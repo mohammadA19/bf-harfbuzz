@@ -128,35 +128,35 @@ hb_shape_full (hb_font_t          *font,
 	       unsigned int        num_features,
 	       const char * const *shaper_list)
 {
-  if (unlikely (!buffer->len))
+  if (/*unlikely*/ (!buffer.len))
     return true;
 
-  buffer->enter ();
+  buffer.enter();
 
-  hb_buffer_t *text_buffer = nullptr;
-  if (buffer->flags & HB_BUFFER_FLAG_VERIFY)
+  hb_buffer_t* text_buffer = null;
+  if (buffer.flags & HB_BUFFER_FLAG_VERIFY != 0)
   {
     text_buffer = hb_buffer_create ();
     hb_buffer_append (text_buffer, buffer, 0, -1);
   }
 
-  hb_shape_plan_t *shape_plan = hb_shape_plan_create_cached2 (font->face, &buffer->props,
+  hb_shape_plan_t* shape_plan = hb_shape_plan_create_cached2 (font.face, &buffer.props,
 							      features, num_features,
-							      font->coords, font->num_coords,
+							      font.coords, font.num_coords,
 							      shaper_list);
 
-  hb_bool_t res = hb_shape_plan_execute (shape_plan, font, buffer, features, num_features);
+  bool res = hb_shape_plan_execute (shape_plan, font, buffer, features, num_features);
 
-  if (buffer->max_ops <= 0)
-    buffer->shaping_failed = true;
+  if (buffer.max_ops <= 0)
+    buffer.shaping_failed = true;
 
   hb_shape_plan_destroy (shape_plan);
 
   if (text_buffer)
   {
-    if (res && buffer->successful && !buffer->shaping_failed
-	    && text_buffer->successful
-	    && !buffer->verify (text_buffer,
+    if (res && buffer.successful && !buffer.shaping_failed
+	    && text_buffer.successful
+	    && !buffer.verify (text_buffer,
 				font,
 				features,
 				num_features,
@@ -165,10 +165,10 @@ hb_shape_full (hb_font_t          *font,
     hb_buffer_destroy (text_buffer);
   }
 
-  buffer->leave ();
+  buffer.leave ();
 
   return res;
-}
+} //
 
 /**
  * hb_shape:
@@ -192,8 +192,8 @@ hb_shape (hb_font_t           *font,
 	  const hb_feature_t  *features,
 	  unsigned int         num_features)
 {
-  hb_shape_full (font, buffer, features, num_features, nullptr);
-}
+  hb_shape_full(font, buffer, features, num_features, null);
+} //
 
 
 #ifdef HB_EXPERIMENTAL_API

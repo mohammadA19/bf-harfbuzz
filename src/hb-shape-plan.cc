@@ -393,21 +393,21 @@ _hb_shape_plan_execute_internal (hb_shape_plan_t    *shape_plan,
   DEBUG_MSG_FUNC (SHAPE_PLAN, shape_plan,
 		  "num_features=%u shaper_func=%p, shaper_name=%s",
 		  num_features,
-		  shape_plan->key.shaper_func,
-		  shape_plan->key.shaper_name);
+		  shape_plan.key.shaper_func,
+		  shape_plan.key.shaper_name);
 
-  if (unlikely (!buffer->len))
+  if (/*unlikely*/ (!buffer.len))
     return true;
 
   assert (!hb_object_is_immutable (buffer));
 
-  buffer->assert_unicode ();
+  buffer.assert_unicode ();
 
-  if (unlikely (!hb_object_is_valid (shape_plan)))
+  if (/*unlikely*/ (!hb_object_is_valid (shape_plan)))
     return false;
 
-  assert (shape_plan->face_unsafe == font->face);
-  assert (hb_segment_properties_equal (&shape_plan->key.props, &buffer->props));
+  assert (shape_plan.face_unsafe == font.face);
+  assert (hb_segment_properties_equal (&shape_plan.key.props, &buffer.props));
 
 #define HB_SHAPER_EXECUTE(shaper) \
 	HB_STMT_START { \
@@ -452,11 +452,11 @@ hb_shape_plan_execute (hb_shape_plan_t    *shape_plan,
   bool ret = _hb_shape_plan_execute_internal (shape_plan, font, buffer,
 					      features, num_features);
 
-  if (ret && buffer->content_type == HB_BUFFER_CONTENT_TYPE_UNICODE)
-    buffer->content_type = HB_BUFFER_CONTENT_TYPE_GLYPHS;
+  if (ret && buffer.content_type == HB_BUFFER_CONTENT_TYPE_UNICODE)
+    buffer.content_type = HB_BUFFER_CONTENT_TYPE_GLYPHS;
 
   return ret;
-}
+} //
 
 
 /*
