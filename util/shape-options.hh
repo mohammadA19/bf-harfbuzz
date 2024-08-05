@@ -42,12 +42,12 @@ struct shape_options_t
 
   void add_options (option_parser_t *parser);
 
-  void setup_buffer (hb_buffer_t *buffer)
+  void setup_buffer (buffer_t *buffer)
   {
-    hb_buffer_set_direction (buffer, hb_direction_from_string (direction, -1));
-    hb_buffer_set_script (buffer, hb_script_from_string (script, -1));
-    hb_buffer_set_language (buffer, hb_language_from_string (language, -1));
-    hb_buffer_set_flags (buffer, (hb_buffer_flags_t)
+    buffer_set_direction (buffer, direction_from_string (direction, -1));
+    buffer_set_script (buffer, script_from_string (script, -1));
+    buffer_set_language (buffer, language_from_string (language, -1));
+    buffer_set_flags (buffer, (buffer_flags_t)
 				 (HB_BUFFER_FLAG_DEFAULT |
 				  (bot ? HB_BUFFER_FLAG_BOT : 0) |
 				  (eot ? HB_BUFFER_FLAG_EOT : 0) |
@@ -57,17 +57,17 @@ struct shape_options_t
 				  (preserve_default_ignorables ? HB_BUFFER_FLAG_PRESERVE_DEFAULT_IGNORABLES : 0) |
 				  (remove_default_ignorables ? HB_BUFFER_FLAG_REMOVE_DEFAULT_IGNORABLES : 0) |
 				  0));
-    hb_buffer_set_invisible_glyph (buffer, invisible_glyph);
-    hb_buffer_set_not_found_glyph (buffer, not_found_glyph);
-    hb_buffer_set_cluster_level (buffer, cluster_level);
-    hb_buffer_guess_segment_properties (buffer);
+    buffer_set_invisible_glyph (buffer, invisible_glyph);
+    buffer_set_not_found_glyph (buffer, not_found_glyph);
+    buffer_set_cluster_level (buffer, cluster_level);
+    buffer_guess_segment_properties (buffer);
   }
 
-  void populate_buffer (hb_buffer_t *buffer, const char *text, int text_len,
+  void populate_buffer (buffer_t *buffer, const char *text, int text_len,
 			const char *text_before, const char *text_after,
-			hb_font_t *font)
+			font_t *font)
   {
-    hb_buffer_clear_contents (buffer);
+    buffer_clear_contents (buffer);
 
     if (glyphs)
     {
@@ -86,7 +86,7 @@ struct shape_options_t
 	glyphs_len = -1;
       }
 
-      hb_buffer_deserialize_glyphs (buffer,
+      buffer_deserialize_glyphs (buffer,
 				    glyphs_text, glyphs_len,
 				    nullptr,
 				    font,
@@ -96,11 +96,11 @@ struct shape_options_t
       {
         scale_advances = false;
         unsigned count;
-	hb_direction_t direction = hb_buffer_get_direction (buffer);
-	hb_glyph_info_t *infos = hb_buffer_get_glyph_infos (buffer, &count);
-	hb_glyph_position_t *positions = hb_buffer_get_glyph_positions (buffer, &count);
+	direction_t direction = buffer_get_direction (buffer);
+	glyph_info_t *infos = buffer_get_glyph_infos (buffer, &count);
+	glyph_position_t *positions = buffer_get_glyph_positions (buffer, &count);
 	for (unsigned i = 0; i < count; i++)
-	  hb_font_get_glyph_advance_for_direction (font,
+	  font_get_glyph_advance_for_direction (font,
 						   infos[i].codepoint,
 						   direction,
 						   &positions[i].x_advance,
@@ -115,18 +115,18 @@ struct shape_options_t
 
     if (text_before) {
       unsigned int len = strlen (text_before);
-      hb_buffer_add_utf8 (buffer, text_before, len, len, 0);
+      buffer_add_utf8 (buffer, text_before, len, len, 0);
     }
-    hb_buffer_add_utf8 (buffer, text, text_len, 0, text_len);
+    buffer_add_utf8 (buffer, text, text_len, 0, text_len);
     if (text_after) {
-      hb_buffer_add_utf8 (buffer, text_after, -1, 0, 0);
+      buffer_add_utf8 (buffer, text_after, -1, 0, 0);
     }
 
     if (!utf8_clusters) {
       /* Reset cluster values to refer to Unicode character index
        * instead of UTF-8 index. */
-      unsigned int num_glyphs = hb_buffer_get_length (buffer);
-      hb_glyph_info_t *info = hb_buffer_get_glyph_infos (buffer, nullptr);
+      unsigned int num_glyphs = buffer_get_length (buffer);
+      glyph_info_t *info = buffer_get_glyph_infos (buffer, nullptr);
       for (unsigned int i = 0; i < num_glyphs; i++)
       {
 	info->cluster = i;
@@ -137,16 +137,16 @@ struct shape_options_t
     setup_buffer (buffer);
   }
 
-  hb_bool_t shape (hb_font_t *font, hb_buffer_t *buffer, const char **error=nullptr)
+  bool_t shape (font_t *font, buffer_t *buffer, const char **error=nullptr)
   {
     if (glyphs)
     {
       /* Scale positions. */
       int x_scale, y_scale;
-      hb_font_get_scale (font, &x_scale, &y_scale);
-      unsigned upem = hb_face_get_upem (hb_font_get_face (font));
+      font_get_scale (font, &x_scale, &y_scale);
+      unsigned upem = face_get_upem (font_get_face (font));
       unsigned count;
-      auto *positions = hb_buffer_get_glyph_positions (buffer, &count);
+      auto *positions = buffer_get_glyph_positions (buffer, &count);
       for (unsigned i = 0; i < count; i++)
       {
 	auto &pos = positions[i];
@@ -163,7 +163,7 @@ struct shape_options_t
     {
       if (advance <= 0)
       {
-	if (!hb_shape_full (font, buffer, features, num_features, shapers))
+	if (!shape_full (font, buffer, features, num_features, shapers))
 	{
 	  if (error)
 	    *error = "Shaping failed.";
@@ -177,8 +177,8 @@ struct shape_options_t
 	  /* Calculate buffer advance */
 	  float w = 0;
 	  unsigned count = 0;
-	  hb_glyph_position_t *pos = hb_buffer_get_glyph_positions (buffer, &count);
-	  if (HB_DIRECTION_IS_HORIZONTAL (hb_buffer_get_direction (buffer)))
+	  glyph_position_t *pos = buffer_get_glyph_positions (buffer, &count);
+	  if (HB_DIRECTION_IS_HORIZONTAL (buffer_get_direction (buffer)))
 	    for (unsigned i = 0; i < count; i++)
 	      w += pos[i].x_advance;
 	  else
@@ -195,9 +195,9 @@ struct shape_options_t
         float unit = (1 << SUBPIXEL_BITS);
         float target_advance = advance * unit;
 	float w = 0;
-	hb_tag_t var_tag;
+	tag_t var_tag;
 	float var_value;
-	if (!hb_shape_justify (font, buffer, features, num_features, shapers,
+	if (!shape_justify (font, buffer, features, num_features, shapers,
 			       target_advance - unit * 0.5f, target_advance + unit * 0.5f,
 			       &w, &var_tag, &var_value))
 	{
@@ -210,7 +210,7 @@ struct shape_options_t
     }
 
     if (normalize_glyphs)
-      hb_buffer_normalize_glyphs (buffer);
+      buffer_normalize_glyphs (buffer);
 
     return true;
 
@@ -219,13 +219,13 @@ struct shape_options_t
   }
 
   void shape_closure (const char *text, int text_len,
-		      hb_font_t *font, hb_buffer_t *buffer,
-		      hb_set_t *glyphs)
+		      font_t *font, buffer_t *buffer,
+		      set_t *glyphs)
   {
-    hb_buffer_reset (buffer);
-    hb_buffer_add_utf8 (buffer, text, text_len, 0, text_len);
+    buffer_reset (buffer);
+    buffer_add_utf8 (buffer, text, text_len, 0, text_len);
     setup_buffer (buffer);
-    hb_ot_shape_glyphs_closure (font, buffer, features, num_features, glyphs);
+    ot_shape_glyphs_closure (font, buffer, features, num_features, glyphs);
   }
 
   /* Buffer properties */
@@ -234,25 +234,25 @@ struct shape_options_t
   char *script = nullptr;
 
   /* Buffer flags */
-  hb_bool_t bot = false;
-  hb_bool_t eot = false;
-  hb_bool_t preserve_default_ignorables = false;
-  hb_bool_t remove_default_ignorables = false;
+  bool_t bot = false;
+  bool_t eot = false;
+  bool_t preserve_default_ignorables = false;
+  bool_t remove_default_ignorables = false;
 
-  hb_feature_t *features = nullptr;
+  feature_t *features = nullptr;
   unsigned int num_features = 0;
   char **shapers = nullptr;
   signed advance = 0;
-  hb_bool_t utf8_clusters = false;
-  hb_codepoint_t invisible_glyph = 0;
-  hb_codepoint_t not_found_glyph = 0;
-  hb_buffer_cluster_level_t cluster_level = HB_BUFFER_CLUSTER_LEVEL_DEFAULT;
-  hb_bool_t normalize_glyphs = false;
-  hb_bool_t glyphs = false;
+  bool_t utf8_clusters = false;
+  codepoint_t invisible_glyph = 0;
+  codepoint_t not_found_glyph = 0;
+  buffer_cluster_level_t cluster_level = HB_BUFFER_CLUSTER_LEVEL_DEFAULT;
+  bool_t normalize_glyphs = false;
+  bool_t glyphs = false;
   bool scale_advances = true;
-  hb_bool_t verify = false;
-  hb_bool_t unsafe_to_concat = false;
-  hb_bool_t safe_to_insert_tatweel = false;
+  bool_t verify = false;
+  bool_t unsafe_to_concat = false;
+  bool_t safe_to_insert_tatweel = false;
   unsigned int num_iterations = 1;
 };
 
@@ -269,8 +269,8 @@ parse_shapers (const char *name G_GNUC_UNUSED,
   for (char **shaper = shapers; *shaper; shaper++)
   {
     bool found = false;
-    for (const char **hb_shaper = hb_shape_list_shapers (); *hb_shaper; hb_shaper++) {
-      if (strcmp (*shaper, *hb_shaper) == 0)
+    for (const char **shaper = shape_list_shapers (); *shaper; shaper++) {
+      if (strcmp (*shaper, *shaper) == 0)
       {
 	found = true;
 	break;
@@ -296,7 +296,7 @@ list_shapers (const char *name G_GNUC_UNUSED,
 	      gpointer    data G_GNUC_UNUSED,
 	      GError    **error G_GNUC_UNUSED)
 {
-  for (const char **shaper = hb_shape_list_shapers (); *shaper; shaper++)
+  for (const char **shaper = shape_list_shapers (); *shaper; shaper++)
     g_printf ("%s\n", *shaper);
 
   exit(0);
@@ -337,7 +337,7 @@ parse_features (const char *name G_GNUC_UNUSED,
       p++;
   } while (p);
 
-  shape_opts->features = (hb_feature_t *) calloc (shape_opts->num_features, sizeof (*shape_opts->features));
+  shape_opts->features = (feature_t *) calloc (shape_opts->num_features, sizeof (*shape_opts->features));
   if (!shape_opts->features)
     return false;
 
@@ -346,7 +346,7 @@ parse_features (const char *name G_GNUC_UNUSED,
   shape_opts->num_features = 0;
   while (p && *p) {
     char *end = strpbrk (p, ", ");
-    if (hb_feature_from_string (p, end ? end - p : -1, &shape_opts->features[shape_opts->num_features]))
+    if (feature_from_string (p, end ? end - p : -1, &shape_opts->features[shape_opts->num_features]))
       shape_opts->num_features++;
     p = end ? end + 1 : nullptr;
   }

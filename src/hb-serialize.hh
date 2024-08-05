@@ -44,7 +44,7 @@
  * Serialize
  */
 
-enum hb_serialize_error_t {
+enum serialize_error_t {
   HB_SERIALIZE_ERROR_NONE =            0x00000000u,
   HB_SERIALIZE_ERROR_OTHER =           0x00000001u,
   HB_SERIALIZE_ERROR_OFFSET_OVERFLOW = 0x00000002u,
@@ -52,9 +52,9 @@ enum hb_serialize_error_t {
   HB_SERIALIZE_ERROR_INT_OVERFLOW =    0x00000008u,
   HB_SERIALIZE_ERROR_ARRAY_OVERFLOW =  0x00000010u
 };
-HB_MARK_AS_FLAG_T (hb_serialize_error_t);
+HB_MARK_AS_FLAG_T (serialize_error_t);
 
-struct hb_serialize_context_t
+struct serialize_context_t
 {
   typedef unsigned objidx_t;
 
@@ -76,7 +76,7 @@ struct hb_serialize_context_t
     object_t () = default;
 
 #ifdef HB_EXPERIMENTAL_API
-    object_t (const hb_object_t &o)
+    object_t (const object_t &o)
     {
       head = o.head;
       tail = o.tail;
@@ -113,11 +113,11 @@ struct hb_serialize_context_t
 
     friend void swap (object_t& a, object_t& b) noexcept
     {
-      hb_swap (a.head, b.head);
-      hb_swap (a.tail, b.tail);
-      hb_swap (a.next, b.next);
-      hb_swap (a.real_links, b.real_links);
-      hb_swap (a.virtual_links, b.virtual_links);
+      swap (a.head, b.head);
+      swap (a.tail, b.tail);
+      swap (a.next, b.next);
+      swap (a.real_links, b.real_links);
+      swap (a.virtual_links, b.virtual_links);
     }
 
     bool operator == (const object_t &o) const
@@ -126,14 +126,14 @@ struct hb_serialize_context_t
       // of the object.
       return (tail - head == o.tail - o.head)
 	  && (real_links.length == o.real_links.length)
-	  && 0 == hb_memcmp (head, o.head, tail - head)
+	  && 0 == memcmp (head, o.head, tail - head)
 	  && real_links.as_bytes () == o.real_links.as_bytes ();
     }
     uint32_t hash () const
     {
       // Virtual links aren't considered for equality since they don't affect the functionality
       // of the object.
-      return hb_bytes_t (head, hb_min (128, tail - head)).hash () ^
+      return bytes_t (head, min (128, tail - head)).hash () ^
           real_links.as_bytes ().hash ();
     }
 
@@ -149,7 +149,7 @@ struct hb_serialize_context_t
       link_t () = default;
 
 #ifdef HB_EXPERIMENTAL_API
-      link_t (const hb_link_t &o)
+      link_t (const link_t &o)
       {
         width = o.width;
         is_signed = 0;
@@ -171,14 +171,14 @@ struct hb_serialize_context_t
 
     char *head;
     char *tail;
-    hb_vector_t<link_t> real_links;
-    hb_vector_t<link_t> virtual_links;
+    vector_t<link_t> real_links;
+    vector_t<link_t> virtual_links;
     object_t *next;
 
     auto all_links () const HB_AUTO_RETURN
-        (( hb_concat (real_links, virtual_links) ));
+        (( concat (real_links, virtual_links) ));
     auto all_links_writer () HB_AUTO_RETURN
-        (( hb_concat (real_links.writer (), virtual_links.writer ()) ));           
+        (( concat (real_links.writer (), virtual_links.writer ()) ));           
   };
 
   struct snapshot_t
@@ -188,7 +188,7 @@ struct hb_serialize_context_t
     object_t *current; // Just for sanity check
     unsigned num_real_links;
     unsigned num_virtual_links;
-    hb_serialize_error_t errors;
+    serialize_error_t errors;
   };
 
   snapshot_t snapshot ()
@@ -201,16 +201,16 @@ struct hb_serialize_context_t
      };
   }
 
-  hb_serialize_context_t (void *start_, unsigned int size) :
+  serialize_context_t (void *start_, unsigned int size) :
     start ((char *) start_),
     end (start + size),
     current (nullptr)
   { reset (); }
-  ~hb_serialize_context_t () { fini (); }
+  ~serialize_context_t () { fini (); }
 
   void fini ()
   {
-    for (object_t *_ : ++hb_iter (packed)) _->fini ();
+    for (object_t *_ : ++iter (packed)) _->fini ();
     packed.fini ();
     this->packed_map.fini ();
 
@@ -258,14 +258,14 @@ struct hb_serialize_context_t
   }
 
   bool check_success (bool success,
-                      hb_serialize_error_t err_type = HB_SERIALIZE_ERROR_OTHER)
+                      serialize_error_t err_type = HB_SERIALIZE_ERROR_OTHER)
   {
     return successful ()
         && (success || err (err_type));
   }
 
   template <typename T1, typename T2>
-  bool check_equal (T1 &&v1, T2 &&v2, hb_serialize_error_t err_type)
+  bool check_equal (T1 &&v1, T2 &&v2, serialize_error_t err_type)
   {
     if ((long long) v1 != (long long) v2)
     {
@@ -275,11 +275,11 @@ struct hb_serialize_context_t
   }
 
   template <typename T1, typename T2>
-  bool check_assign (T1 &v1, T2 &&v2, hb_serialize_error_t err_type)
+  bool check_assign (T1 &v1, T2 &&v2, serialize_error_t err_type)
   { return check_equal (v1 = v2, v2, err_type); }
 
   template <typename T> bool propagate_error (T &&obj)
-  { return check_success (!hb_deref (obj).in_error ()); }
+  { return check_success (!deref (obj).in_error ()); }
 
   template <typename T1, typename... Ts> bool propagate_error (T1 &&o1, Ts&&... os)
   { return propagate_error (std::forward<T1> (o1)) &&
@@ -394,7 +394,7 @@ struct hb_serialize_context_t
     uint32_t hash = 0;
     if (share)
     {
-      hash = hb_hash (obj);
+      hash = hash (obj);
       objidx = packed_map.get_with_hash (obj, hash);
       if (objidx)
       {
@@ -555,7 +555,7 @@ struct hb_serialize_context_t
       return;
     }
 
-    link.is_signed = std::is_signed<hb_unwrap_type (T)>::value;
+    link.is_signed = std::is_signed<unwrap_type (T)>::value;
     link.whence = (unsigned) whence;
     link.position = (const char *) &ofs - current->head;
     link.bias = bias;
@@ -577,7 +577,7 @@ struct hb_serialize_context_t
     assert (!current);
     assert (packed.length > 1);
 
-    for (const object_t* parent : ++hb_iter (packed))
+    for (const object_t* parent : ++iter (packed))
       for (const object_t::link_t &link : parent->real_links)
       {
 	const object_t* child = packed[link.objidx];
@@ -634,7 +634,7 @@ struct hb_serialize_context_t
   Type *start_embed (const Type &obj) const
   { return start_embed (std::addressof (obj)); }
 
-  bool err (hb_serialize_error_t err_type)
+  bool err (serialize_error_t err_type)
   {
     return !bool ((errors = (errors | err_type)));
   }
@@ -669,7 +669,7 @@ struct hb_serialize_context_t
       return nullptr;
     }
     if (clear)
-      hb_memset (this->head, 0, size);
+      memset (this->head, 0, size);
     char *ret = this->head;
     this->head += size;
     return reinterpret_cast<Type *> (ret);
@@ -686,7 +686,7 @@ struct hb_serialize_context_t
     unsigned int size = obj->get_size ();
     Type *ret = this->allocate_size<Type> (size, false);
     if (unlikely (!ret)) return nullptr;
-    hb_memcpy (ret, obj, size);
+    memcpy (ret, obj, size);
     return ret;
   }
   template <typename Type>
@@ -697,16 +697,16 @@ struct hb_serialize_context_t
   {
     char *ret = this->allocate_size<char> (size, false);
     if (unlikely (!ret)) return nullptr;
-    hb_memcpy (ret, obj, size);
+    memcpy (ret, obj, size);
     return ret;
   }
 
   template <typename Type, typename ...Ts> auto
-  _copy (const Type &src, hb_priority<1>, Ts&&... ds) HB_RETURN
+  _copy (const Type &src, priority<1>, Ts&&... ds) HB_RETURN
   (Type *, src.copy (this, std::forward<Ts> (ds)...))
 
   template <typename Type> auto
-  _copy (const Type &src, hb_priority<0>) -> decltype (&(hb_declval<Type> () = src))
+  _copy (const Type &src, priority<0>) -> decltype (&(declval<Type> () = src))
   {
     Type *ret = this->allocate_size<Type> (sizeof (Type));
     if (unlikely (!ret)) return nullptr;
@@ -715,22 +715,22 @@ struct hb_serialize_context_t
   }
 
   /* Like embed, but active: calls obj.operator=() or obj.copy() to transfer data
-   * instead of hb_memcpy(). */
+   * instead of memcpy(). */
   template <typename Type, typename ...Ts>
   Type *copy (const Type &src, Ts&&... ds)
-  { return _copy (src, hb_prioritize, std::forward<Ts> (ds)...); }
+  { return _copy (src, prioritize, std::forward<Ts> (ds)...); }
   template <typename Type, typename ...Ts>
   Type *copy (const Type *src, Ts&&... ds)
   { return copy (*src, std::forward<Ts> (ds)...); }
 
   template<typename Iterator,
-	   hb_requires (hb_is_iterator (Iterator)),
+	   requires (is_iterator (Iterator)),
 	   typename ...Ts>
   void copy_all (Iterator it, Ts&&... ds)
   { for (decltype (*it) _ : it) copy (_, std::forward<Ts> (ds)...); }
 
   template <typename Type>
-  hb_serialize_context_t& operator << (const Type &obj) & { embed (obj); return *this; }
+  serialize_context_t& operator << (const Type &obj) & { embed (obj); return *this; }
 
   template <typename Type>
   Type *extend_size (Type *obj, size_t size, bool clear = true)
@@ -761,36 +761,36 @@ struct hb_serialize_context_t
   { return extend (std::addressof (obj), std::forward<Ts> (ds)...); }
 
   /* Output routines. */
-  hb_bytes_t copy_bytes () const
+  bytes_t copy_bytes () const
   {
     assert (successful ());
     /* Copy both items from head side and tail side... */
     unsigned int len = (this->head - this->start)
 		     + (this->end  - this->tail);
 
-    // If len is zero don't hb_malloc as the memory won't get properly
+    // If len is zero don't malloc as the memory won't get properly
     // cleaned up later.
-    if (!len) return hb_bytes_t ();
+    if (!len) return bytes_t ();
 
-    char *p = (char *) hb_malloc (len);
-    if (unlikely (!p)) return hb_bytes_t ();
+    char *p = (char *) malloc (len);
+    if (unlikely (!p)) return bytes_t ();
 
-    hb_memcpy (p, this->start, this->head - this->start);
-    hb_memcpy (p + (this->head - this->start), this->tail, this->end - this->tail);
-    return hb_bytes_t (p, len);
+    memcpy (p, this->start, this->head - this->start);
+    memcpy (p + (this->head - this->start), this->tail, this->end - this->tail);
+    return bytes_t (p, len);
   }
   template <typename Type>
   Type *copy () const
   { return reinterpret_cast<Type *> ((char *) copy_bytes ().arrayZ); }
-  hb_blob_t *copy_blob () const
+  blob_t *copy_blob () const
   {
-    hb_bytes_t b = copy_bytes ();
-    return hb_blob_create (b.arrayZ, b.length,
+    bytes_t b = copy_bytes ();
+    return blob_create (b.arrayZ, b.length,
 			   HB_MEMORY_MODE_WRITABLE,
-			   (char *) b.arrayZ, hb_free);
+			   (char *) b.arrayZ, free);
   }
 
-  const hb_vector_t<object_t *>& object_graph() const
+  const vector_t<object_t *>& object_graph() const
   { return packed; }
 
   private:
@@ -805,7 +805,7 @@ struct hb_serialize_context_t
   public:
   char *start, *head, *tail, *end, *zerocopy;
   unsigned int debug_depth;
-  hb_serialize_error_t errors;
+  serialize_error_t errors;
 
   private:
 
@@ -817,16 +817,16 @@ struct hb_serialize_context_t
   }
 
   /* Object memory pool. */
-  hb_pool_t<object_t> object_pool;
+  pool_t<object_t> object_pool;
 
   /* Stack of currently under construction objects. */
   object_t *current;
 
   /* Stack of packed objects.  Object 0 is always nil object. */
-  hb_vector_t<object_t *> packed;
+  vector_t<object_t *> packed;
 
   /* Map view of packed objects. */
-  hb_hashmap_t<const object_t *, objidx_t> packed_map;
+  hashmap_t<const object_t *, objidx_t> packed_map;
 };
 
 #endif /* HB_SERIALIZE_HH */

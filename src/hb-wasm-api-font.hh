@@ -38,7 +38,7 @@ HB_WASM_API (ptr_t(font_t), font_create) (HB_WASM_EXEC_ENV
 {
   HB_REF2OBJ (face);
 
-  hb_font_t *font = hb_font_create (face);
+  font_t *font = font_create (face);
 
   HB_OBJ2REF (font);
   return fontref;
@@ -49,7 +49,7 @@ HB_WASM_API (ptr_t(face_t), font_get_face) (HB_WASM_EXEC_ENV
 {
   HB_REF2OBJ (font);
 
-  hb_face_t *face = hb_font_get_face (font);
+  face_t *face = font_get_face (font);
 
   HB_OBJ2REF (face);
   return faceref;
@@ -65,7 +65,7 @@ HB_WASM_API (void, font_get_scale) (HB_WASM_EXEC_ENV
   HB_PTR_PARAM(int32_t, x_scale);
   HB_PTR_PARAM(int32_t, y_scale);
 
-  hb_font_get_scale (font, x_scale, y_scale);
+  font_get_scale (font, x_scale, y_scale);
 }
 
 HB_WASM_API (codepoint_t, font_get_glyph) (HB_WASM_EXEC_ENV
@@ -76,7 +76,7 @@ HB_WASM_API (codepoint_t, font_get_glyph) (HB_WASM_EXEC_ENV
   HB_REF2OBJ (font);
   codepoint_t glyph;
 
-  hb_font_get_glyph (font, unicode, variation_selector, &glyph);
+  font_get_glyph (font, unicode, variation_selector, &glyph);
   return glyph;
 }
 
@@ -85,7 +85,7 @@ HB_WASM_API (position_t, font_get_glyph_h_advance) (HB_WASM_EXEC_ENV
 						    codepoint_t glyph)
 {
   HB_REF2OBJ (font);
-  return hb_font_get_glyph_h_advance (font, glyph);
+  return font_get_glyph_h_advance (font, glyph);
 }
 
 HB_WASM_API (position_t, font_get_glyph_v_advance) (HB_WASM_EXEC_ENV
@@ -93,10 +93,10 @@ HB_WASM_API (position_t, font_get_glyph_v_advance) (HB_WASM_EXEC_ENV
 						    codepoint_t glyph)
 {
   HB_REF2OBJ (font);
-  return hb_font_get_glyph_v_advance (font, glyph);
+  return font_get_glyph_v_advance (font, glyph);
 }
 
-static_assert (sizeof (glyph_extents_t) == sizeof (hb_glyph_extents_t), "");
+static_assert (sizeof (glyph_extents_t) == sizeof (glyph_extents_t), "");
 
 HB_WASM_API (bool_t, font_get_glyph_extents) (HB_WASM_EXEC_ENV
 					      ptr_d(font_t, font),
@@ -108,8 +108,8 @@ HB_WASM_API (bool_t, font_get_glyph_extents) (HB_WASM_EXEC_ENV
   if (unlikely (!extents))
     return false;
 
-  return hb_font_get_glyph_extents (font, glyph,
-				    (hb_glyph_extents_t *) extents);
+  return font_get_glyph_extents (font, glyph,
+				    (glyph_extents_t *) extents);
 }
 
 HB_WASM_API (void, font_glyph_to_string) (HB_WASM_EXEC_ENV
@@ -119,11 +119,11 @@ HB_WASM_API (void, font_glyph_to_string) (HB_WASM_EXEC_ENV
 {
   HB_REF2OBJ (font);
 
-  hb_font_glyph_to_string (font, glyph, s, size);
+  font_glyph_to_string (font, glyph, s, size);
 }
 
-static_assert (sizeof (glyph_outline_point_t) == sizeof (hb_outline_point_t), "");
-static_assert (sizeof (uint32_t) == sizeof (hb_outline_t::contours[0]), "");
+static_assert (sizeof (glyph_outline_point_t) == sizeof (outline_point_t), "");
+static_assert (sizeof (uint32_t) == sizeof (outline_t::contours[0]), "");
 
 HB_WASM_API (bool_t, font_copy_glyph_outline) (HB_WASM_EXEC_ENV
 					       ptr_d(font_t, font),
@@ -135,24 +135,24 @@ HB_WASM_API (bool_t, font_copy_glyph_outline) (HB_WASM_EXEC_ENV
   if (unlikely (!outline))
     return false;
 
-  hb_outline_t hb_outline;
-  auto *funcs = hb_outline_recording_pen_get_funcs ();
+  outline_t outline;
+  auto *funcs = outline_recording_pen_get_funcs ();
 
-  hb_font_draw_glyph (font, glyph, funcs, &hb_outline);
+  font_draw_glyph (font, glyph, funcs, &outline);
 
-  if (unlikely (hb_outline.points.in_error () ||
-		hb_outline.contours.in_error ()))
+  if (unlikely (outline.points.in_error () ||
+		outline.contours.in_error ()))
   {
     outline->n_points = outline->n_contours = 0;
     return false;
   }
 
   // TODO Check two buffers separately
-  if (hb_outline.points.length <= outline->n_points &&
-      hb_outline.contours.length <= outline->n_contours)
+  if (outline.points.length <= outline->n_points &&
+      outline.contours.length <= outline->n_contours)
   {
-    glyph_outline_point_t *points = HB_ARRAY_APP2NATIVE (glyph_outline_point_t, outline->points, hb_outline.points.length);
-    uint32_t *contours = HB_ARRAY_APP2NATIVE (uint32_t, outline->contours, hb_outline.contours.length);
+    glyph_outline_point_t *points = HB_ARRAY_APP2NATIVE (glyph_outline_point_t, outline->points, outline.points.length);
+    uint32_t *contours = HB_ARRAY_APP2NATIVE (uint32_t, outline->contours, outline.contours.length);
 
     if (unlikely (!points || !contours))
     {
@@ -160,20 +160,20 @@ HB_WASM_API (bool_t, font_copy_glyph_outline) (HB_WASM_EXEC_ENV
       return false;
     }
 
-    hb_memcpy (points, hb_outline.points.arrayZ, hb_outline.points.get_size ());
-    hb_memcpy (contours, hb_outline.contours.arrayZ, hb_outline.contours.get_size ());
+    memcpy (points, outline.points.arrayZ, outline.points.get_size ());
+    memcpy (contours, outline.contours.arrayZ, outline.contours.get_size ());
 
     return true;
   }
 
-  outline->n_points = hb_outline.points.length;
+  outline->n_points = outline.points.length;
   outline->points = wasm_runtime_module_dup_data (module_inst,
-						  (const char *) hb_outline.points.arrayZ,
-						  hb_outline.points.get_size ());
-  outline->n_contours = hb_outline.contours.length;
+						  (const char *) outline.points.arrayZ,
+						  outline.points.get_size ());
+  outline->n_contours = outline.contours.length;
   outline->contours = wasm_runtime_module_dup_data (module_inst,
-						    (const char *) hb_outline.contours.arrayZ,
-						    hb_outline.contours.get_size ());
+						    (const char *) outline.contours.arrayZ,
+						    outline.contours.get_size ());
 
   if ((outline->n_points && !outline->points) ||
       (!outline->n_contours && !outline->contours))
@@ -211,7 +211,7 @@ HB_WASM_API (bool_t, font_copy_coords) (HB_WASM_EXEC_ENV
     return false;
 
   unsigned our_length;
-  const int* our_coords = hb_font_get_var_coords_normalized(font, &our_length);
+  const int* our_coords = font_get_var_coords_normalized(font, &our_length);
 
   if (our_length <= coords->length) {
     int *their_coords = HB_ARRAY_APP2NATIVE (int, coords->coords, our_length);
@@ -220,7 +220,7 @@ HB_WASM_API (bool_t, font_copy_coords) (HB_WASM_EXEC_ENV
     	return false;
     }
 		unsigned bytes = our_length * sizeof (int);
-    hb_memcpy (their_coords, our_coords, bytes);
+    memcpy (their_coords, our_coords, bytes);
 
     return true;
   }
@@ -249,11 +249,11 @@ HB_WASM_API (bool_t, font_set_coords) (HB_WASM_EXEC_ENV
 
   unsigned length = coords->length;
   unsigned bytes;
-  if (unlikely (hb_unsigned_mul_overflows (length, sizeof (int), &bytes)))
+  if (unlikely (unsigned_mul_overflows (length, sizeof (int), &bytes)))
     return false;
 
   const int *our_coords = (const int *) (validate_app_addr (coords->coords, bytes) ? addr_app_to_native (coords->coords) : nullptr);
-  hb_font_set_var_coords_normalized(font, our_coords, length);
+  font_set_var_coords_normalized(font, our_coords, length);
   return true;
 }
 

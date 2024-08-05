@@ -20,36 +20,36 @@
 
 #include "hb-ucd-table.hh"
 
-static hb_unicode_combining_class_t
-hb_ucd_combining_class (hb_unicode_funcs_t *ufuncs HB_UNUSED,
-			hb_codepoint_t unicode,
+static unicode_combining_class_t
+ucd_combining_class (unicode_funcs_t *ufuncs HB_UNUSED,
+			codepoint_t unicode,
 			void *user_data HB_UNUSED)
 {
-  return (hb_unicode_combining_class_t) _hb_ucd_ccc (unicode);
+  return (unicode_combining_class_t) _ucd_ccc (unicode);
 }
 
-static hb_unicode_general_category_t
-hb_ucd_general_category (hb_unicode_funcs_t *ufuncs HB_UNUSED,
-			 hb_codepoint_t unicode,
+static unicode_general_category_t
+ucd_general_category (unicode_funcs_t *ufuncs HB_UNUSED,
+			 codepoint_t unicode,
 			 void *user_data HB_UNUSED)
 {
-  return (hb_unicode_general_category_t) _hb_ucd_gc (unicode);
+  return (unicode_general_category_t) _ucd_gc (unicode);
 }
 
-static hb_codepoint_t
-hb_ucd_mirroring (hb_unicode_funcs_t *ufuncs HB_UNUSED,
-		  hb_codepoint_t unicode,
+static codepoint_t
+ucd_mirroring (unicode_funcs_t *ufuncs HB_UNUSED,
+		  codepoint_t unicode,
 		  void *user_data HB_UNUSED)
 {
-  return unicode + _hb_ucd_bmg (unicode);
+  return unicode + _ucd_bmg (unicode);
 }
 
-static hb_script_t
-hb_ucd_script (hb_unicode_funcs_t *ufuncs HB_UNUSED,
-	       hb_codepoint_t unicode,
+static script_t
+ucd_script (unicode_funcs_t *ufuncs HB_UNUSED,
+	       codepoint_t unicode,
 	       void *user_data HB_UNUSED)
 {
-  return _hb_ucd_sc_map[_hb_ucd_sc (unicode)];
+  return _ucd_sc_map[_ucd_sc (unicode)];
 }
 
 
@@ -64,7 +64,7 @@ hb_ucd_script (hb_unicode_funcs_t *ufuncs HB_UNUSED,
 #define NCOUNT (VCOUNT * TCOUNT)
 
 static inline bool
-_hb_ucd_decompose_hangul (hb_codepoint_t ab, hb_codepoint_t *a, hb_codepoint_t *b)
+_ucd_decompose_hangul (codepoint_t ab, codepoint_t *a, codepoint_t *b)
 {
   unsigned si = ab - SBASE;
 
@@ -86,7 +86,7 @@ _hb_ucd_decompose_hangul (hb_codepoint_t ab, hb_codepoint_t *a, hb_codepoint_t *
 }
 
 static inline bool
-_hb_ucd_compose_hangul (hb_codepoint_t a, hb_codepoint_t b, hb_codepoint_t *ab)
+_ucd_compose_hangul (codepoint_t a, codepoint_t b, codepoint_t *ab)
 {
   if (a >= SBASE && a < (SBASE + SCOUNT) && b > TBASE && b < (TBASE + TCOUNT) &&
     !((a - SBASE) % TCOUNT))
@@ -124,15 +124,15 @@ _cmp_pair_11_7_14 (const void *_key, const void *_item)
   return a < b ? -1 : a > b ? +1 : 0;
 }
 
-static hb_bool_t
-hb_ucd_compose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
-		hb_codepoint_t a, hb_codepoint_t b, hb_codepoint_t *ab,
+static bool_t
+ucd_compose (unicode_funcs_t *ufuncs HB_UNUSED,
+		codepoint_t a, codepoint_t b, codepoint_t *ab,
 		void *user_data HB_UNUSED)
 {
   // Hangul is handled algorithmically.
-  if (_hb_ucd_compose_hangul (a, b, ab)) return true;
+  if (_ucd_compose_hangul (a, b, ab)) return true;
 
-  hb_codepoint_t u = 0;
+  codepoint_t u = 0;
 
   if ((a & 0xFFFFF800u) == 0x0000u && (b & 0xFFFFFF80) == 0x0300u)
   {
@@ -140,10 +140,10 @@ hb_ucd_compose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
      * the composition data is encoded in a 32bit array sorted
      * by "a,b" pair. */
     uint32_t k = HB_CODEPOINT_ENCODE3_11_7_14 (a, b, 0);
-    const uint32_t *v = hb_bsearch (k,
-				    _hb_ucd_dm2_u32_map,
-				    ARRAY_LENGTH (_hb_ucd_dm2_u32_map),
-				    sizeof (*_hb_ucd_dm2_u32_map),
+    const uint32_t *v = bsearch (k,
+				    _ucd_dm2_u32_map,
+				    ARRAY_LENGTH (_ucd_dm2_u32_map),
+				    sizeof (*_ucd_dm2_u32_map),
 				    _cmp_pair_11_7_14);
     if (likely (!v)) return false;
     u = HB_CODEPOINT_DECODE3_11_7_14_3 (*v);
@@ -153,10 +153,10 @@ hb_ucd_compose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
     /* Otherwise it is stored in a 64bit array sorted by
      * "a,b" pair. */
     uint64_t k = HB_CODEPOINT_ENCODE3 (a, b, 0);
-    const uint64_t *v = hb_bsearch (k,
-				    _hb_ucd_dm2_u64_map,
-				    ARRAY_LENGTH (_hb_ucd_dm2_u64_map),
-				    sizeof (*_hb_ucd_dm2_u64_map),
+    const uint64_t *v = bsearch (k,
+				    _ucd_dm2_u64_map,
+				    ARRAY_LENGTH (_ucd_dm2_u64_map),
+				    sizeof (*_ucd_dm2_u64_map),
 				    _cmp_pair);
     if (likely (!v)) return false;
     u = HB_CODEPOINT_DECODE3_3 (*v);
@@ -167,52 +167,52 @@ hb_ucd_compose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
   return true;
 }
 
-static hb_bool_t
-hb_ucd_decompose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
-		  hb_codepoint_t ab, hb_codepoint_t *a, hb_codepoint_t *b,
+static bool_t
+ucd_decompose (unicode_funcs_t *ufuncs HB_UNUSED,
+		  codepoint_t ab, codepoint_t *a, codepoint_t *b,
 		  void *user_data HB_UNUSED)
 {
-  if (_hb_ucd_decompose_hangul (ab, a, b)) return true;
+  if (_ucd_decompose_hangul (ab, a, b)) return true;
 
-  unsigned i = _hb_ucd_dm (ab);
+  unsigned i = _ucd_dm (ab);
 
   /* If no data, there's no decomposition. */
   if (likely (!i)) return false;
   i--;
 
   /* Check if it's a single-character decomposition. */
-  if (i < ARRAY_LENGTH (_hb_ucd_dm1_p0_map) + ARRAY_LENGTH (_hb_ucd_dm1_p2_map))
+  if (i < ARRAY_LENGTH (_ucd_dm1_p0_map) + ARRAY_LENGTH (_ucd_dm1_p2_map))
   {
     /* Single-character decompositions currently are only in plane 0 or plane 2. */
-    if (i < ARRAY_LENGTH (_hb_ucd_dm1_p0_map))
+    if (i < ARRAY_LENGTH (_ucd_dm1_p0_map))
     {
       /* Plane 0. */
-      *a = _hb_ucd_dm1_p0_map[i];
+      *a = _ucd_dm1_p0_map[i];
     }
     else
     {
       /* Plane 2. */
-      i -= ARRAY_LENGTH (_hb_ucd_dm1_p0_map);
-      *a = 0x20000 | _hb_ucd_dm1_p2_map[i];
+      i -= ARRAY_LENGTH (_ucd_dm1_p0_map);
+      *a = 0x20000 | _ucd_dm1_p2_map[i];
     }
     *b = 0;
     return true;
   }
-  i -= ARRAY_LENGTH (_hb_ucd_dm1_p0_map) + ARRAY_LENGTH (_hb_ucd_dm1_p2_map);
+  i -= ARRAY_LENGTH (_ucd_dm1_p0_map) + ARRAY_LENGTH (_ucd_dm1_p2_map);
 
   /* Otherwise they are encoded either in a 32bit array or a 64bit array. */
-  if (i < ARRAY_LENGTH (_hb_ucd_dm2_u32_map))
+  if (i < ARRAY_LENGTH (_ucd_dm2_u32_map))
   {
     /* 32bit array. */
-    uint32_t v = _hb_ucd_dm2_u32_map[i];
+    uint32_t v = _ucd_dm2_u32_map[i];
     *a = HB_CODEPOINT_DECODE3_11_7_14_1 (v);
     *b = HB_CODEPOINT_DECODE3_11_7_14_2 (v);
     return true;
   }
-  i -= ARRAY_LENGTH (_hb_ucd_dm2_u32_map);
+  i -= ARRAY_LENGTH (_ucd_dm2_u32_map);
 
   /* 64bit array. */
-  uint64_t v = _hb_ucd_dm2_u64_map[i];
+  uint64_t v = _ucd_dm2_u64_map[i];
   *a = HB_CODEPOINT_DECODE3_1 (v);
   *b = HB_CODEPOINT_DECODE3_2 (v);
   return true;
@@ -221,22 +221,22 @@ hb_ucd_decompose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
 
 static void free_static_ucd_funcs ();
 
-static struct hb_ucd_unicode_funcs_lazy_loader_t : hb_unicode_funcs_lazy_loader_t<hb_ucd_unicode_funcs_lazy_loader_t>
+static struct ucd_unicode_funcs_lazy_loader_t : unicode_funcs_lazy_loader_t<ucd_unicode_funcs_lazy_loader_t>
 {
-  static hb_unicode_funcs_t *create ()
+  static unicode_funcs_t *create ()
   {
-    hb_unicode_funcs_t *funcs = hb_unicode_funcs_create (nullptr);
+    unicode_funcs_t *funcs = unicode_funcs_create (nullptr);
 
-    hb_unicode_funcs_set_combining_class_func (funcs, hb_ucd_combining_class, nullptr, nullptr);
-    hb_unicode_funcs_set_general_category_func (funcs, hb_ucd_general_category, nullptr, nullptr);
-    hb_unicode_funcs_set_mirroring_func (funcs, hb_ucd_mirroring, nullptr, nullptr);
-    hb_unicode_funcs_set_script_func (funcs, hb_ucd_script, nullptr, nullptr);
-    hb_unicode_funcs_set_compose_func (funcs, hb_ucd_compose, nullptr, nullptr);
-    hb_unicode_funcs_set_decompose_func (funcs, hb_ucd_decompose, nullptr, nullptr);
+    unicode_funcs_set_combining_class_func (funcs, ucd_combining_class, nullptr, nullptr);
+    unicode_funcs_set_general_category_func (funcs, ucd_general_category, nullptr, nullptr);
+    unicode_funcs_set_mirroring_func (funcs, ucd_mirroring, nullptr, nullptr);
+    unicode_funcs_set_script_func (funcs, ucd_script, nullptr, nullptr);
+    unicode_funcs_set_compose_func (funcs, ucd_compose, nullptr, nullptr);
+    unicode_funcs_set_decompose_func (funcs, ucd_decompose, nullptr, nullptr);
 
-    hb_unicode_funcs_make_immutable (funcs);
+    unicode_funcs_make_immutable (funcs);
 
-    hb_atexit (free_static_ucd_funcs);
+    atexit (free_static_ucd_funcs);
 
     return funcs;
   }
@@ -248,11 +248,11 @@ void free_static_ucd_funcs ()
   static_ucd_funcs.free_instance ();
 }
 
-hb_unicode_funcs_t *
-hb_ucd_get_unicode_funcs ()
+unicode_funcs_t *
+ucd_get_unicode_funcs ()
 {
 #ifdef HB_NO_UCD
-  return hb_unicode_funcs_get_empty ();
+  return unicode_funcs_get_empty ();
 #endif
   return static_ucd_funcs.get_unconst ();
 }

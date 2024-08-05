@@ -126,11 +126,11 @@ struct str_encoder_t
        * We use 8 here to match FontTools X-).
        */
 
-      hb_locale_t clocale HB_UNUSED;
-      hb_locale_t oldlocale HB_UNUSED;
-      oldlocale = hb_uselocale (clocale = newlocale (LC_ALL_MASK, "C", NULL));
+      locale_t clocale HB_UNUSED;
+      locale_t oldlocale HB_UNUSED;
+      oldlocale = uselocale (clocale = newlocale (LC_ALL_MASK, "C", NULL));
       snprintf (buf, sizeof (buf), "%.8G", v);
-      (void) hb_uselocale (((void) freelocale (clocale), oldlocale));
+      (void) uselocale (((void) freelocale (clocale), oldlocale));
 
       char *s = buf;
       size_t len;
@@ -183,7 +183,7 @@ struct str_encoder_t
 	memmove (s + sign, s2, len);
 	snprintf (s + sign + len, sizeof (buf) - (s + sign + len - buf), "E-%u", (unsigned) (strlen (s + sign) - 1));
       }
-      hb_vector_t<char> nibbles;
+      vector_t<char> nibbles;
       while (*s)
       {
 	char c = s[0];
@@ -243,7 +243,7 @@ struct str_encoder_t
   void copy_str (const unsigned char *str, unsigned length)
   {
     assert ((signed) (buff.length + length) <= buff.allocated);
-    hb_memcpy (buff.arrayZ + buff.length, str, length);
+    memcpy (buff.arrayZ + buff.length, str, length);
     buff.length += length;
   }
 
@@ -270,7 +270,7 @@ struct cff_sub_table_info_t {
 template <typename OPSTR=op_str_t>
 struct cff_top_dict_op_serializer_t : op_serializer_t
 {
-  bool serialize (hb_serialize_context_t *c,
+  bool serialize (serialize_context_t *c,
 		  const OPSTR &opstr,
 		  const cff_sub_table_info_t &info) const
   {
@@ -296,7 +296,7 @@ struct cff_top_dict_op_serializer_t : op_serializer_t
 
 struct cff_font_dict_op_serializer_t : op_serializer_t
 {
-  bool serialize (hb_serialize_context_t *c,
+  bool serialize (serialize_context_t *c,
 		  const op_str_t &opstr,
 		  const table_info_t &privateDictInfo) const
   {
@@ -312,10 +312,10 @@ struct cff_font_dict_op_serializer_t : op_serializer_t
     {
       unsigned char *d = c->allocate_size<unsigned char> (opstr.length);
       if (unlikely (!d)) return_trace (false);
-      /* Faster than hb_memcpy for small strings. */
+      /* Faster than memcpy for small strings. */
       for (unsigned i = 0; i < opstr.length; i++)
 	d[i] = opstr.ptr[i];
-      //hb_memcpy (d, opstr.ptr, opstr.length);
+      //memcpy (d, opstr.ptr, opstr.length);
     }
     return_trace (true);
   }
@@ -325,14 +325,14 @@ struct flatten_param_t
 {
   str_buff_t     &flatStr;
   bool	drop_hints;
-  const hb_subset_plan_t *plan;
+  const subset_plan_t *plan;
 };
 
 template <typename ACC, typename ENV, typename OPSET, op_code_t endchar_op=OpCode_Invalid>
 struct subr_flattener_t
 {
   subr_flattener_t (const ACC &acc_,
-		    const hb_subset_plan_t *plan_)
+		    const subset_plan_t *plan_)
 		   : acc (acc_), plan (plan_) {}
 
   bool flatten (str_buff_vec_t &flat_charstrings)
@@ -342,14 +342,14 @@ struct subr_flattener_t
       return false;
     for (unsigned int i = 0; i < count; i++)
     {
-      hb_codepoint_t  glyph;
+      codepoint_t  glyph;
       if (!plan->old_gid_for_new_gid (i, &glyph))
       {
 	/* add an endchar only charstring for a missing glyph if CFF1 */
 	if (endchar_op != OpCode_Invalid) flat_charstrings[i].push (endchar_op);
 	continue;
       }
-      const hb_ubytes_t str = (*acc.charStrings)[glyph];
+      const ubytes_t str = (*acc.charStrings)[glyph];
       unsigned int fd = acc.fdSelect->get_fd (glyph);
       if (unlikely (fd >= acc.fdCount))
 	return false;
@@ -370,7 +370,7 @@ struct subr_flattener_t
   }
 
   const ACC &acc;
-  const hb_subset_plan_t *plan;
+  const subset_plan_t *plan;
 };
 
 struct subr_closures_t
@@ -388,8 +388,8 @@ struct subr_closures_t
   }
 
   bool in_error () const { return local_closures.in_error (); }
-  hb_set_t  global_closure;
-  hb_vector_t<hb_set_t> local_closures;
+  set_t  global_closure;
+  vector_t<set_t> local_closures;
 };
 
 struct parsed_cs_op_t : op_str_t
@@ -510,21 +510,21 @@ struct parsed_cs_str_t : parsed_values_t<parsed_cs_op_t>
   typedef parsed_values_t<parsed_cs_op_t> SUPER;
 };
 
-struct parsed_cs_str_vec_t : hb_vector_t<parsed_cs_str_t>
+struct parsed_cs_str_vec_t : vector_t<parsed_cs_str_t>
 {
   private:
-  typedef hb_vector_t<parsed_cs_str_t> SUPER;
+  typedef vector_t<parsed_cs_str_t> SUPER;
 };
 
 struct cff_subset_accelerator_t
 {
   static cff_subset_accelerator_t* create (
-      hb_blob_t* original_blob,
+      blob_t* original_blob,
       const parsed_cs_str_vec_t& parsed_charstrings,
       const parsed_cs_str_vec_t& parsed_global_subrs,
-      const hb_vector_t<parsed_cs_str_vec_t>& parsed_local_subrs) {
+      const vector_t<parsed_cs_str_vec_t>& parsed_local_subrs) {
     cff_subset_accelerator_t* accel =
-        (cff_subset_accelerator_t*) hb_malloc (sizeof(cff_subset_accelerator_t));
+        (cff_subset_accelerator_t*) malloc (sizeof(cff_subset_accelerator_t));
     if (unlikely (!accel)) return nullptr;
     new (accel) cff_subset_accelerator_t (original_blob,
                                           parsed_charstrings,
@@ -538,14 +538,14 @@ struct cff_subset_accelerator_t
 
     cff_subset_accelerator_t* accel = (cff_subset_accelerator_t*) value;
     accel->~cff_subset_accelerator_t ();
-    hb_free (accel);
+    free (accel);
   }
 
   cff_subset_accelerator_t(
-      hb_blob_t* original_blob_,
+      blob_t* original_blob_,
       const parsed_cs_str_vec_t& parsed_charstrings_,
       const parsed_cs_str_vec_t& parsed_global_subrs_,
-      const hb_vector_t<parsed_cs_str_vec_t>& parsed_local_subrs_)
+      const vector_t<parsed_cs_str_vec_t>& parsed_local_subrs_)
   {
     parsed_charstrings = parsed_charstrings_;
     parsed_global_subrs = parsed_global_subrs_;
@@ -553,27 +553,27 @@ struct cff_subset_accelerator_t
 
     // the parsed charstrings point to memory in the original CFF table so we must hold a reference
     // to it to keep the memory valid.
-    original_blob = hb_blob_reference (original_blob_);
+    original_blob = blob_reference (original_blob_);
   }
 
   ~cff_subset_accelerator_t()
   {
-    hb_blob_destroy (original_blob);
+    blob_destroy (original_blob);
     auto *mapping = glyph_to_sid_map.get_relaxed ();
     if (mapping)
     {
       mapping->~glyph_to_sid_map_t ();
-      hb_free (mapping);
+      free (mapping);
     }
   }
 
   parsed_cs_str_vec_t parsed_charstrings;
   parsed_cs_str_vec_t parsed_global_subrs;
-  hb_vector_t<parsed_cs_str_vec_t> parsed_local_subrs;
-  mutable hb_atomic_ptr_t<glyph_to_sid_map_t> glyph_to_sid_map;
+  vector_t<parsed_cs_str_vec_t> parsed_local_subrs;
+  mutable atomic_ptr_t<glyph_to_sid_map_t> glyph_to_sid_map;
 
  private:
-  hb_blob_t* original_blob;
+  blob_t* original_blob;
 };
 
 struct subr_subset_param_t
@@ -581,8 +581,8 @@ struct subr_subset_param_t
   subr_subset_param_t (parsed_cs_str_t *parsed_charstring_,
 		       parsed_cs_str_vec_t *parsed_global_subrs_,
 		       parsed_cs_str_vec_t *parsed_local_subrs_,
-		       hb_set_t *global_closure_,
-		       hb_set_t *local_closure_,
+		       set_t *global_closure_,
+		       set_t *local_closure_,
 		       bool drop_hints_) :
       current_parsed_str (parsed_charstring_),
       parsed_charstring (parsed_charstring_),
@@ -639,14 +639,14 @@ struct subr_subset_param_t
   parsed_cs_str_t	*parsed_charstring;
   parsed_cs_str_vec_t	*parsed_global_subrs;
   parsed_cs_str_vec_t	*parsed_local_subrs;
-  hb_set_t      *global_closure;
-  hb_set_t      *local_closure;
+  set_t      *global_closure;
+  set_t      *local_closure;
   bool	  drop_hints;
 };
 
-struct subr_remap_t : hb_inc_bimap_t
+struct subr_remap_t : inc_bimap_t
 {
-  void create (const hb_set_t *closure)
+  void create (const set_t *closure)
   {
     /* create a remapping of subroutine numbers from old to new.
      * no optimization based on usage counts. fonttools doesn't appear doing that either.
@@ -666,7 +666,7 @@ struct subr_remap_t : hb_inc_bimap_t
 
   int biased_num (unsigned int old_num) const
   {
-    hb_codepoint_t new_num = get (old_num);
+    codepoint_t new_num = get (old_num);
     return (int)new_num - bias;
   }
 
@@ -694,13 +694,13 @@ struct subr_remaps_t
   }
 
   subr_remap_t	       global_remap;
-  hb_vector_t<subr_remap_t>  local_remaps;
+  vector_t<subr_remap_t>  local_remaps;
 };
 
 template <typename SUBSETTER, typename SUBRS, typename ACC, typename ENV, typename OPSET, op_code_t endchar_op=OpCode_Invalid>
 struct subr_subsetter_t
 {
-  subr_subsetter_t (ACC &acc_, const hb_subset_plan_t *plan_)
+  subr_subsetter_t (ACC &acc_, const subset_plan_t *plan_)
       : acc (acc_), plan (plan_), closures(acc_.fdCount),
         remaps(acc_.fdCount)
   {}
@@ -762,10 +762,10 @@ struct subr_subsetter_t
     /* phase 1 & 2 */
     for (auto _ : plan->new_to_old_gid_list)
     {
-      hb_codepoint_t new_glyph = _.first;
-      hb_codepoint_t old_glyph = _.second;
+      codepoint_t new_glyph = _.first;
+      codepoint_t old_glyph = _.second;
 
-      const hb_ubytes_t str = (*acc.charStrings)[old_glyph];
+      const ubytes_t str = (*acc.charStrings)[old_glyph];
       unsigned int fd = acc.fdSelect->get_fd (old_glyph);
       if (unlikely (fd >= acc.fdCount))
         return false;
@@ -850,11 +850,11 @@ struct subr_subsetter_t
     unsigned num_glyphs = plan->num_output_glyphs ();
     if (unlikely (!buffArray.resize_exact (num_glyphs)))
       return false;
-    hb_codepoint_t last = 0;
+    codepoint_t last = 0;
     for (auto _ : plan->new_to_old_gid_list)
     {
-      hb_codepoint_t gid = _.first;
-      hb_codepoint_t old_glyph = _.second;
+      codepoint_t gid = _.first;
+      codepoint_t old_glyph = _.second;
 
       if (endchar_op != OpCode_Invalid)
         for (; last < gid; last++)
@@ -892,7 +892,7 @@ struct subr_subsetter_t
       return false;
     for (unsigned int new_num = 0; new_num < count; new_num++)
     {
-      hb_codepoint_t old_num = remap.backward (new_num);
+      codepoint_t old_num = remap.backward (new_num);
       assert (old_num != CFF_UNDEF_CODE);
 
       if (unlikely (!encode_str (subrs[old_num], fd, buffArray[new_num])))
@@ -1044,13 +1044,13 @@ struct subr_subsetter_t
   }
 
   bool closure_subroutines (const parsed_cs_str_vec_t& global_subrs,
-                            const hb_vector_t<parsed_cs_str_vec_t>& local_subrs)
+                            const vector_t<parsed_cs_str_vec_t>& local_subrs)
   {
     closures.reset ();
     for (auto _ : plan->new_to_old_gid_list)
     {
-      hb_codepoint_t new_glyph = _.first;
-      hb_codepoint_t old_glyph = _.second;
+      codepoint_t new_glyph = _.first;
+      codepoint_t old_glyph = _.second;
       unsigned int fd = acc.fdSelect->get_fd (old_glyph);
       if (unlikely (fd >= acc.fdCount))
         return false;
@@ -1070,7 +1070,7 @@ struct subr_subsetter_t
   }
 
   void collect_subr_refs_in_subr (unsigned int subr_num, parsed_cs_str_vec_t &subrs,
-				  hb_set_t *closure,
+				  set_t *closure,
 				  const subr_subset_param_t &param)
   {
     if (closure->has (subr_num))
@@ -1186,13 +1186,13 @@ struct subr_subsetter_t
 
   protected:
   const ACC			&acc;
-  const hb_subset_plan_t	*plan;
+  const subset_plan_t	*plan;
 
   subr_closures_t		closures;
 
-  hb_vector_t<const parsed_cs_str_t*>     cached_charstrings;
+  vector_t<const parsed_cs_str_t*>     cached_charstrings;
   const parsed_cs_str_vec_t*              parsed_global_subrs;
-  const hb_vector_t<parsed_cs_str_vec_t>* parsed_local_subrs;
+  const vector_t<parsed_cs_str_vec_t>* parsed_local_subrs;
 
   subr_remaps_t			remaps;
 
@@ -1200,29 +1200,29 @@ struct subr_subsetter_t
 
   parsed_cs_str_vec_t		parsed_charstrings;
   parsed_cs_str_vec_t		parsed_global_subrs_storage;
-  hb_vector_t<parsed_cs_str_vec_t>  parsed_local_subrs_storage;
+  vector_t<parsed_cs_str_vec_t>  parsed_local_subrs_storage;
   typedef typename SUBRS::count_type subr_count_type;
 };
 
 } /* namespace CFF */
 
 HB_INTERNAL bool
-hb_plan_subset_cff_fdselect (const hb_subset_plan_t *plan,
+plan_subset_cff_fdselect (const subset_plan_t *plan,
 			    unsigned int fdCount,
 			    const CFF::FDSelect &src, /* IN */
 			    unsigned int &subset_fd_count /* OUT */,
 			    unsigned int &subset_fdselect_size /* OUT */,
 			    unsigned int &subset_fdselect_format /* OUT */,
-			    hb_vector_t<CFF::code_pair_t> &fdselect_ranges /* OUT */,
-			    hb_inc_bimap_t &fdmap /* OUT */);
+			    vector_t<CFF::code_pair_t> &fdselect_ranges /* OUT */,
+			    inc_bimap_t &fdmap /* OUT */);
 
 HB_INTERNAL bool
-hb_serialize_cff_fdselect (hb_serialize_context_t *c,
+serialize_cff_fdselect (serialize_context_t *c,
 			  unsigned int num_glyphs,
 			  const CFF::FDSelect &src,
 			  unsigned int fd_count,
 			  unsigned int fdselect_format,
 			  unsigned int size,
-			  const hb_vector_t<CFF::code_pair_t> &fdselect_ranges);
+			  const vector_t<CFF::code_pair_t> &fdselect_ranges);
 
 #endif /* HB_SUBSET_CFF_COMMON_HH */

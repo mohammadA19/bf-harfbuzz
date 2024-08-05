@@ -41,7 +41,7 @@ struct graph_t
 {
   struct vertex_t
   {
-    hb_serialize_context_t::object_t obj;
+    serialize_context_t::object_t obj;
     int64_t distance = 0 ;
     unsigned space = 0 ;
     unsigned start = 0;
@@ -50,13 +50,13 @@ struct graph_t
     private:
     unsigned incoming_edges_ = 0;
     unsigned single_parent = (unsigned) -1;
-    hb_hashmap_t<unsigned, unsigned> parents;
+    hashmap_t<unsigned, unsigned> parents;
     public:
 
     auto parents_iter () const HB_AUTO_RETURN
     (
-      hb_concat (
-	hb_iter (&single_parent, single_parent != (unsigned) -1),
+      concat (
+	iter (&single_parent, single_parent != (unsigned) -1),
 	parents.keys_ref ()
       )
     )
@@ -68,7 +68,7 @@ struct graph_t
 
     bool link_positions_valid (unsigned num_objects, bool removed_nil)
     {
-      hb_set_t assigned_bytes;
+      set_t assigned_bytes;
       for (const auto& l : obj.real_links)
       {
         if (l.objidx >= num_objects
@@ -149,28 +149,28 @@ struct graph_t
       return links_equal (obj.real_links, other.obj.real_links, graph, other_graph, depth);
     }
 
-    hb_bytes_t as_bytes () const
+    bytes_t as_bytes () const
     {
-      return hb_bytes_t (obj.head, table_size ());
+      return bytes_t (obj.head, table_size ());
     }
 
     friend void swap (vertex_t& a, vertex_t& b)
     {
-      hb_swap (a.obj, b.obj);
-      hb_swap (a.distance, b.distance);
-      hb_swap (a.space, b.space);
-      hb_swap (a.single_parent, b.single_parent);
-      hb_swap (a.parents, b.parents);
-      hb_swap (a.incoming_edges_, b.incoming_edges_);
-      hb_swap (a.start, b.start);
-      hb_swap (a.end, b.end);
-      hb_swap (a.priority, b.priority);
+      swap (a.obj, b.obj);
+      swap (a.distance, b.distance);
+      swap (a.space, b.space);
+      swap (a.single_parent, b.single_parent);
+      swap (a.parents, b.parents);
+      swap (a.incoming_edges_, b.incoming_edges_);
+      swap (a.start, b.start);
+      swap (a.end, b.end);
+      swap (a.priority, b.priority);
     }
 
-    hb_hashmap_t<unsigned, unsigned>
+    hashmap_t<unsigned, unsigned>
     position_to_index_map () const
     {
-      hb_hashmap_t<unsigned, unsigned> result;
+      hashmap_t<unsigned, unsigned> result;
 
       result.alloc (obj.real_links.length);
       for (const auto& l : obj.real_links) {
@@ -190,7 +190,7 @@ struct graph_t
       if (HB_DEBUG_SUBSET_REPACK)
        {
 	assert (incoming_edges_ == (single_parent != (unsigned) -1) +
-		(parents.values_ref () | hb_reduce (hb_add, 0)));
+		(parents.values_ref () | reduce (add, 0)));
        }
       return incoming_edges_;
     }
@@ -281,7 +281,7 @@ struct graph_t
       }
     }
 
-    bool remap_parents (const hb_vector_t<unsigned>& id_map)
+    bool remap_parents (const vector_t<unsigned>& id_map)
     {
       if (single_parent != (unsigned) -1)
       {
@@ -290,7 +290,7 @@ struct graph_t
 	return true;
       }
 
-      hb_hashmap_t<unsigned, unsigned> new_parents;
+      hashmap_t<unsigned, unsigned> new_parents;
       new_parents.alloc (parents.get_population ());
       for (auto _ : parents)
       {
@@ -368,7 +368,7 @@ struct graph_t
       // it's parent where possible.
 
       int64_t modified_distance =
-          hb_clamp (distance + distance_modifier (), (int64_t) 0, 0x7FFFFFFFFFF);
+          clamp (distance + distance_modifier (), (int64_t) 0, 0x7FFFFFFFFFF);
       if (has_max_priority ()) {
         modified_distance = 0;
       }
@@ -387,8 +387,8 @@ struct graph_t
     }
 
    private:
-    bool links_equal (const hb_vector_t<hb_serialize_context_t::object_t::link_t>& this_links,
-                      const hb_vector_t<hb_serialize_context_t::object_t::link_t>& other_links,
+    bool links_equal (const vector_t<serialize_context_t::object_t::link_t>& this_links,
+                      const vector_t<serialize_context_t::object_t::link_t>& other_links,
                       const graph_t& graph,
                       const graph_t& other_graph,
                       unsigned depth) const
@@ -485,7 +485,7 @@ struct graph_t
   ~graph_t ()
   {
     for (char* b : buffers)
-      hb_free (b);
+      free (b);
   }
 
   bool operator== (const graph_t& other) const
@@ -532,7 +532,7 @@ struct graph_t
     return vertices_.length - 1;
   }
 
-  const hb_serialize_context_t::object_t& object (unsigned i) const
+  const serialize_context_t::object_t& object (unsigned i) const
   {
     return vertices_[i].obj;
   }
@@ -585,14 +585,14 @@ struct graph_t
 
     update_distances ();
 
-    hb_priority_queue_t<int64_t> queue;
+    priority_queue_t<int64_t> queue;
     queue.alloc (vertices_.length);
-    hb_vector_t<vertex_t> &sorted_graph = vertices_scratch_;
+    vector_t<vertex_t> &sorted_graph = vertices_scratch_;
     if (unlikely (!check_success (sorted_graph.resize (vertices_.length)))) return;
-    hb_vector_t<unsigned> id_map;
+    vector_t<unsigned> id_map;
     if (unlikely (!check_success (id_map.resize (vertices_.length)))) return;
 
-    hb_vector_t<unsigned> removed_edges;
+    vector_t<unsigned> removed_edges;
     if (unlikely (!check_success (removed_edges.resize (vertices_.length)))) return;
     update_parents ();
 
@@ -643,7 +643,7 @@ struct graph_t
    * More specifically this looks for the top most 24 bit or 32 bit links in the graph.
    * Some special casing is done that is specific to the layout of GSUB/GPOS tables.
    */
-  void find_space_roots (hb_set_t& visited, hb_set_t& roots)
+  void find_space_roots (set_t& visited, set_t& roots)
   {
     int root_index = (int) root_idx ();
     for (int i = root_index; i >= 0; i--)
@@ -667,7 +667,7 @@ struct graph_t
           // in it's subgraph, then those become the roots instead. This is to make sure
           // that extension subtables beneath a 24bit lookup become the spaces instead
           // of the offset to the lookup.
-          hb_set_t sub_roots;
+          set_t sub_roots;
           find_32bit_roots (l.objidx, sub_roots);
           if (sub_roots) {
             for (unsigned sub_root_idx : sub_roots) {
@@ -763,8 +763,8 @@ struct graph_t
   {
     update_parents ();
 
-    hb_set_t visited;
-    hb_set_t roots;
+    set_t visited;
+    set_t roots;
     find_space_roots (visited, roots);
 
     // Mark everything not in the subgraphs of the roots as visited. This prevents
@@ -779,7 +779,7 @@ struct graph_t
       if (unlikely (!check_success (!roots.in_error ()))) break;
       if (!roots.next (&next)) break;
 
-      hb_set_t connected_roots;
+      set_t connected_roots;
       find_connected_nodes (next, roots, visited, connected_roots);
       if (unlikely (!check_success (!connected_roots.in_error ()))) break;
 
@@ -813,14 +813,14 @@ struct graph_t
    *
    * Indices stored in roots will be updated if any of the roots are duplicated to new indices.
    */
-  bool isolate_subgraph (hb_set_t& roots)
+  bool isolate_subgraph (set_t& roots)
   {
     update_parents ();
-    hb_map_t subgraph;
+    map_t subgraph;
 
     // incoming edges to root_idx should be all 32 bit in length so we don't need to de-dup these
     // set the subgraph incoming edge count to match all of root_idx's incoming edges
-    hb_set_t parents;
+    set_t parents;
     for (unsigned root_idx : roots)
     {
       subgraph.set (root_idx, wide_parents (root_idx, parents));
@@ -830,7 +830,7 @@ struct graph_t
       return false;
 
     unsigned original_root_idx = root_idx ();
-    hb_map_t index_map;
+    map_t index_map;
     bool made_changes = false;
     for (auto entry : subgraph.iter ())
     {
@@ -862,7 +862,7 @@ struct graph_t
 
     auto new_subgraph =
         + subgraph.keys ()
-        | hb_map([&] (uint32_t node_idx) {
+        | map([&] (uint32_t node_idx) {
           const uint32_t *v;
           if (index_map.has (node_idx, &v)) return *v;
           return node_idx;
@@ -886,11 +886,11 @@ struct graph_t
     return true;
   }
 
-  void find_subgraph (unsigned node_idx, hb_map_t& subgraph)
+  void find_subgraph (unsigned node_idx, map_t& subgraph)
   {
     for (const auto& link : vertices_[node_idx].obj.all_links ())
     {
-      hb_codepoint_t *v;
+      codepoint_t *v;
       if (subgraph.has (link.objidx, &v))
       {
         (*v)++;
@@ -901,7 +901,7 @@ struct graph_t
     }
   }
 
-  void find_subgraph (unsigned node_idx, hb_set_t& subgraph)
+  void find_subgraph (unsigned node_idx, set_t& subgraph)
   {
     if (subgraph.has (node_idx)) return;
     subgraph.add (node_idx);
@@ -909,7 +909,7 @@ struct graph_t
       find_subgraph (link.objidx, subgraph);
   }
 
-  size_t find_subgraph_size (unsigned node_idx, hb_set_t& subgraph, unsigned max_depth = -1)
+  size_t find_subgraph_size (unsigned node_idx, set_t& subgraph, unsigned max_depth = -1)
   {
     if (subgraph.has (node_idx)) return 0;
     subgraph.add (node_idx);
@@ -928,7 +928,7 @@ struct graph_t
    * Finds the topmost children of 32bit offsets in the subgraph starting
    * at node_idx. Found indices are placed into 'found'.
    */
-  void find_32bit_roots (unsigned node_idx, hb_set_t& found)
+  void find_32bit_roots (unsigned node_idx, set_t& found)
   {
     for (const auto& link : vertices_[node_idx].obj.all_links ())
     {
@@ -976,7 +976,7 @@ struct graph_t
    * links. index_map is updated with mappings from old id to new id. If a duplication has already
    * been performed for a given index, then it will be skipped.
    */
-  void duplicate_subgraph (unsigned node_idx, hb_map_t& index_map)
+  void duplicate_subgraph (unsigned node_idx, map_t& index_map)
   {
     if (index_map.has (node_idx))
       return;
@@ -1029,7 +1029,7 @@ struct graph_t
     // The last object is the root of the graph, so swap back the root to the end.
     // The root's obj idx does change, however since it's root nothing else refers to it.
     // all other obj idx's will be unaffected.
-    hb_swap (vertices_[vertices_.length - 2], *clone);
+    swap (vertices_[vertices_.length - 2], *clone);
 
     // Since the root moved, update the parents arrays of all children on the root.
     for (const auto& l : root ().obj.all_links ())
@@ -1113,7 +1113,7 @@ struct graph_t
    * duplication isn't possible or duplication fails and this will
    * return -1.
    */
-  unsigned duplicate (const hb_set_t* parents, unsigned child_idx)
+  unsigned duplicate (const set_t* parents, unsigned child_idx)
   {
     if (parents->is_empty()) {
       return -1;
@@ -1182,7 +1182,7 @@ struct graph_t
     // The last object is the root of the graph, so swap back the root to the end.
     // The root's obj idx does change, however since it's root nothing else refers to it.
     // all other obj idx's will be unaffected.
-    hb_swap (vertices_[vertices_.length - 2], *clone);
+    swap (vertices_[vertices_.length - 2], *clone);
 
     // Since the root moved, update the parents arrays of all children on the root.
     for (const auto& l : root ().obj.all_links ())
@@ -1229,7 +1229,7 @@ struct graph_t
    * Saves the current graph to a packed binary format which the repacker fuzzer takes
    * as a seed.
    */
-  void save_fuzzer_seed (hb_tag_t tag) const
+  void save_fuzzer_seed (tag_t tag) const
   {
     FILE* f = fopen ("./repacker_fuzzer_seed", "w");
     fwrite ((void*) &tag, sizeof (tag), 1, f);
@@ -1304,7 +1304,7 @@ struct graph_t
     return num_roots_for_space_.length;
   }
 
-  void move_to_new_space (const hb_set_t& indices)
+  void move_to_new_space (const set_t& indices)
   {
     num_roots_for_space_.push (0);
     unsigned new_space = num_roots_for_space_.length - 1;
@@ -1360,7 +1360,7 @@ struct graph_t
   /*
    * Returns the numbers of incoming edges that are 24 or 32 bits wide.
    */
-  unsigned wide_parents (unsigned node_idx, hb_set_t& parents) const
+  unsigned wide_parents (unsigned node_idx, set_t& parents) const
   {
     unsigned count = 0;
     for (unsigned p : vertices_[node_idx].parents_iter ())
@@ -1449,14 +1449,14 @@ struct graph_t
     // (such as a fibonacci queue) with a fast decrease priority.
     unsigned count = vertices_.length;
     for (unsigned i = 0; i < count; i++)
-      vertices_.arrayZ[i].distance = hb_int_max (int64_t);
+      vertices_.arrayZ[i].distance = int_max (int64_t);
     vertices_.tail ().distance = 0;
 
-    hb_priority_queue_t<int64_t> queue;
+    priority_queue_t<int64_t> queue;
     queue.alloc (count);
     queue.insert (0, vertices_.length - 1);
 
-    hb_vector_t<bool> visited;
+    vector_t<bool> visited;
     visited.resize (vertices_.length);
 
     while (!queue.in_error () && !queue.is_empty ())
@@ -1500,7 +1500,7 @@ struct graph_t
    * Updates a link in the graph to point to a different object. Corrects the
    * parents vector on the previous and new child nodes.
    */
-  void reassign_link (hb_serialize_context_t::object_t::link_t& link,
+  void reassign_link (serialize_context_t::object_t::link_t& link,
                       unsigned parent_idx,
                       unsigned new_idx)
   {
@@ -1513,8 +1513,8 @@ struct graph_t
   /*
    * Updates all objidx's in all links using the provided mapping. Corrects incoming edge counts.
    */
-  template<typename Iterator, hb_requires (hb_is_iterator (Iterator))>
-  void remap_obj_indices (const hb_map_t& id_map,
+  template<typename Iterator, requires (is_iterator (Iterator))>
+  void remap_obj_indices (const map_t& id_map,
                           Iterator subgraph,
                           bool only_wide = false)
   {
@@ -1535,8 +1535,8 @@ struct graph_t
   /*
    * Updates all objidx's in all links using the provided mapping.
    */
-  bool remap_all_obj_indices (const hb_vector_t<unsigned>& id_map,
-                              hb_vector_t<vertex_t>* sorted_graph) const
+  bool remap_all_obj_indices (const vector_t<unsigned>& id_map,
+                              vector_t<vertex_t>* sorted_graph) const
   {
     unsigned count = sorted_graph->length;
     for (unsigned i = 0; i < count; i++)
@@ -1559,9 +1559,9 @@ struct graph_t
    * will be added to visited.
    */
   void find_connected_nodes (unsigned start_idx,
-                             hb_set_t& targets,
-                             hb_set_t& visited,
-                             hb_set_t& connected)
+                             set_t& targets,
+                             set_t& visited,
+                             set_t& connected)
   {
     if (unlikely (!check_success (!visited.in_error ()))) return;
     if (visited.has (start_idx)) return;
@@ -1585,15 +1585,15 @@ struct graph_t
 
  public:
   // TODO(garretrieger): make private, will need to move most of offset overflow code into graph.
-  hb_vector_t<vertex_t> vertices_;
-  hb_vector_t<vertex_t> vertices_scratch_;
+  vector_t<vertex_t> vertices_;
+  vector_t<vertex_t> vertices_scratch_;
  private:
   bool parents_invalid;
   bool distance_invalid;
   bool positions_invalid;
   bool successful;
-  hb_vector_t<unsigned> num_roots_for_space_;
-  hb_vector_t<char*> buffers;
+  vector_t<unsigned> num_roots_for_space_;
+  vector_t<char*> buffers;
 };
 
 }

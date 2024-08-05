@@ -32,72 +32,72 @@
 static void
 test_subset_VVAR_noop (void)
 {
-  hb_face_t *face_abc = hb_test_open_font_file("fonts/SourceSerifVariable-Roman-VVAR.abc.ttf");
+  face_t *face_abc = test_open_font_file("fonts/SourceSerifVariable-Roman-VVAR.abc.ttf");
 
-  hb_set_t *codepoints = hb_set_create ();
-  hb_face_t *face_abc_subset;
-  hb_set_add (codepoints, 'a');
-  hb_set_add (codepoints, 'b');
-  hb_set_add (codepoints, 'c');
-  face_abc_subset = hb_subset_test_create_subset (face_abc, hb_subset_test_create_input (codepoints));
-  hb_set_destroy (codepoints);
+  set_t *codepoints = set_create ();
+  face_t *face_abc_subset;
+  set_add (codepoints, 'a');
+  set_add (codepoints, 'b');
+  set_add (codepoints, 'c');
+  face_abc_subset = subset_test_create_subset (face_abc, subset_test_create_input (codepoints));
+  set_destroy (codepoints);
 
-  hb_subset_test_check (face_abc, face_abc_subset, HB_TAG ('V','V','A','R'));
+  subset_test_check (face_abc, face_abc_subset, HB_TAG ('V','V','A','R'));
 
-  hb_face_destroy (face_abc_subset);
-  hb_face_destroy (face_abc);
+  face_destroy (face_abc_subset);
+  face_destroy (face_abc);
 }
 
 static void
 test_subset_VVAR (void)
 {
-  hb_face_t *face_abc = hb_test_open_font_file ("fonts/SourceSerifVariable-Roman-VVAR.abc.ttf");
-  hb_face_t *face_ac = hb_test_open_font_file ("fonts/SourceSerifVariable-Roman-VVAR.ac.ttf");
+  face_t *face_abc = test_open_font_file ("fonts/SourceSerifVariable-Roman-VVAR.abc.ttf");
+  face_t *face_ac = test_open_font_file ("fonts/SourceSerifVariable-Roman-VVAR.ac.ttf");
 
-  hb_set_t *codepoints = hb_set_create ();
-  hb_face_t *face_abc_subset;
-  hb_set_add (codepoints, 'a');
-  hb_set_add (codepoints, 'c');
-  face_abc_subset = hb_subset_test_create_subset (face_abc, hb_subset_test_create_input (codepoints));
-  hb_set_destroy (codepoints);
+  set_t *codepoints = set_create ();
+  face_t *face_abc_subset;
+  set_add (codepoints, 'a');
+  set_add (codepoints, 'c');
+  face_abc_subset = subset_test_create_subset (face_abc, subset_test_create_input (codepoints));
+  set_destroy (codepoints);
 
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('V','V','A','R'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('V','V','A','R'));
 
-  hb_face_destroy (face_abc_subset);
-  hb_face_destroy (face_abc);
-  hb_face_destroy (face_ac);
+  face_destroy (face_abc_subset);
+  face_destroy (face_abc);
+  face_destroy (face_ac);
 }
 
 static void
 test_subset_VVAR_retaingids (void)
 {
-  hb_face_t *face_abc = hb_test_open_font_file ("fonts/SourceSerifVariable-Roman-VVAR.abc.ttf");
-  hb_face_t *face_ac = hb_test_open_font_file ("fonts/SourceSerifVariable-Roman-VVAR.ac.retaingids.ttf");
+  face_t *face_abc = test_open_font_file ("fonts/SourceSerifVariable-Roman-VVAR.abc.ttf");
+  face_t *face_ac = test_open_font_file ("fonts/SourceSerifVariable-Roman-VVAR.ac.retaingids.ttf");
 
-  hb_set_t *codepoints = hb_set_create ();
-  hb_face_t *face_abc_subset;
-  hb_set_add (codepoints, 'a');
-  hb_set_add (codepoints, 'c');
-  hb_subset_input_t *input = hb_subset_test_create_input (codepoints);
-  hb_subset_input_set_flags (input, HB_SUBSET_FLAGS_RETAIN_GIDS);
-  face_abc_subset = hb_subset_test_create_subset (face_abc, input);
-  hb_set_destroy (codepoints);
+  set_t *codepoints = set_create ();
+  face_t *face_abc_subset;
+  set_add (codepoints, 'a');
+  set_add (codepoints, 'c');
+  subset_input_t *input = subset_test_create_input (codepoints);
+  subset_input_set_flags (input, HB_SUBSET_FLAGS_RETAIN_GIDS);
+  face_abc_subset = subset_test_create_subset (face_abc, input);
+  set_destroy (codepoints);
 
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('V','V','A','R'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('V','V','A','R'));
 
-  hb_face_destroy (face_abc_subset);
-  hb_face_destroy (face_abc);
-  hb_face_destroy (face_ac);
+  face_destroy (face_abc_subset);
+  face_destroy (face_abc);
+  face_destroy (face_ac);
 }
 
 int
 main (int argc, char **argv)
 {
-  hb_test_init (&argc, &argv);
+  test_init (&argc, &argv);
 
-  hb_test_add (test_subset_VVAR_noop);
-  hb_test_add (test_subset_VVAR);
-  hb_test_add (test_subset_VVAR_retaingids);
+  test_add (test_subset_VVAR_noop);
+  test_add (test_subset_VVAR);
+  test_add (test_subset_VVAR_retaingids);
 
-  return hb_test_run ();
+  return test_run ();
 }

@@ -38,7 +38,7 @@ typedef struct draw_data_t
 
 /* Our modified itoa, why not using libc's? it is going to be used
    in harfbuzzjs where libc isn't available */
-static void _hb_reverse (char *buf, unsigned int len)
+static void _reverse (char *buf, unsigned int len)
 {
   unsigned start = 0, end = len - 1;
   while (start < end)
@@ -49,11 +49,11 @@ static void _hb_reverse (char *buf, unsigned int len)
     start++; end--;
   }
 }
-static unsigned _hb_itoa (float fnum, char *buf)
+static unsigned _itoa (float fnum, char *buf)
 {
   int32_t num = (int32_t) floorf (fnum + .5f);
   unsigned int i = 0;
-  hb_bool_t is_negative = num < 0;
+  bool_t is_negative = num < 0;
   if (is_negative) num = -num;
   do
   {
@@ -61,7 +61,7 @@ static unsigned _hb_itoa (float fnum, char *buf)
     num /= 10;
   } while (num);
   if (is_negative) buf[i++] = '-';
-  _hb_reverse (buf, i);
+  _reverse (buf, i);
   buf[i] = '\0';
   return i;
 }
@@ -72,34 +72,34 @@ static void
 test_itoa (void)
 {
   char s[] = "12345";
-  _hb_reverse (s, 5);
+  _reverse (s, 5);
   g_assert_cmpmem (s, 5, "54321", 5);
 
   {
     unsigned num = 12345;
     char buf[ITOA_BUF_SIZE];
-    unsigned len = _hb_itoa (num, buf);
+    unsigned len = _itoa (num, buf);
     g_assert_cmpmem (buf, len, "12345", 5);
   }
 
   {
     unsigned num = 3152;
     char buf[ITOA_BUF_SIZE];
-    unsigned len = _hb_itoa (num, buf);
+    unsigned len = _itoa (num, buf);
     g_assert_cmpmem (buf, len, "3152", 4);
   }
 
   {
     int num = -6457;
     char buf[ITOA_BUF_SIZE];
-    unsigned len = _hb_itoa (num, buf);
+    unsigned len = _itoa (num, buf);
     g_assert_cmpmem (buf, len, "-6457", 5);
   }
 }
 
 static void
-move_to (HB_UNUSED hb_draw_funcs_t *dfuncs, draw_data_t *draw_data,
-	 HB_UNUSED hb_draw_state_t *st,
+move_to (HB_UNUSED draw_funcs_t *dfuncs, draw_data_t *draw_data,
+	 HB_UNUSED draw_state_t *st,
 	 HB_UNUSED float to_x, HB_UNUSED float to_y,
 	 HB_UNUSED void *user_data)
 {
@@ -107,8 +107,8 @@ move_to (HB_UNUSED hb_draw_funcs_t *dfuncs, draw_data_t *draw_data,
 }
 
 static void
-line_to (HB_UNUSED hb_draw_funcs_t *dfuncs, draw_data_t *draw_data,
-	 HB_UNUSED hb_draw_state_t *st,
+line_to (HB_UNUSED draw_funcs_t *dfuncs, draw_data_t *draw_data,
+	 HB_UNUSED draw_state_t *st,
 	 HB_UNUSED float to_x, HB_UNUSED float to_y,
 	 HB_UNUSED void *user_data)
 {
@@ -116,8 +116,8 @@ line_to (HB_UNUSED hb_draw_funcs_t *dfuncs, draw_data_t *draw_data,
 }
 
 static void
-quadratic_to (HB_UNUSED hb_draw_funcs_t *dfuncs, draw_data_t *draw_data,
-	      HB_UNUSED hb_draw_state_t *st,
+quadratic_to (HB_UNUSED draw_funcs_t *dfuncs, draw_data_t *draw_data,
+	      HB_UNUSED draw_state_t *st,
 	      HB_UNUSED float control_x, HB_UNUSED float control_y,
 	      HB_UNUSED float to_x, HB_UNUSED float to_y,
 	      HB_UNUSED void *user_data)
@@ -126,8 +126,8 @@ quadratic_to (HB_UNUSED hb_draw_funcs_t *dfuncs, draw_data_t *draw_data,
 }
 
 static void
-cubic_to (HB_UNUSED hb_draw_funcs_t *dfuncs, draw_data_t *draw_data,
-	  HB_UNUSED hb_draw_state_t *st,
+cubic_to (HB_UNUSED draw_funcs_t *dfuncs, draw_data_t *draw_data,
+	  HB_UNUSED draw_state_t *st,
 	  HB_UNUSED float control1_x, HB_UNUSED float control1_y,
 	  HB_UNUSED float control2_x, HB_UNUSED float control2_y,
 	  HB_UNUSED float to_x, HB_UNUSED float to_y,
@@ -137,134 +137,134 @@ cubic_to (HB_UNUSED hb_draw_funcs_t *dfuncs, draw_data_t *draw_data,
 }
 
 static void
-close_path (HB_UNUSED hb_draw_funcs_t *dfuncs, draw_data_t *draw_data,
-	    HB_UNUSED hb_draw_state_t *st,
+close_path (HB_UNUSED draw_funcs_t *dfuncs, draw_data_t *draw_data,
+	    HB_UNUSED draw_state_t *st,
 	    HB_UNUSED void *user_data)
 {
   draw_data->close_path_count++;
 }
 
-static hb_draw_funcs_t *funcs;
+static draw_funcs_t *funcs;
 
 #ifdef HB_EXPERIMENTAL_API
 static void
-test_hb_draw_varc_simple_hangul (void)
+test_draw_varc_simple_hangul (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/varc-ac00-ac01.ttf");
-  hb_font_t *font = hb_font_create (face);
-  hb_face_destroy (face);
+  face_t *face = test_open_font_file ("fonts/varc-ac00-ac01.ttf");
+  font_t *font = font_create (face);
+  face_destroy (face);
 
   draw_data_t draw_data0 = {0};
   draw_data_t draw_data;;
   unsigned gid = 0;
 
-  hb_font_get_nominal_glyph (font, 0xAC00u, &gid);
+  font_get_nominal_glyph (font, 0xAC00u, &gid);
   draw_data = draw_data0;
-  hb_font_draw_glyph (font, gid, funcs, &draw_data);
+  font_draw_glyph (font, gid, funcs, &draw_data);
   g_assert_cmpuint (draw_data.move_to_count, ==, 3);
 
-  hb_font_get_nominal_glyph (font, 0xAC01u, &gid);
+  font_get_nominal_glyph (font, 0xAC01u, &gid);
   draw_data = draw_data0;
-  hb_font_draw_glyph (font, gid, funcs, &draw_data);
+  font_draw_glyph (font, gid, funcs, &draw_data);
   g_assert_cmpuint (draw_data.move_to_count, ==, 4);
 
-  hb_variation_t var;
+  variation_t var;
   var.tag = HB_TAG ('w','g','h','t');
   var.value = 800;
-  hb_font_set_variations (font, &var, 1);
+  font_set_variations (font, &var, 1);
 
-  hb_font_get_nominal_glyph (font, 0xAC00u, &gid);
+  font_get_nominal_glyph (font, 0xAC00u, &gid);
   draw_data = draw_data0;
-  hb_font_draw_glyph (font, gid, funcs, &draw_data);
+  font_draw_glyph (font, gid, funcs, &draw_data);
   g_assert_cmpuint (draw_data.move_to_count, ==, 3);
 
-  hb_font_get_nominal_glyph (font, 0xAC01u, &gid);
+  font_get_nominal_glyph (font, 0xAC01u, &gid);
   draw_data = draw_data0;
-  hb_font_draw_glyph (font, gid, funcs, &draw_data);
+  font_draw_glyph (font, gid, funcs, &draw_data);
   g_assert_cmpuint (draw_data.move_to_count, ==, 4);
 
-  hb_font_destroy (font);
+  font_destroy (font);
 }
 
 static void
-test_hb_draw_varc_simple_hanzi (void)
+test_draw_varc_simple_hanzi (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/varc-6868.ttf");
-  hb_font_t *font = hb_font_create (face);
-  hb_face_destroy (face);
+  face_t *face = test_open_font_file ("fonts/varc-6868.ttf");
+  font_t *font = font_create (face);
+  face_destroy (face);
 
   draw_data_t draw_data0 = {0};
   draw_data_t draw_data;;
   unsigned gid = 0;
 
-  hb_font_get_nominal_glyph (font, 0x6868u, &gid);
+  font_get_nominal_glyph (font, 0x6868u, &gid);
   draw_data = draw_data0;
-  hb_font_draw_glyph (font, gid, funcs, &draw_data);
+  font_draw_glyph (font, gid, funcs, &draw_data);
   g_assert_cmpuint (draw_data.move_to_count, ==, 11);
 
-  hb_variation_t var;
+  variation_t var;
   var.tag = HB_TAG ('w','g','h','t');
   var.value = 800;
-  hb_font_set_variations (font, &var, 1);
+  font_set_variations (font, &var, 1);
 
-  hb_font_get_nominal_glyph (font, 0x6868u, &gid);
+  font_get_nominal_glyph (font, 0x6868u, &gid);
   draw_data = draw_data0;
-  hb_font_draw_glyph (font, gid, funcs, &draw_data);
+  font_draw_glyph (font, gid, funcs, &draw_data);
   g_assert_cmpuint (draw_data.move_to_count, ==, 11);
 
-  hb_font_destroy (font);
+  font_destroy (font);
 }
 
 static void
-test_hb_draw_varc_conditional (void)
+test_draw_varc_conditional (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/varc-ac01-conditional.ttf");
-  hb_font_t *font = hb_font_create (face);
-  hb_face_destroy (face);
+  face_t *face = test_open_font_file ("fonts/varc-ac01-conditional.ttf");
+  font_t *font = font_create (face);
+  face_destroy (face);
 
   draw_data_t draw_data0 = {0};
   draw_data_t draw_data;;
   unsigned gid = 0;
 
-  hb_font_get_nominal_glyph (font, 0xAC01u, &gid);
+  font_get_nominal_glyph (font, 0xAC01u, &gid);
   draw_data = draw_data0;
-  hb_font_draw_glyph (font, gid, funcs, &draw_data);
+  font_draw_glyph (font, gid, funcs, &draw_data);
   g_assert_cmpuint (draw_data.move_to_count, ==, 2);
 
-  hb_variation_t var;
+  variation_t var;
   var.tag = HB_TAG ('w','g','h','t');
   var.value = 800;
-  hb_font_set_variations (font, &var, 1);
+  font_set_variations (font, &var, 1);
 
-  hb_font_get_nominal_glyph (font, 0xAC01u, &gid);
+  font_get_nominal_glyph (font, 0xAC01u, &gid);
   draw_data = draw_data0;
-  hb_font_draw_glyph (font, gid, funcs, &draw_data);
+  font_draw_glyph (font, gid, funcs, &draw_data);
   g_assert_cmpuint (draw_data.move_to_count, ==, 4);
 
-  hb_font_destroy (font);
+  font_destroy (font);
 }
 #endif
 
 int
 main (int argc, char **argv)
 {
-  funcs = hb_draw_funcs_create ();
-  hb_draw_funcs_set_move_to_func (funcs, (hb_draw_move_to_func_t) move_to, NULL, NULL);
-  hb_draw_funcs_set_line_to_func (funcs, (hb_draw_line_to_func_t) line_to, NULL, NULL);
-  hb_draw_funcs_set_quadratic_to_func (funcs, (hb_draw_quadratic_to_func_t) quadratic_to, NULL, NULL);
-  hb_draw_funcs_set_cubic_to_func (funcs, (hb_draw_cubic_to_func_t) cubic_to, NULL, NULL);
-  hb_draw_funcs_set_close_path_func (funcs, (hb_draw_close_path_func_t) close_path, NULL, NULL);
-  hb_draw_funcs_make_immutable (funcs);
+  funcs = draw_funcs_create ();
+  draw_funcs_set_move_to_func (funcs, (draw_move_to_func_t) move_to, NULL, NULL);
+  draw_funcs_set_line_to_func (funcs, (draw_line_to_func_t) line_to, NULL, NULL);
+  draw_funcs_set_quadratic_to_func (funcs, (draw_quadratic_to_func_t) quadratic_to, NULL, NULL);
+  draw_funcs_set_cubic_to_func (funcs, (draw_cubic_to_func_t) cubic_to, NULL, NULL);
+  draw_funcs_set_close_path_func (funcs, (draw_close_path_func_t) close_path, NULL, NULL);
+  draw_funcs_make_immutable (funcs);
 
-  hb_test_init (&argc, &argv);
-  hb_test_add (test_itoa);
+  test_init (&argc, &argv);
+  test_add (test_itoa);
 #ifdef HB_EXPERIMENTAL_API
-  hb_test_add (test_hb_draw_varc_simple_hangul);
-  hb_test_add (test_hb_draw_varc_simple_hanzi);
-  hb_test_add (test_hb_draw_varc_conditional);
+  test_add (test_draw_varc_simple_hangul);
+  test_add (test_draw_varc_simple_hanzi);
+  test_add (test_draw_varc_conditional);
 #endif
-  unsigned result = hb_test_run ();
+  unsigned result = test_run ();
 
-  hb_draw_funcs_destroy (funcs);
+  draw_funcs_destroy (funcs);
   return result;
 }

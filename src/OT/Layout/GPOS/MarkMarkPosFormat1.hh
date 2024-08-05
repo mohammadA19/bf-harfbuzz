@@ -35,56 +35,56 @@ struct MarkMarkPosFormat1_2
   public:
   DEFINE_SIZE_STATIC (4 + 4 * Types::size);
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
                   mark1Coverage.sanitize (c, this) &&
                   mark2Coverage.sanitize (c, this) &&
                   mark1Array.sanitize (c, this) &&
-		  hb_barrier () &&
+		  barrier () &&
                   mark2Array.sanitize (c, this, (unsigned int) classCount));
   }
 
-  bool intersects (const hb_set_t *glyphs) const
+  bool intersects (const set_t *glyphs) const
   {
     return (this+mark1Coverage).intersects (glyphs) &&
            (this+mark2Coverage).intersects (glyphs);
   }
 
-  void closure_lookups (hb_closure_lookups_context_t *c) const {}
+  void closure_lookups (closure_lookups_context_t *c) const {}
 
-  void collect_variation_indices (hb_collect_variation_indices_context_t *c) const
+  void collect_variation_indices (collect_variation_indices_context_t *c) const
   {
-    + hb_zip (this+mark1Coverage, this+mark1Array)
-    | hb_filter (c->glyph_set, hb_first)
-    | hb_map (hb_second)
-    | hb_apply ([&] (const MarkRecord& record) { record.collect_variation_indices (c, &(this+mark1Array)); })
+    + zip (this+mark1Coverage, this+mark1Array)
+    | filter (c->glyph_set, first)
+    | map (second)
+    | apply ([&] (const MarkRecord& record) { record.collect_variation_indices (c, &(this+mark1Array)); })
     ;
 
-    hb_map_t klass_mapping;
+    map_t klass_mapping;
     Markclass_closure_and_remap_indexes (this+mark1Coverage, this+mark1Array, *c->glyph_set, &klass_mapping);
 
     unsigned mark2_count = (this+mark2Array).rows;
     auto mark2_iter =
-    + hb_zip (this+mark2Coverage, hb_range (mark2_count))
-    | hb_filter (c->glyph_set, hb_first)
-    | hb_map (hb_second)
+    + zip (this+mark2Coverage, range (mark2_count))
+    | filter (c->glyph_set, first)
+    | map (second)
     ;
 
-    hb_sorted_vector_t<unsigned> mark2_indexes;
+    sorted_vector_t<unsigned> mark2_indexes;
     for (const unsigned row : mark2_iter)
     {
-      + hb_range ((unsigned) classCount)
-      | hb_filter (klass_mapping)
-      | hb_map ([&] (const unsigned col) { return row * (unsigned) classCount + col; })
-      | hb_sink (mark2_indexes)
+      + range ((unsigned) classCount)
+      | filter (klass_mapping)
+      | map ([&] (const unsigned col) { return row * (unsigned) classCount + col; })
+      | sink (mark2_indexes)
       ;
     }
     (this+mark2Array).collect_variation_indices (c, mark2_indexes.iter ());
   }
 
-  void collect_glyphs (hb_collect_glyphs_context_t *c) const
+  void collect_glyphs (collect_glyphs_context_t *c) const
   {
     if (unlikely (!(this+mark1Coverage).collect_coverage (c->input))) return;
     if (unlikely (!(this+mark2Coverage).collect_coverage (c->input))) return;
@@ -92,15 +92,15 @@ struct MarkMarkPosFormat1_2
 
   const Coverage &get_coverage () const { return this+mark1Coverage; }
 
-  bool apply (hb_ot_apply_context_t *c) const
+  bool apply (ot_apply_context_t *c) const
   {
     TRACE_APPLY (this);
-    hb_buffer_t *buffer = c->buffer;
+    buffer_t *buffer = c->buffer;
     unsigned int mark1_index = (this+mark1Coverage).get_coverage  (buffer->cur().codepoint);
     if (likely (mark1_index == NOT_COVERED)) return_trace (false);
 
     /* now we search backwards for a suitable mark glyph until a non-mark glyph */
-    hb_ot_apply_context_t::skipping_iterator_t &skippy_iter = c->iter_input;
+    ot_apply_context_t::skipping_iterator_t &skippy_iter = c->iter_input;
     skippy_iter.reset_fast (buffer->idx);
     skippy_iter.set_lookup_props (c->lookup_props & ~(uint32_t)LookupFlag::IgnoreFlags);
     unsigned unsafe_from;
@@ -110,7 +110,7 @@ struct MarkMarkPosFormat1_2
       return_trace (false);
     }
 
-    if (likely (!_hb_glyph_info_is_mark (&buffer->info[skippy_iter.idx])))
+    if (likely (!_glyph_info_is_mark (&buffer->info[skippy_iter.idx])))
     {
       buffer->unsafe_to_concat_from_outbuffer (skippy_iter.idx, buffer->idx + 1);
       return_trace (false);
@@ -118,10 +118,10 @@ struct MarkMarkPosFormat1_2
 
     unsigned int j = skippy_iter.idx;
 
-    unsigned int id1 = _hb_glyph_info_get_lig_id (&buffer->cur());
-    unsigned int id2 = _hb_glyph_info_get_lig_id (&buffer->info[j]);
-    unsigned int comp1 = _hb_glyph_info_get_lig_comp (&buffer->cur());
-    unsigned int comp2 = _hb_glyph_info_get_lig_comp (&buffer->info[j]);
+    unsigned int id1 = _glyph_info_get_lig_id (&buffer->cur());
+    unsigned int id2 = _glyph_info_get_lig_id (&buffer->info[j]);
+    unsigned int comp1 = _glyph_info_get_lig_comp (&buffer->cur());
+    unsigned int comp2 = _glyph_info_get_lig_comp (&buffer->info[j]);
 
     if (likely (id1 == id2))
     {
@@ -153,32 +153,32 @@ struct MarkMarkPosFormat1_2
     return_trace ((this+mark1Array).apply (c, mark1_index, mark2_index, this+mark2Array, classCount, j));
   }
 
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
-    const hb_set_t &glyphset = *c->plan->glyphset_gsub ();
-    const hb_map_t &glyph_map = *c->plan->glyph_map;
+    const set_t &glyphset = *c->plan->glyphset_gsub ();
+    const map_t &glyph_map = *c->plan->glyph_map;
 
     auto *out = c->serializer->start_embed (*this);
     if (unlikely (!c->serializer->extend_min (out))) return_trace (false);
     out->format = format;
 
-    hb_map_t klass_mapping;
+    map_t klass_mapping;
     Markclass_closure_and_remap_indexes (this+mark1Coverage, this+mark1Array, glyphset, &klass_mapping);
 
     if (!klass_mapping.get_population ()) return_trace (false);
     out->classCount = klass_mapping.get_population ();
 
     auto mark1_iter =
-    + hb_zip (this+mark1Coverage, this+mark1Array)
-    | hb_filter (glyphset, hb_first)
+    + zip (this+mark1Coverage, this+mark1Array)
+    | filter (glyphset, first)
     ;
 
-    hb_sorted_vector_t<hb_codepoint_t> new_coverage;
+    sorted_vector_t<codepoint_t> new_coverage;
     + mark1_iter
-    | hb_map (hb_first)
-    | hb_map (glyph_map)
-    | hb_sink (new_coverage)
+    | map (first)
+    | map (glyph_map)
+    | sink (new_coverage)
     ;
 
     if (!out->mark1Coverage.serialize_serialize (c->serializer, new_coverage.iter ()))
@@ -191,28 +191,28 @@ struct MarkMarkPosFormat1_2
 
     unsigned mark2count = (this+mark2Array).rows;
     auto mark2_iter =
-    + hb_zip (this+mark2Coverage, hb_range (mark2count))
-    | hb_filter (glyphset, hb_first)
+    + zip (this+mark2Coverage, range (mark2count))
+    | filter (glyphset, first)
     ;
 
     new_coverage.reset ();
     + mark2_iter
-    | hb_map (hb_first)
-    | hb_map (glyph_map)
-    | hb_sink (new_coverage)
+    | map (first)
+    | map (glyph_map)
+    | sink (new_coverage)
     ;
 
     if (!out->mark2Coverage.serialize_serialize (c->serializer, new_coverage.iter ()))
       return_trace (false);
 
-    hb_sorted_vector_t<unsigned> mark2_indexes;
+    sorted_vector_t<unsigned> mark2_indexes;
     for (const unsigned row : + mark2_iter
-                              | hb_map (hb_second))
+                              | map (second))
     {
-      + hb_range ((unsigned) classCount)
-      | hb_filter (klass_mapping)
-      | hb_map ([&] (const unsigned col) { return row * (unsigned) classCount + col; })
-      | hb_sink (mark2_indexes)
+      + range ((unsigned) classCount)
+      | filter (klass_mapping)
+      | map ([&] (const unsigned col) { return row * (unsigned) classCount + col; })
+      | sink (mark2_indexes)
       ;
     }
 

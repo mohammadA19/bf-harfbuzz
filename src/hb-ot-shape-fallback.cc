@@ -32,7 +32,7 @@
 #include "hb-kern.hh"
 
 static unsigned int
-recategorize_combining_class (hb_codepoint_t u,
+recategorize_combining_class (codepoint_t u,
 			      unsigned int klass)
 {
   if (klass >= 200)
@@ -166,34 +166,34 @@ recategorize_combining_class (hb_codepoint_t u,
 }
 
 void
-_hb_ot_shape_fallback_mark_position_recategorize_marks (const hb_ot_shape_plan_t *plan HB_UNUSED,
-							hb_font_t *font HB_UNUSED,
-							hb_buffer_t  *buffer)
+_ot_shape_fallback_mark_position_recategorize_marks (const ot_shape_plan_t *plan HB_UNUSED,
+							font_t *font HB_UNUSED,
+							buffer_t  *buffer)
 {
 #ifdef HB_NO_OT_SHAPE_FALLBACK
   return;
 #endif
 
   unsigned int count = buffer->len;
-  hb_glyph_info_t *info = buffer->info;
+  glyph_info_t *info = buffer->info;
   for (unsigned int i = 0; i < count; i++)
-    if (_hb_glyph_info_get_general_category (&info[i]) == HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK) {
-      unsigned int combining_class = _hb_glyph_info_get_modified_combining_class (&info[i]);
+    if (_glyph_info_get_general_category (&info[i]) == HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK) {
+      unsigned int combining_class = _glyph_info_get_modified_combining_class (&info[i]);
       combining_class = recategorize_combining_class (info[i].codepoint, combining_class);
-      _hb_glyph_info_set_modified_combining_class (&info[i], combining_class);
+      _glyph_info_set_modified_combining_class (&info[i], combining_class);
     }
 }
 
 
 static void
-zero_mark_advances (hb_buffer_t *buffer,
+zero_mark_advances (buffer_t *buffer,
 		    unsigned int start,
 		    unsigned int end,
 		    bool adjust_offsets_when_zeroing)
 {
-  hb_glyph_info_t *info = buffer->info;
+  glyph_info_t *info = buffer->info;
   for (unsigned int i = start; i < end; i++)
-    if (_hb_glyph_info_get_general_category (&info[i]) == HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK)
+    if (_glyph_info_get_general_category (&info[i]) == HB_UNICODE_GENERAL_CATEGORY_NON_SPACING_MARK)
     {
       if (adjust_offsets_when_zeroing)
       {
@@ -206,20 +206,20 @@ zero_mark_advances (hb_buffer_t *buffer,
 }
 
 static inline void
-position_mark (const hb_ot_shape_plan_t *plan HB_UNUSED,
-	       hb_font_t *font,
-	       hb_buffer_t  *buffer,
-	       hb_glyph_extents_t &base_extents,
+position_mark (const ot_shape_plan_t *plan HB_UNUSED,
+	       font_t *font,
+	       buffer_t  *buffer,
+	       glyph_extents_t &base_extents,
 	       unsigned int i,
 	       unsigned int combining_class)
 {
-  hb_glyph_extents_t mark_extents;
+  glyph_extents_t mark_extents;
   if (!font->get_glyph_extents (buffer->info[i].codepoint, &mark_extents))
     return;
 
-  hb_position_t y_gap = font->y_scale / 16;
+  position_t y_gap = font->y_scale / 16;
 
-  hb_glyph_position_t &pos = buffer->pos[i];
+  glyph_position_t &pos = buffer->pos[i];
   pos.x_offset = pos.y_offset = 0;
 
 
@@ -313,18 +313,18 @@ position_mark (const hb_ot_shape_plan_t *plan HB_UNUSED,
 }
 
 static inline void
-position_around_base (const hb_ot_shape_plan_t *plan,
-		      hb_font_t *font,
-		      hb_buffer_t  *buffer,
+position_around_base (const ot_shape_plan_t *plan,
+		      font_t *font,
+		      buffer_t  *buffer,
 		      unsigned int base,
 		      unsigned int end,
 		      bool adjust_offsets_when_zeroing)
 {
-  hb_direction_t horiz_dir = HB_DIRECTION_INVALID;
+  direction_t horiz_dir = HB_DIRECTION_INVALID;
 
   buffer->unsafe_to_break (base, end);
 
-  hb_glyph_extents_t base_extents;
+  glyph_extents_t base_extents;
   if (!font->get_glyph_extents (buffer->info[base].codepoint,
 				&base_extents))
   {
@@ -339,28 +339,28 @@ position_around_base (const hb_ot_shape_plan_t *plan,
   base_extents.x_bearing = 0;
   base_extents.width = font->get_glyph_h_advance (buffer->info[base].codepoint);
 
-  unsigned int lig_id = _hb_glyph_info_get_lig_id (&buffer->info[base]);
+  unsigned int lig_id = _glyph_info_get_lig_id (&buffer->info[base]);
   /* Use integer for num_lig_components such that it doesn't convert to unsigned
    * when we divide or multiply by it. */
-  int num_lig_components = _hb_glyph_info_get_lig_num_comps (&buffer->info[base]);
+  int num_lig_components = _glyph_info_get_lig_num_comps (&buffer->info[base]);
 
-  hb_position_t x_offset = 0, y_offset = 0;
+  position_t x_offset = 0, y_offset = 0;
   if (HB_DIRECTION_IS_FORWARD (buffer->props.direction)) {
     x_offset -= buffer->pos[base].x_advance;
     y_offset -= buffer->pos[base].y_advance;
   }
 
-  hb_glyph_extents_t component_extents = base_extents;
+  glyph_extents_t component_extents = base_extents;
   int last_lig_component = -1;
   unsigned int last_combining_class = 255;
-  hb_glyph_extents_t cluster_extents = base_extents; /* Initialization is just to shut gcc up. */
-  hb_glyph_info_t *info = buffer->info;
+  glyph_extents_t cluster_extents = base_extents; /* Initialization is just to shut gcc up. */
+  glyph_info_t *info = buffer->info;
   for (unsigned int i = base + 1; i < end; i++)
-    if (_hb_glyph_info_get_modified_combining_class (&info[i]))
+    if (_glyph_info_get_modified_combining_class (&info[i]))
     {
       if (num_lig_components > 1) {
-	unsigned int this_lig_id = _hb_glyph_info_get_lig_id (&info[i]);
-	int this_lig_component = _hb_glyph_info_get_lig_comp (&info[i]) - 1;
+	unsigned int this_lig_id = _glyph_info_get_lig_id (&info[i]);
+	int this_lig_component = _glyph_info_get_lig_comp (&info[i]) - 1;
 	/* Conditions for attaching to the last component. */
 	if (!lig_id || lig_id != this_lig_id || this_lig_component >= num_lig_components)
 	  this_lig_component = num_lig_components - 1;
@@ -373,7 +373,7 @@ position_around_base (const hb_ot_shape_plan_t *plan,
 	    if (HB_DIRECTION_IS_HORIZONTAL (plan->props.direction))
 	      horiz_dir = plan->props.direction;
 	    else
-	      horiz_dir = hb_script_get_horizontal_direction (plan->props.script);
+	      horiz_dir = script_get_horizontal_direction (plan->props.script);
 	  }
 	  if (horiz_dir == HB_DIRECTION_LTR)
 	    component_extents.x_bearing += (this_lig_component * component_extents.width) / num_lig_components;
@@ -383,7 +383,7 @@ position_around_base (const hb_ot_shape_plan_t *plan,
 	}
       }
 
-      unsigned int this_combining_class = _hb_glyph_info_get_modified_combining_class (&info[i]);
+      unsigned int this_combining_class = _glyph_info_get_modified_combining_class (&info[i]);
       if (last_combining_class != this_combining_class)
       {
 	last_combining_class = this_combining_class;
@@ -409,9 +409,9 @@ position_around_base (const hb_ot_shape_plan_t *plan,
 }
 
 static inline void
-position_cluster (const hb_ot_shape_plan_t *plan,
-		  hb_font_t *font,
-		  hb_buffer_t  *buffer,
+position_cluster (const ot_shape_plan_t *plan,
+		  font_t *font,
+		  buffer_t  *buffer,
 		  unsigned int start,
 		  unsigned int end,
 		  bool adjust_offsets_when_zeroing)
@@ -420,14 +420,14 @@ position_cluster (const hb_ot_shape_plan_t *plan,
     return;
 
   /* Find the base glyph */
-  hb_glyph_info_t *info = buffer->info;
+  glyph_info_t *info = buffer->info;
   for (unsigned int i = start; i < end; i++)
-    if (!_hb_glyph_info_is_unicode_mark (&info[i]))
+    if (!_glyph_info_is_unicode_mark (&info[i]))
     {
       /* Find mark glyphs */
       unsigned int j;
       for (j = i + 1; j < end; j++)
-	if (!_hb_glyph_info_is_unicode_mark (&info[j]))
+	if (!_glyph_info_is_unicode_mark (&info[j]))
 	  break;
 
       position_around_base (plan, font, buffer, i, j, adjust_offsets_when_zeroing);
@@ -437,9 +437,9 @@ position_cluster (const hb_ot_shape_plan_t *plan,
 }
 
 void
-_hb_ot_shape_fallback_mark_position (const hb_ot_shape_plan_t *plan,
-				     hb_font_t *font,
-				     hb_buffer_t  *buffer,
+_ot_shape_fallback_mark_position (const ot_shape_plan_t *plan,
+				     font_t *font,
+				     buffer_t  *buffer,
 				     bool adjust_offsets_when_zeroing)
 {
 #ifdef HB_NO_OT_SHAPE_FALLBACK
@@ -449,13 +449,13 @@ _hb_ot_shape_fallback_mark_position (const hb_ot_shape_plan_t *plan,
   if (!buffer->message (font, "start fallback mark"))
     return;
 
-  _hb_buffer_assert_gsubgpos_vars (buffer);
+  _buffer_assert_gsubgpos_vars (buffer);
 
   unsigned int start = 0;
   unsigned int count = buffer->len;
-  hb_glyph_info_t *info = buffer->info;
+  glyph_info_t *info = buffer->info;
   for (unsigned int i = 1; i < count; i++)
-    if (likely (!_hb_glyph_info_is_unicode_mark (&info[i]))) {
+    if (likely (!_glyph_info_is_unicode_mark (&info[i]))) {
       position_cluster (plan, font, buffer, start, i, adjust_offsets_when_zeroing);
       start = i;
     }
@@ -466,31 +466,31 @@ _hb_ot_shape_fallback_mark_position (const hb_ot_shape_plan_t *plan,
 
 
 #ifndef HB_DISABLE_DEPRECATED
-struct hb_ot_shape_fallback_kern_driver_t
+struct ot_shape_fallback_kern_driver_t
 {
-  hb_ot_shape_fallback_kern_driver_t (hb_font_t   *font_,
-				      hb_buffer_t *buffer) :
+  ot_shape_fallback_kern_driver_t (font_t   *font_,
+				      buffer_t *buffer) :
     font (font_), direction (buffer->props.direction) {}
 
-  hb_position_t get_kerning (hb_codepoint_t first, hb_codepoint_t second) const
+  position_t get_kerning (codepoint_t first, codepoint_t second) const
   {
-    hb_position_t kern = 0;
+    position_t kern = 0;
     font->get_glyph_kerning_for_direction (first, second,
 					   direction,
 					   &kern, &kern);
     return kern;
   }
 
-  hb_font_t *font;
-  hb_direction_t direction;
+  font_t *font;
+  direction_t direction;
 };
 #endif
 
 /* Performs font-assisted kerning. */
 void
-_hb_ot_shape_fallback_kern (const hb_ot_shape_plan_t *plan,
-			    hb_font_t *font,
-			    hb_buffer_t *buffer)
+_ot_shape_fallback_kern (const ot_shape_plan_t *plan,
+			    font_t *font,
+			    buffer_t *buffer)
 {
 #ifdef HB_NO_OT_SHAPE_FALLBACK
   return;
@@ -510,8 +510,8 @@ _hb_ot_shape_fallback_kern (const hb_ot_shape_plan_t *plan,
   if (reverse)
     buffer->reverse ();
 
-  hb_ot_shape_fallback_kern_driver_t driver (font, buffer);
-  OT::hb_kern_machine_t<hb_ot_shape_fallback_kern_driver_t> machine (driver);
+  ot_shape_fallback_kern_driver_t driver (font, buffer);
+  OT::kern_machine_t<ot_shape_fallback_kern_driver_t> machine (driver);
   machine.kern (font, buffer, plan->kern_mask, false);
 
   if (reverse)
@@ -524,16 +524,16 @@ _hb_ot_shape_fallback_kern (const hb_ot_shape_plan_t *plan,
 
 /* Adjusts width of various spaces. */
 void
-_hb_ot_shape_fallback_spaces (const hb_ot_shape_plan_t *plan HB_UNUSED,
-			      hb_font_t *font,
-			      hb_buffer_t  *buffer)
+_ot_shape_fallback_spaces (const ot_shape_plan_t *plan HB_UNUSED,
+			      font_t *font,
+			      buffer_t  *buffer)
 {
-  hb_glyph_info_t *info = buffer->info;
-  hb_glyph_position_t *pos = buffer->pos;
+  glyph_info_t *info = buffer->info;
+  glyph_position_t *pos = buffer->pos;
   bool horizontal = HB_DIRECTION_IS_HORIZONTAL (buffer->props.direction);
   unsigned int count = buffer->len;
   for (unsigned int i = 0; i < count; i++)
-    if (_hb_glyph_info_is_unicode_space (&info[i]) && !_hb_glyph_info_ligated (&info[i]))
+    if (_glyph_info_is_unicode_space (&info[i]) && !_glyph_info_ligated (&info[i]))
     {
       /* If font had no ASCII space and we used the invisible glyph, give it a 1/4 EM default advance. */
       if (buffer->invisible && info[i].codepoint == buffer->invisible)
@@ -544,9 +544,9 @@ _hb_ot_shape_fallback_spaces (const hb_ot_shape_plan_t *plan HB_UNUSED,
 	  pos[i].y_advance = -font->y_scale / 4;
       }
 
-      hb_unicode_funcs_t::space_t space_type = _hb_glyph_info_get_unicode_space_fallback_type (&info[i]);
-      hb_codepoint_t glyph;
-      typedef hb_unicode_funcs_t t;
+      unicode_funcs_t::space_t space_type = _glyph_info_get_unicode_space_fallback_type (&info[i]);
+      codepoint_t glyph;
+      typedef unicode_funcs_t t;
       switch (space_type)
       {
 	case t::NOT_SPACE: /* Shouldn't happen. */

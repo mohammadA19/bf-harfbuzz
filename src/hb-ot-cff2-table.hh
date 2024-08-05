@@ -48,13 +48,13 @@ typedef FDSelect3_4_Range<HBUINT32, HBUINT16> FDSelect4_Range;
 
 struct CFF2FDSelect
 {
-  bool serialize (hb_serialize_context_t *c, const CFF2FDSelect &src, unsigned int num_glyphs)
+  bool serialize (serialize_context_t *c, const CFF2FDSelect &src, unsigned int num_glyphs)
   {
     TRACE_SERIALIZE (this);
     unsigned int size = src.get_size (num_glyphs);
     CFF2FDSelect *dest = c->allocate_size<CFF2FDSelect> (size);
     if (unlikely (!dest)) return_trace (false);
-    hb_memcpy (dest, &src, size);
+    memcpy (dest, &src, size);
     return_trace (true);
   }
 
@@ -69,7 +69,7 @@ struct CFF2FDSelect
     }
   }
 
-  hb_codepoint_t get_fd (hb_codepoint_t glyph) const
+  codepoint_t get_fd (codepoint_t glyph) const
   {
     if (this == &Null (CFF2FDSelect))
       return 0;
@@ -83,12 +83,12 @@ struct CFF2FDSelect
     }
   }
 
-  bool sanitize (hb_sanitize_context_t *c, unsigned int fdcount) const
+  bool sanitize (sanitize_context_t *c, unsigned int fdcount) const
   {
     TRACE_SANITIZE (this);
     if (unlikely (!c->check_struct (this)))
       return_trace (false);
-    hb_barrier ();
+    barrier ();
 
     switch (format)
     {
@@ -111,22 +111,22 @@ struct CFF2FDSelect
 
 struct CFF2ItemVariationStore
 {
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
-		  hb_barrier () &&
+		  barrier () &&
 		  c->check_range (&varStore, size) &&
 		  varStore.sanitize (c));
   }
 
-  bool serialize (hb_serialize_context_t *c, const CFF2ItemVariationStore *varStore)
+  bool serialize (serialize_context_t *c, const CFF2ItemVariationStore *varStore)
   {
     TRACE_SERIALIZE (this);
     unsigned int size_ = varStore->get_size ();
     CFF2ItemVariationStore *dest = c->allocate_size<CFF2ItemVariationStore> (size_);
     if (unlikely (!dest)) return_trace (false);
-    hb_memcpy (dest, varStore, size_);
+    memcpy (dest, varStore, size_);
     return_trace (true);
   }
 
@@ -249,7 +249,7 @@ typedef cff2_private_dict_values_base_t<num_dict_val_t> cff2_private_dict_values
 
 struct cff2_priv_dict_interp_env_t : num_interp_env_t
 {
-  cff2_priv_dict_interp_env_t (const hb_ubytes_t &str) :
+  cff2_priv_dict_interp_env_t (const ubytes_t &str) :
     num_interp_env_t (str) {}
 
   void process_vsindex ()
@@ -368,7 +368,7 @@ struct CFF2FDArray : FDArray<HBUINT32>
 {
   /* FDArray::serialize does not compile without this partial specialization */
   template <typename ITER, typename OP_SERIALIZER>
-  bool serialize (hb_serialize_context_t *c, ITER it, OP_SERIALIZER& opszr)
+  bool serialize (serialize_context_t *c, ITER it, OP_SERIALIZER& opszr)
   { return FDArray<HBUINT32>::serialize<cff2_font_dict_values_t, table_info_t> (c, it, opszr); }
 };
 
@@ -380,22 +380,22 @@ using namespace CFF;
 
 struct cff2
 {
-  static constexpr hb_tag_t tableTag = HB_OT_TAG_CFF2;
+  static constexpr tag_t tableTag = HB_OT_TAG_CFF2;
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
-		  hb_barrier () &&
+		  barrier () &&
 		  likely (version.major == 2));
   }
 
   template <typename PRIVOPSET, typename PRIVDICTVAL>
   struct accelerator_templ_t
   {
-    static constexpr hb_tag_t tableTag = cff2::tableTag;
+    static constexpr tag_t tableTag = cff2::tableTag;
 
-    accelerator_templ_t (hb_face_t *face)
+    accelerator_templ_t (face_t *face)
     {
       if (!face) return;
 
@@ -415,9 +415,9 @@ struct cff2
         goto fail;
 
       { /* parse top dict */
-	hb_ubytes_t topDictStr = (cff2 + cff2->topDict).as_ubytes (cff2->topDictSize);
+	ubytes_t topDictStr = (cff2 + cff2->topDict).as_ubytes (cff2->topDictSize);
 	if (unlikely (!topDictStr.sanitize (&sc))) goto fail;
-	hb_barrier ();
+	barrier ();
 	num_interp_env_t env (topDictStr);
 	cff2_top_dict_interpreter_t top_interp (env);
 	topDict.init ();
@@ -446,9 +446,9 @@ struct cff2
       /* parse font dicts and gather private dicts */
       for (unsigned int i = 0; i < fdCount; i++)
       {
-	const hb_ubytes_t fontDictStr = (*fdArray)[i];
+	const ubytes_t fontDictStr = (*fdArray)[i];
 	if (unlikely (!fontDictStr.sanitize (&sc))) goto fail;
-	hb_barrier ();
+	barrier ();
 	cff2_font_dict_values_t  *font;
 	num_interp_env_t env (fontDictStr);
 	cff2_font_dict_interpreter_t font_interp (env);
@@ -457,7 +457,7 @@ struct cff2
 	font->init ();
 	if (unlikely (!font_interp.interpret (*font))) goto fail;
 
-	const hb_ubytes_t privDictStr = StructAtOffsetOrNull<UnsizedByteStr> (cff2, font->privateDictInfo.offset, sc, font->privateDictInfo.size).as_ubytes (font->privateDictInfo.size);
+	const ubytes_t privDictStr = StructAtOffsetOrNull<UnsizedByteStr> (cff2, font->privateDictInfo.offset, sc, font->privateDictInfo.size).as_ubytes (font->privateDictInfo.size);
 	if (unlikely (privDictStr == (const unsigned char *) &Null (UnsizedByteStr))) goto fail;
 	cff2_priv_dict_interp_env_t env2 (privDictStr);
 	dict_interpreter_t<PRIVOPSET, PRIVDICTVAL, cff2_priv_dict_interp_env_t> priv_interp (env2);
@@ -479,24 +479,24 @@ struct cff2
       topDict.fini ();
       fontDicts.fini ();
       privateDicts.fini ();
-      hb_blob_destroy (blob);
+      blob_destroy (blob);
       blob = nullptr;
     }
 
-    hb_vector_t<uint16_t> *create_glyph_to_sid_map () const
+    vector_t<uint16_t> *create_glyph_to_sid_map () const
     {
       return nullptr;
     }
 
-    hb_blob_t *get_blob () const { return blob; }
+    blob_t *get_blob () const { return blob; }
 
     bool is_valid () const { return blob; }
 
     protected:
-    hb_sanitize_context_t	sc;
+    sanitize_context_t	sc;
 
     public:
-    hb_blob_t			*blob = nullptr;
+    blob_t			*blob = nullptr;
     cff2_top_dict_values_t	topDict;
     const CFF2Subrs		*globalSubrs = nullptr;
     const CFF2ItemVariationStore	*varStore = nullptr;
@@ -505,37 +505,37 @@ struct cff2
     const CFF2FDSelect		*fdSelect = nullptr;
     unsigned int		fdCount = 0;
 
-    hb_vector_t<cff2_font_dict_values_t>     fontDicts;
-    hb_vector_t<PRIVDICTVAL>  privateDicts;
+    vector_t<cff2_font_dict_values_t>     fontDicts;
+    vector_t<PRIVDICTVAL>  privateDicts;
 
     unsigned int	      num_glyphs = 0;
   };
 
   struct accelerator_t : accelerator_templ_t<cff2_private_dict_opset_t, cff2_private_dict_values_t>
   {
-    accelerator_t (hb_face_t *face) : accelerator_templ_t (face) {}
+    accelerator_t (face_t *face) : accelerator_templ_t (face) {}
 
-    HB_INTERNAL bool get_extents (hb_font_t *font,
-				  hb_codepoint_t glyph,
-				  hb_glyph_extents_t *extents) const;
-    HB_INTERNAL bool paint_glyph (hb_font_t *font, hb_codepoint_t glyph, hb_paint_funcs_t *funcs, void *data, hb_color_t foreground) const;
-    HB_INTERNAL bool get_path (hb_font_t *font, hb_codepoint_t glyph, hb_draw_session_t &draw_session) const;
-    HB_INTERNAL bool get_path_at (hb_font_t *font, hb_codepoint_t glyph, hb_draw_session_t &draw_session, hb_array_t<const int> coords) const;
+    HB_INTERNAL bool get_extents (font_t *font,
+				  codepoint_t glyph,
+				  glyph_extents_t *extents) const;
+    HB_INTERNAL bool paint_glyph (font_t *font, codepoint_t glyph, paint_funcs_t *funcs, void *data, color_t foreground) const;
+    HB_INTERNAL bool get_path (font_t *font, codepoint_t glyph, draw_session_t &draw_session) const;
+    HB_INTERNAL bool get_path_at (font_t *font, codepoint_t glyph, draw_session_t &draw_session, array_t<const int> coords) const;
   };
 
   struct accelerator_subset_t : accelerator_templ_t<cff2_private_dict_opset_subset_t, cff2_private_dict_values_subset_t>
   {
-    accelerator_subset_t (hb_face_t *face) : SUPER (face) {}
+    accelerator_subset_t (face_t *face) : SUPER (face) {}
     ~accelerator_subset_t ()
     {
       if (cff_accelerator)
 	cff_subset_accelerator_t::destroy (cff_accelerator);
     }
 
-    HB_INTERNAL bool subset (hb_subset_context_t *c) const;
-    HB_INTERNAL bool serialize (hb_serialize_context_t *c,
+    HB_INTERNAL bool subset (subset_context_t *c) const;
+    HB_INTERNAL bool serialize (serialize_context_t *c,
 				struct cff2_subset_plan &plan,
-				hb_array_t<int> normalized_coords) const;
+				array_t<int> normalized_coords) const;
 
     mutable CFF::cff_subset_accelerator_t* cff_accelerator = nullptr;
 
@@ -552,11 +552,11 @@ struct cff2
 };
 
 struct cff2_accelerator_t : cff2::accelerator_t {
-  cff2_accelerator_t (hb_face_t *face) : cff2::accelerator_t (face) {}
+  cff2_accelerator_t (face_t *face) : cff2::accelerator_t (face) {}
 };
 
 struct cff2_subset_accelerator_t : cff2::accelerator_subset_t {
-  cff2_subset_accelerator_t (hb_face_t *face) : cff2::accelerator_subset_t (face) {}
+  cff2_subset_accelerator_t (face_t *face) : cff2::accelerator_subset_t (face) {}
 };
 
 } /* namespace OT */

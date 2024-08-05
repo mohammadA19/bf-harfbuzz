@@ -30,111 +30,111 @@
 static void
 test_collect_unicodes_format4 (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/Roboto-Regular.abc.format4.ttf");
-  hb_set_t *codepoints = hb_set_create();
-  hb_codepoint_t cp;
+  face_t *face = test_open_font_file ("fonts/Roboto-Regular.abc.format4.ttf");
+  set_t *codepoints = set_create();
+  codepoint_t cp;
 
-  hb_face_collect_unicodes (face, codepoints);
+  face_collect_unicodes (face, codepoints);
 
   cp = HB_SET_VALUE_INVALID;
-  g_assert (hb_set_next (codepoints, &cp));
+  g_assert (set_next (codepoints, &cp));
   g_assert_cmpuint (0x61, ==, cp);
-  g_assert (hb_set_next (codepoints, &cp));
+  g_assert (set_next (codepoints, &cp));
   g_assert_cmpuint (0x62, ==, cp);
-  g_assert (hb_set_next (codepoints, &cp));
+  g_assert (set_next (codepoints, &cp));
   g_assert_cmpuint (0x63, ==, cp);
-  g_assert (!hb_set_next (codepoints, &cp));
+  g_assert (!set_next (codepoints, &cp));
 
-  hb_set_destroy (codepoints);
-  hb_face_destroy (face);
+  set_destroy (codepoints);
+  face_destroy (face);
 }
 
 static void
 test_collect_unicodes_format12_notdef (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/cmunrm.otf");
-  hb_set_t *codepoints = hb_set_create();
-  hb_codepoint_t cp;
+  face_t *face = test_open_font_file ("fonts/cmunrm.otf");
+  set_t *codepoints = set_create();
+  codepoint_t cp;
 
-  hb_face_collect_unicodes (face, codepoints);
+  face_collect_unicodes (face, codepoints);
 
   cp = HB_SET_VALUE_INVALID;
-  g_assert (hb_set_next (codepoints, &cp));
+  g_assert (set_next (codepoints, &cp));
   g_assert_cmpuint (0x20, ==, cp);
-  g_assert (hb_set_next (codepoints, &cp));
+  g_assert (set_next (codepoints, &cp));
   g_assert_cmpuint (0x21, ==, cp);
-  g_assert (hb_set_next (codepoints, &cp));
+  g_assert (set_next (codepoints, &cp));
   g_assert_cmpuint (0x22, ==, cp);
 
-  hb_set_destroy (codepoints);
-  hb_face_destroy (face);
+  set_destroy (codepoints);
+  face_destroy (face);
 }
 
 static void
 test_collect_unicodes_format12 (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/Roboto-Regular.abc.format12.ttf");
-  hb_set_t *codepoints = hb_set_create();
-  hb_codepoint_t cp;
+  face_t *face = test_open_font_file ("fonts/Roboto-Regular.abc.format12.ttf");
+  set_t *codepoints = set_create();
+  codepoint_t cp;
 
-  hb_face_collect_unicodes (face, codepoints);
+  face_collect_unicodes (face, codepoints);
 
   cp = HB_SET_VALUE_INVALID;
-  g_assert (hb_set_next (codepoints, &cp));
+  g_assert (set_next (codepoints, &cp));
   g_assert_cmpuint (0x61, ==, cp);
-  g_assert (hb_set_next (codepoints, &cp));
+  g_assert (set_next (codepoints, &cp));
   g_assert_cmpuint (0x62, ==, cp);
-  g_assert (hb_set_next (codepoints, &cp));
+  g_assert (set_next (codepoints, &cp));
   g_assert_cmpuint (0x63, ==, cp);
-  g_assert (!hb_set_next (codepoints, &cp));
+  g_assert (!set_next (codepoints, &cp));
 
-  hb_set_destroy (codepoints);
-  hb_face_destroy (face);
+  set_destroy (codepoints);
+  face_destroy (face);
 }
 
 static void
 test_collect_unicodes (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
-  hb_set_t *codepoints = hb_set_create();
-  hb_set_t *codepoints2 = hb_set_create();
-  hb_map_t *mapping = hb_map_create();
-  hb_codepoint_t cp;
+  face_t *face = test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
+  set_t *codepoints = set_create();
+  set_t *codepoints2 = set_create();
+  map_t *mapping = map_create();
+  codepoint_t cp;
 
-  hb_face_collect_unicodes (face, codepoints);
-  hb_face_collect_nominal_glyph_mapping (face, mapping, codepoints2);
+  face_collect_unicodes (face, codepoints);
+  face_collect_nominal_glyph_mapping (face, mapping, codepoints2);
 
-  g_assert (hb_set_is_equal (codepoints, codepoints2));
-  g_assert_cmpuint (hb_set_get_population (codepoints), ==, 3);
-  g_assert_cmpuint (hb_map_get_population (mapping), ==, 3);
+  g_assert (set_is_equal (codepoints, codepoints2));
+  g_assert_cmpuint (set_get_population (codepoints), ==, 3);
+  g_assert_cmpuint (map_get_population (mapping), ==, 3);
 
   cp = HB_SET_VALUE_INVALID;
-  g_assert (hb_set_next (codepoints, &cp));
-  g_assert (hb_map_has (mapping, cp));
+  g_assert (set_next (codepoints, &cp));
+  g_assert (map_has (mapping, cp));
   g_assert_cmpuint (0x61, ==, cp);
-  g_assert (hb_set_next (codepoints, &cp));
-  g_assert (hb_map_has (mapping, cp));
+  g_assert (set_next (codepoints, &cp));
+  g_assert (map_has (mapping, cp));
   g_assert_cmpuint (0x62, ==, cp);
-  g_assert (hb_set_next (codepoints, &cp));
-  g_assert (hb_map_has (mapping, cp));
+  g_assert (set_next (codepoints, &cp));
+  g_assert (map_has (mapping, cp));
   g_assert_cmpuint (0x63, ==, cp);
-  g_assert (!hb_set_next (codepoints, &cp));
+  g_assert (!set_next (codepoints, &cp));
 
-  hb_set_destroy (codepoints);
-  hb_set_destroy (codepoints2);
-  hb_map_destroy (mapping);
-  hb_face_destroy (face);
+  set_destroy (codepoints);
+  set_destroy (codepoints2);
+  map_destroy (mapping);
+  face_destroy (face);
 }
 
 int
 main (int argc, char **argv)
 {
-  hb_test_init (&argc, &argv);
+  test_init (&argc, &argv);
 
-  hb_test_add (test_collect_unicodes);
-  hb_test_add (test_collect_unicodes_format4);
-  hb_test_add (test_collect_unicodes_format12);
-  hb_test_add (test_collect_unicodes_format12_notdef);
+  test_add (test_collect_unicodes);
+  test_add (test_collect_unicodes_format4);
+  test_add (test_collect_unicodes_format12);
+  test_add (test_collect_unicodes_format12_notdef);
 
-  return hb_test_run();
+  return test_run();
 }

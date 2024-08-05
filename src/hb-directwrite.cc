@@ -143,7 +143,7 @@ public:
 * shaper face data
 */
 
-struct hb_directwrite_face_data_t
+struct directwrite_face_data_t
 {
   HMODULE dwrite_dll;
   IDWriteFactory *dwriteFactory;
@@ -151,13 +151,13 @@ struct hb_directwrite_face_data_t
   DWriteFontFileStream *fontFileStream;
   DWriteFontFileLoader *fontFileLoader;
   IDWriteFontFace *fontFace;
-  hb_blob_t *faceBlob;
+  blob_t *faceBlob;
 };
 
-hb_directwrite_face_data_t *
-_hb_directwrite_shaper_face_data_create (hb_face_t *face)
+directwrite_face_data_t *
+_directwrite_shaper_face_data_create (face_t *face)
 {
-  hb_directwrite_face_data_t *data = new hb_directwrite_face_data_t;
+  directwrite_face_data_t *data = new directwrite_face_data_t;
   if (unlikely (!data))
     return nullptr;
 
@@ -198,10 +198,10 @@ _hb_directwrite_shaper_face_data_create (hb_face_t *face)
   if (unlikely (hr != S_OK))
     FAIL ("Failed to run DWriteCreateFactory().");
 
-  hb_blob_t *blob = hb_face_reference_blob (face);
+  blob_t *blob = face_reference_blob (face);
   DWriteFontFileStream *fontFileStream;
-  fontFileStream = new DWriteFontFileStream ((uint8_t *) hb_blob_get_data (blob, nullptr),
-					     hb_blob_get_length (blob));
+  fontFileStream = new DWriteFontFileStream ((uint8_t *) blob_get_data (blob, nullptr),
+					     blob_get_length (blob));
 
   DWriteFontFileLoader *fontFileLoader = new DWriteFontFileLoader (fontFileStream);
   dwriteFactory->RegisterFontFileLoader (fontFileLoader);
@@ -239,7 +239,7 @@ _hb_directwrite_shaper_face_data_create (hb_face_t *face)
 }
 
 void
-_hb_directwrite_shaper_face_data_destroy (hb_directwrite_face_data_t *data)
+_directwrite_shaper_face_data_destroy (directwrite_face_data_t *data)
 {
   if (data->fontFace)
     data->fontFace->Release ();
@@ -253,7 +253,7 @@ _hb_directwrite_shaper_face_data_destroy (hb_directwrite_face_data_t *data)
   }
   delete data->fontFileLoader;
   delete data->fontFileStream;
-  hb_blob_destroy (data->faceBlob);
+  blob_destroy (data->faceBlob);
   if (data->dwrite_dll)
     FreeLibrary (data->dwrite_dll);
   delete data;
@@ -264,16 +264,16 @@ _hb_directwrite_shaper_face_data_destroy (hb_directwrite_face_data_t *data)
  * shaper font data
  */
 
-struct hb_directwrite_font_data_t {};
+struct directwrite_font_data_t {};
 
-hb_directwrite_font_data_t *
-_hb_directwrite_shaper_font_data_create (hb_font_t *font)
+directwrite_font_data_t *
+_directwrite_shaper_font_data_create (font_t *font)
 {
-  return (hb_directwrite_font_data_t *) HB_SHAPER_DATA_SUCCEEDED;
+  return (directwrite_font_data_t *) HB_SHAPER_DATA_SUCCEEDED;
 }
 
 void
-_hb_directwrite_shaper_font_data_destroy (hb_directwrite_font_data_t *data)
+_directwrite_shaper_font_data_destroy (directwrite_font_data_t *data)
 {
 }
 
@@ -534,15 +534,15 @@ protected:
  * shaper
  */
 
-hb_bool_t
-_hb_directwrite_shape (hb_shape_plan_t    *shape_plan,
-		       hb_font_t          *font,
-		       hb_buffer_t        *buffer,
-		       const hb_feature_t *features,
+bool_t
+_directwrite_shape (shape_plan_t    *shape_plan,
+		       font_t          *font,
+		       buffer_t        *buffer,
+		       const feature_t *features,
 		       unsigned int        num_features)
 {
-  hb_face_t *face = font->face;
-  const hb_directwrite_face_data_t *face_data = face->data.directwrite;
+  face_t *face = font->face;
+  const directwrite_face_data_t *face_data = face->data.directwrite;
   IDWriteFactory *dwriteFactory = face_data->dwriteFactory;
   IDWriteFontFace *fontFace = face_data->fontFace;
 
@@ -550,7 +550,7 @@ _hb_directwrite_shape (hb_shape_plan_t    *shape_plan,
   dwriteFactory->CreateTextAnalyzer (&analyzer);
 
   unsigned int scratch_size;
-  hb_buffer_t::scratch_buffer_t *scratch = buffer->get_scratch_buffer (&scratch_size);
+  buffer_t::scratch_buffer_t *scratch = buffer->get_scratch_buffer (&scratch_size);
 #define ALLOCATE_ARRAY(Type, name, len) \
   Type *name = (Type *) scratch; \
   do { \
@@ -567,7 +567,7 @@ _hb_directwrite_shape (hb_shape_plan_t    *shape_plan,
   unsigned int chars_len = 0;
   for (unsigned int i = 0; i < buffer->len; i++)
   {
-    hb_codepoint_t c = buffer->info[i].codepoint;
+    codepoint_t c = buffer->info[i].codepoint;
     buffer->info[i].utf16_index () = chars_len;
     if (likely (c <= 0xFFFFu))
       textString[chars_len++] = c;
@@ -585,10 +585,10 @@ _hb_directwrite_shape (hb_shape_plan_t    *shape_plan,
   chars_len = 0;
   for (unsigned int i = 0; i < buffer->len; i++)
   {
-    hb_codepoint_t c = buffer->info[i].codepoint;
+    codepoint_t c = buffer->info[i].codepoint;
     unsigned int cluster = buffer->info[i].cluster;
     log_clusters[chars_len++] = cluster;
-    if (hb_in_range (c, 0x10000u, 0x10FFFFu))
+    if (in_range (c, 0x10000u, 0x10FFFFu))
       log_clusters[chars_len++] = cluster; /* Surrogates. */
   }
 
@@ -625,21 +625,21 @@ _hb_directwrite_shape (hb_shape_plan_t    *shape_plan,
   const wchar_t localeName[20] = {0};
   if (buffer->props.language)
     mbstowcs ((wchar_t*) localeName,
-	      hb_language_to_string (buffer->props.language), 20);
+	      language_to_string (buffer->props.language), 20);
 
   /*
    * Set up features.
    */
-  static_assert ((sizeof (DWRITE_TYPOGRAPHIC_FEATURES) == sizeof (hb_ms_features_t)), "");
-  static_assert ((sizeof (DWRITE_FONT_FEATURE) == sizeof (hb_ms_feature_t)), "");
-  hb_vector_t<hb_ms_features_t *> range_features;
-  hb_vector_t<uint32_t> range_char_counts;
+  static_assert ((sizeof (DWRITE_TYPOGRAPHIC_FEATURES) == sizeof (ms_features_t)), "");
+  static_assert ((sizeof (DWRITE_FONT_FEATURE) == sizeof (ms_feature_t)), "");
+  vector_t<ms_features_t *> range_features;
+  vector_t<uint32_t> range_char_counts;
   if (num_features)
   {
-    hb_vector_t<hb_ms_feature_t> feature_records;
-    hb_vector_t<hb_ms_range_record_t> range_records;
-    if (hb_ms_setup_features (features, num_features, feature_records, range_records))
-      hb_ms_make_feature_ranges (feature_records,
+    vector_t<ms_feature_t> feature_records;
+    vector_t<ms_range_record_t> range_records;
+    if (ms_setup_features (features, num_features, feature_records, range_records))
+      ms_make_feature_ranges (feature_records,
 				 range_records,
 				 0,
 				 chars_len,
@@ -742,7 +742,7 @@ retry_getglyphs:
   {
     uint32_t *p =
       &vis_clusters[log_clusters[buffer->info[i].utf16_index ()]];
-    *p = hb_min (*p, buffer->info[i].cluster);
+    *p = min (*p, buffer->info[i].cluster);
   }
   for (unsigned int i = 1; i < glyphCount; i++)
     if (vis_clusters[i] == (uint32_t) -1)
@@ -759,7 +759,7 @@ retry_getglyphs:
   buffer->len = 0;
   for (unsigned int i = 0; i < glyphCount; i++)
   {
-    hb_glyph_info_t *info = &buffer->info[buffer->len++];
+    glyph_info_t *info = &buffer->info[buffer->len++];
 
     info->codepoint = glyphIndices[i];
     info->cluster = vis_clusters[i];
@@ -774,8 +774,8 @@ retry_getglyphs:
   buffer->clear_positions ();
   for (unsigned int i = 0; i < glyphCount; i++)
   {
-    hb_glyph_info_t *info = &buffer->info[i];
-    hb_glyph_position_t *pos = &buffer->pos[i];
+    glyph_info_t *info = &buffer->info[i];
+    glyph_position_t *pos = &buffer->pos[i];
 
     /* TODO vertical */
     pos->x_advance = x_mult * (int32_t) info->mask;
@@ -783,7 +783,7 @@ retry_getglyphs:
     pos->y_offset = y_mult * info->var2.i32;
   }
 
-  if (isRightToLeft) hb_buffer_reverse (buffer);
+  if (isRightToLeft) buffer_reverse (buffer);
 
   buffer->clear_glyph_flags ();
   buffer->unsafe_to_break ();
@@ -799,28 +799,28 @@ retry_getglyphs:
   return true;
 }
 
-struct _hb_directwrite_font_table_context {
+struct _directwrite_font_table_context {
   IDWriteFontFace *face;
   void *table_context;
 };
 
 static void
-_hb_directwrite_table_data_release (void *data)
+_directwrite_table_data_release (void *data)
 {
-  _hb_directwrite_font_table_context *context = (_hb_directwrite_font_table_context *) data;
+  _directwrite_font_table_context *context = (_directwrite_font_table_context *) data;
   context->face->ReleaseFontTable (context->table_context);
-  hb_free (context);
+  free (context);
 }
 
-static hb_blob_t *
-_hb_directwrite_reference_table (hb_face_t *face HB_UNUSED, hb_tag_t tag, void *user_data)
+static blob_t *
+_directwrite_reference_table (face_t *face HB_UNUSED, tag_t tag, void *user_data)
 {
   IDWriteFontFace *dw_face = ((IDWriteFontFace *) user_data);
   const void *data;
   uint32_t length;
   void *table_context;
   BOOL exists;
-  if (!dw_face || FAILED (dw_face->TryGetFontTable (hb_uint32_swap (tag), &data,
+  if (!dw_face || FAILED (dw_face->TryGetFontTable (uint32_swap (tag), &data,
 						    &length, &table_context, &exists)))
     return nullptr;
 
@@ -830,43 +830,43 @@ _hb_directwrite_reference_table (hb_face_t *face HB_UNUSED, hb_tag_t tag, void *
     return nullptr;
   }
 
-  _hb_directwrite_font_table_context *context = (_hb_directwrite_font_table_context *) hb_malloc (sizeof (_hb_directwrite_font_table_context));
+  _directwrite_font_table_context *context = (_directwrite_font_table_context *) malloc (sizeof (_directwrite_font_table_context));
   context->face = dw_face;
   context->table_context = table_context;
 
-  return hb_blob_create ((const char *) data, length, HB_MEMORY_MODE_READONLY,
-			 context, _hb_directwrite_table_data_release);
+  return blob_create ((const char *) data, length, HB_MEMORY_MODE_READONLY,
+			 context, _directwrite_table_data_release);
 }
 
 static void
-_hb_directwrite_font_release (void *data)
+_directwrite_font_release (void *data)
 {
   if (data)
     ((IDWriteFontFace *) data)->Release ();
 }
 
 /**
- * hb_directwrite_face_create:
+ * directwrite_face_create:
  * @font_face: a DirectWrite IDWriteFontFace object.
  *
  * Constructs a new face object from the specified DirectWrite IDWriteFontFace.
  *
- * Return value: #hb_face_t object corresponding to the given input
+ * Return value: #face_t object corresponding to the given input
  *
  * Since: 2.4.0
  **/
-hb_face_t *
-hb_directwrite_face_create (IDWriteFontFace *font_face)
+face_t *
+directwrite_face_create (IDWriteFontFace *font_face)
 {
   if (font_face)
     font_face->AddRef ();
-  return hb_face_create_for_tables (_hb_directwrite_reference_table, font_face,
-				    _hb_directwrite_font_release);
+  return face_create_for_tables (_directwrite_reference_table, font_face,
+				    _directwrite_font_release);
 }
 
 /**
-* hb_directwrite_face_get_font_face:
-* @face: a #hb_face_t object
+* directwrite_face_get_font_face:
+* @face: a #face_t object
 *
 * Gets the DirectWrite IDWriteFontFace associated with @face.
 *
@@ -875,7 +875,7 @@ hb_directwrite_face_create (IDWriteFontFace *font_face)
 * Since: 2.5.0
 **/
 IDWriteFontFace *
-hb_directwrite_face_get_font_face (hb_face_t *face)
+directwrite_face_get_font_face (face_t *face)
 {
   return face->data.directwrite->fontFace;
 }

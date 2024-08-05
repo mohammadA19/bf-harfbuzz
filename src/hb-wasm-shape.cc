@@ -66,19 +66,19 @@
 
 #ifndef HB_WASM_NO_MODULES
 static bool HB_UNUSED
-_hb_wasm_module_reader (const char *module_name,
+_wasm_module_reader (const char *module_name,
 		       uint8_t **p_buffer, uint32_t *p_size)
 {
   char path[sizeof (HB_WASM_MODULE_DIR) + 64] = HB_WASM_MODULE_DIR "/";
   strncat (path, module_name, sizeof (path) - sizeof (HB_WASM_MODULE_DIR) - 16);
   strncat (path, ".wasm", 6);
 
-  auto *blob = hb_blob_create_from_file (path);
+  auto *blob = blob_create_from_file (path);
 
   unsigned length;
-  auto *data = hb_blob_get_data (blob, &length);
+  auto *data = blob_get_data (blob, &length);
 
-  *p_buffer = (uint8_t *) hb_malloc (length);
+  *p_buffer = (uint8_t *) malloc (length);
 
   if (length && !p_buffer)
     return false;
@@ -86,15 +86,15 @@ _hb_wasm_module_reader (const char *module_name,
   memcpy (*p_buffer, data, length);
   *p_size = length;
 
-  hb_blob_destroy (blob);
+  blob_destroy (blob);
 
   return true;
 }
 
 static void HB_UNUSED
-_hb_wasm_module_destroyer (uint8_t *buffer, uint32_t size)
+_wasm_module_destroyer (uint8_t *buffer, uint32_t size)
 {
-  hb_free (buffer);
+  free (buffer);
 }
 #endif
 
@@ -104,20 +104,20 @@ _hb_wasm_module_destroyer (uint8_t *buffer, uint32_t size)
 
 #define HB_WASM_TAG_WASM HB_TAG('W','a','s','m')
 
-struct hb_wasm_shape_plan_t {
+struct wasm_shape_plan_t {
   wasm_module_inst_t module_inst;
   wasm_exec_env_t exec_env;
   ptr_d(void, wasm_shape_plan);
 };
 
-struct hb_wasm_face_data_t {
-  hb_blob_t *wasm_blob;
+struct wasm_face_data_t {
+  blob_t *wasm_blob;
   wasm_module_t wasm_module;
-  mutable hb_atomic_ptr_t<hb_wasm_shape_plan_t> plan;
+  mutable atomic_ptr_t<wasm_shape_plan_t> plan;
 };
 
 static bool
-_hb_wasm_init ()
+_wasm_init ()
 {
   /* XXX
    *
@@ -137,17 +137,17 @@ _hb_wasm_init ()
     return true;
 
   RuntimeInitArgs init_args;
-  hb_memset (&init_args, 0, sizeof (RuntimeInitArgs));
+  memset (&init_args, 0, sizeof (RuntimeInitArgs));
 
   init_args.mem_alloc_type = Alloc_With_Allocator;
-  init_args.mem_alloc_option.allocator.malloc_func = (void *) hb_malloc;
-  init_args.mem_alloc_option.allocator.realloc_func = (void *) hb_realloc;
-  init_args.mem_alloc_option.allocator.free_func = (void *) hb_free;
+  init_args.mem_alloc_option.allocator.malloc_func = (void *) malloc;
+  init_args.mem_alloc_option.allocator.realloc_func = (void *) realloc;
+  init_args.mem_alloc_option.allocator.free_func = (void *) free;
 
   // Native symbols need below registration phase
-  init_args.n_native_symbols = ARRAY_LENGTH (_hb_wasm_native_symbols);
+  init_args.n_native_symbols = ARRAY_LENGTH (_wasm_native_symbols);
   init_args.native_module_name = "env";
-  init_args.native_symbols = _hb_wasm_native_symbols;
+  init_args.native_symbols = _wasm_native_symbols;
 
   if (unlikely (!wasm_runtime_full_init (&init_args)))
   {
@@ -156,31 +156,31 @@ _hb_wasm_init ()
   }
 
 #ifndef HB_WASM_NO_MODULES
-  wasm_runtime_set_module_reader (_hb_wasm_module_reader,
-				  _hb_wasm_module_destroyer);
+  wasm_runtime_set_module_reader (_wasm_module_reader,
+				  _wasm_module_destroyer);
 #endif
 
   initialized = true;
   return true;
 }
 
-hb_wasm_face_data_t *
-_hb_wasm_shaper_face_data_create (hb_face_t *face)
+wasm_face_data_t *
+_wasm_shaper_face_data_create (face_t *face)
 {
   char error[128];
-  hb_wasm_face_data_t *data = nullptr;
-  hb_blob_t *wasm_blob = nullptr;
+  wasm_face_data_t *data = nullptr;
+  blob_t *wasm_blob = nullptr;
   wasm_module_t wasm_module = nullptr;
 
-  wasm_blob = hb_face_reference_table (face, HB_WASM_TAG_WASM);
-  unsigned length = hb_blob_get_length (wasm_blob);
+  wasm_blob = face_reference_table (face, HB_WASM_TAG_WASM);
+  unsigned length = blob_get_length (wasm_blob);
   if (!length)
     goto fail;
 
-  if (!_hb_wasm_init ())
+  if (!_wasm_init ())
     goto fail;
 
-  wasm_module = wasm_runtime_load ((uint8_t *) hb_blob_get_data_writable (wasm_blob, nullptr),
+  wasm_module = wasm_runtime_load ((uint8_t *) blob_get_data_writable (wasm_blob, nullptr),
 				   length, error, sizeof (error));
   if (unlikely (!wasm_module))
   {
@@ -188,7 +188,7 @@ _hb_wasm_shaper_face_data_create (hb_face_t *face)
     goto fail;
   }
 
-  data = (hb_wasm_face_data_t *) hb_calloc (1, sizeof (hb_wasm_face_data_t));
+  data = (wasm_face_data_t *) calloc (1, sizeof (wasm_face_data_t));
   if (unlikely (!data))
     goto fail;
 
@@ -200,23 +200,23 @@ _hb_wasm_shaper_face_data_create (hb_face_t *face)
 fail:
   if (wasm_module)
       wasm_runtime_unload (wasm_module);
-  hb_blob_destroy (wasm_blob);
-  hb_free (data);
+  blob_destroy (wasm_blob);
+  free (data);
   return nullptr;
 }
 
-static hb_wasm_shape_plan_t *
-acquire_shape_plan (hb_face_t *face,
-		    const hb_wasm_face_data_t *face_data)
+static wasm_shape_plan_t *
+acquire_shape_plan (face_t *face,
+		    const wasm_face_data_t *face_data)
 {
   char error[128];
 
   /* Fetch cached one if available. */
-  hb_wasm_shape_plan_t *plan = face_data->plan.get_acquire ();
+  wasm_shape_plan_t *plan = face_data->plan.get_acquire ();
   if (likely (plan && face_data->plan.cmpexch (plan, nullptr)))
     return plan;
 
-  plan = (hb_wasm_shape_plan_t *) hb_calloc (1, sizeof (hb_wasm_shape_plan_t));
+  plan = (wasm_shape_plan_t *) calloc (1, sizeof (wasm_shape_plan_t));
 
   wasm_module_inst_t module_inst = nullptr;
   wasm_exec_env_t exec_env = nullptr;
@@ -277,13 +277,13 @@ fail:
     wasm_runtime_destroy_exec_env (exec_env);
   if (module_inst)
     wasm_runtime_deinstantiate (module_inst);
-  hb_free (plan);
+  free (plan);
   return nullptr;
 }
 
 static void
-release_shape_plan (const hb_wasm_face_data_t *face_data,
-		    hb_wasm_shape_plan_t *plan,
+release_shape_plan (const wasm_face_data_t *face_data,
+		    wasm_shape_plan_t *plan,
 		    bool cache = false)
 {
   if (cache && face_data->plan.cmpexch (nullptr, plan))
@@ -318,17 +318,17 @@ release_shape_plan (const hb_wasm_face_data_t *face_data,
 
   wasm_runtime_destroy_exec_env (exec_env);
   wasm_runtime_deinstantiate (module_inst);
-  hb_free (plan);
+  free (plan);
 }
 
 void
-_hb_wasm_shaper_face_data_destroy (hb_wasm_face_data_t *data)
+_wasm_shaper_face_data_destroy (wasm_face_data_t *data)
 {
   if (data->plan.get_relaxed ())
     release_shape_plan (data, data->plan);
   wasm_runtime_unload (data->wasm_module);
-  hb_blob_destroy (data->wasm_blob);
-  hb_free (data);
+  blob_destroy (data->wasm_blob);
+  free (data);
 }
 
 
@@ -336,16 +336,16 @@ _hb_wasm_shaper_face_data_destroy (hb_wasm_face_data_t *data)
  * shaper font data
  */
 
-struct hb_wasm_font_data_t {};
+struct wasm_font_data_t {};
 
-hb_wasm_font_data_t *
-_hb_wasm_shaper_font_data_create (hb_font_t *font HB_UNUSED)
+wasm_font_data_t *
+_wasm_shaper_font_data_create (font_t *font HB_UNUSED)
 {
-  return (hb_wasm_font_data_t *) HB_SHAPER_DATA_SUCCEEDED;
+  return (wasm_font_data_t *) HB_SHAPER_DATA_SUCCEEDED;
 }
 
 void
-_hb_wasm_shaper_font_data_destroy (hb_wasm_font_data_t *data HB_UNUSED)
+_wasm_shaper_font_data_destroy (wasm_font_data_t *data HB_UNUSED)
 {
 }
 
@@ -354,19 +354,19 @@ _hb_wasm_shaper_font_data_destroy (hb_wasm_font_data_t *data HB_UNUSED)
  * shaper
  */
 
-hb_bool_t
-_hb_wasm_shape (hb_shape_plan_t    *shape_plan,
-		hb_font_t          *font,
-		hb_buffer_t        *buffer,
-		const hb_feature_t *features,
+bool_t
+_wasm_shape (shape_plan_t    *shape_plan,
+		font_t          *font,
+		buffer_t        *buffer,
+		const feature_t *features,
 		unsigned int        num_features)
 {
   if (unlikely (buffer->in_error ()))
     return false;
 
   bool ret = true;
-  hb_face_t *face = font->face;
-  const hb_wasm_face_data_t *face_data = face->data.wasm;
+  face_t *face = font->face;
+  const wasm_face_data_t *face_data = face->data.wasm;
 
   bool retried = false;
   if (0)
@@ -377,7 +377,7 @@ retry:
 
   wasm_function_inst_t func = nullptr;
 
-  hb_wasm_shape_plan_t *plan = acquire_shape_plan (face, face_data);
+  wasm_shape_plan_t *plan = acquire_shape_plan (face, face_data);
   if (unlikely (!plan))
   {
     DEBUG_MSG (WASM, face_data, "Acquiring shape-plan failed.");

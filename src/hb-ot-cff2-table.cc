@@ -99,9 +99,9 @@ struct cff2_path_procs_extents_t : path_procs_t<cff2_path_procs_extents_t, cff2_
 
 struct cff2_cs_opset_extents_t : cff2_cs_opset_t<cff2_cs_opset_extents_t, cff2_extents_param_t, number_t, cff2_path_procs_extents_t> {};
 
-bool OT::cff2::accelerator_t::get_extents (hb_font_t *font,
-					   hb_codepoint_t glyph,
-					   hb_glyph_extents_t *extents) const
+bool OT::cff2::accelerator_t::get_extents (font_t *font,
+					   codepoint_t glyph,
+					   glyph_extents_t *extents) const
 {
 #ifdef HB_NO_OT_FONT_CFF
   /* XXX Remove check when this code moves to .hh file. */
@@ -111,7 +111,7 @@ bool OT::cff2::accelerator_t::get_extents (hb_font_t *font,
   if (unlikely (!is_valid () || (glyph >= num_glyphs))) return false;
 
   unsigned int fd = fdSelect->get_fd (glyph);
-  const hb_ubytes_t str = (*charStrings)[glyph];
+  const ubytes_t str = (*charStrings)[glyph];
   cff2_cs_interp_env_t<number_t> env (str, *this, fd, font->coords, font->num_coords);
   cff2_cs_interpreter_t<cff2_cs_opset_extents_t, cff2_extents_param_t, number_t> interp (env);
   cff2_extents_param_t  param;
@@ -143,7 +143,7 @@ bool OT::cff2::accelerator_t::get_extents (hb_font_t *font,
   return true;
 }
 
-bool OT::cff2::accelerator_t::paint_glyph (hb_font_t *font, hb_codepoint_t glyph, hb_paint_funcs_t *funcs, void *data, hb_color_t foreground) const
+bool OT::cff2::accelerator_t::paint_glyph (font_t *font, codepoint_t glyph, paint_funcs_t *funcs, void *data, color_t foreground) const
 {
   funcs->push_clip_glyph (data, glyph, font);
   funcs->color (data, true, foreground);
@@ -154,7 +154,7 @@ bool OT::cff2::accelerator_t::paint_glyph (hb_font_t *font, hb_codepoint_t glyph
 
 struct cff2_path_param_t
 {
-  cff2_path_param_t (hb_font_t *font_, hb_draw_session_t &draw_session_)
+  cff2_path_param_t (font_t *font_, draw_session_t &draw_session_)
   {
     draw_session = &draw_session_;
     font = font_;
@@ -174,8 +174,8 @@ struct cff2_path_param_t
   }
 
   protected:
-  hb_draw_session_t *draw_session;
-  hb_font_t *font;
+  draw_session_t *draw_session;
+  font_t *font;
 };
 
 struct cff2_path_procs_path_t : path_procs_t<cff2_path_procs_path_t, cff2_cs_interp_env_t<number_t>, cff2_path_param_t>
@@ -201,12 +201,12 @@ struct cff2_path_procs_path_t : path_procs_t<cff2_path_procs_path_t, cff2_cs_int
 
 struct cff2_cs_opset_path_t : cff2_cs_opset_t<cff2_cs_opset_path_t, cff2_path_param_t, number_t, cff2_path_procs_path_t> {};
 
-bool OT::cff2::accelerator_t::get_path (hb_font_t *font, hb_codepoint_t glyph, hb_draw_session_t &draw_session) const
+bool OT::cff2::accelerator_t::get_path (font_t *font, codepoint_t glyph, draw_session_t &draw_session) const
 {
-  return get_path_at (font, glyph, draw_session, hb_array (font->coords, font->num_coords));
+  return get_path_at (font, glyph, draw_session, array (font->coords, font->num_coords));
 }
 
-bool OT::cff2::accelerator_t::get_path_at (hb_font_t *font, hb_codepoint_t glyph, hb_draw_session_t &draw_session, hb_array_t<const int> coords) const
+bool OT::cff2::accelerator_t::get_path_at (font_t *font, codepoint_t glyph, draw_session_t &draw_session, array_t<const int> coords) const
 {
 #ifdef HB_NO_OT_FONT_CFF
   /* XXX Remove check when this code moves to .hh file. */
@@ -216,7 +216,7 @@ bool OT::cff2::accelerator_t::get_path_at (hb_font_t *font, hb_codepoint_t glyph
   if (unlikely (!is_valid () || (glyph >= num_glyphs))) return false;
 
   unsigned int fd = fdSelect->get_fd (glyph);
-  const hb_ubytes_t str = (*charStrings)[glyph];
+  const ubytes_t str = (*charStrings)[glyph];
   cff2_cs_interp_env_t<number_t> env (str, *this, fd, coords.arrayZ, coords.length);
   cff2_cs_interpreter_t<cff2_cs_opset_path_t, cff2_path_param_t, number_t> interp (env);
   cff2_path_param_t param (font, draw_session);

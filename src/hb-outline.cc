@@ -34,9 +34,9 @@
 #include "hb-machinery.hh"
 
 
-void hb_outline_t::replay (hb_draw_funcs_t *pen, void *pen_data) const
+void outline_t::replay (draw_funcs_t *pen, void *pen_data) const
 {
-  hb_draw_state_t st = HB_DRAW_STATE_DEFAULT;
+  draw_state_t st = HB_DRAW_STATE_DEFAULT;
 
   unsigned first = 0;
   for (unsigned contour : contours)
@@ -44,33 +44,33 @@ void hb_outline_t::replay (hb_draw_funcs_t *pen, void *pen_data) const
     auto it = points.as_array ().sub_array (first, contour - first);
     while (it)
     {
-      hb_outline_point_t p1 = *it++;
+      outline_point_t p1 = *it++;
       switch (p1.type)
       {
-	case hb_outline_point_t::type_t::MOVE_TO:
+	case outline_point_t::type_t::MOVE_TO:
 	{
 	  pen->move_to (pen_data, st,
 			   p1.x, p1.y);
 	}
 	break;
-	case hb_outline_point_t::type_t::LINE_TO:
+	case outline_point_t::type_t::LINE_TO:
 	{
 	  pen->line_to (pen_data, st,
 			   p1.x, p1.y);
 	}
 	break;
-	case hb_outline_point_t::type_t::QUADRATIC_TO:
+	case outline_point_t::type_t::QUADRATIC_TO:
 	{
-	  hb_outline_point_t p2 = *it++;
+	  outline_point_t p2 = *it++;
 	  pen->quadratic_to (pen_data, st,
 				p1.x, p1.y,
 				p2.x, p2.y);
 	}
 	break;
-	case hb_outline_point_t::type_t::CUBIC_TO:
+	case outline_point_t::type_t::CUBIC_TO:
 	{
-	  hb_outline_point_t p2 = *it++;
-	  hb_outline_point_t p3 = *it++;
+	  outline_point_t p2 = *it++;
+	  outline_point_t p3 = *it++;
 	  pen->cubic_to (pen_data, st,
 			    p1.x, p1.y,
 			    p2.x, p2.y,
@@ -84,7 +84,7 @@ void hb_outline_t::replay (hb_draw_funcs_t *pen, void *pen_data) const
   }
 }
 
-float hb_outline_t::control_area () const
+float outline_t::control_area () const
 {
   float a = 0;
   unsigned first = 0;
@@ -104,7 +104,7 @@ float hb_outline_t::control_area () const
   return a * .5f;
 }
 
-void hb_outline_t::embolden (float x_strength, float y_strength,
+void outline_t::embolden (float x_strength, float y_strength,
 			     float x_shift, float y_shift)
 {
   /* This function is a straight port of FreeType's FT_Outline_EmboldenXY.
@@ -122,7 +122,7 @@ void hb_outline_t::embolden (float x_strength, float y_strength,
   signed first = 0;
   for (unsigned c = 0; c < contours.length; c++)
   {
-    hb_outline_vector_t in, out, anchor, shift;
+    outline_vector_t in, out, anchor, shift;
     float l_in, l_out, l_anchor = 0, l, q, d;
 
     l_in = 0;
@@ -182,7 +182,7 @@ void hb_outline_t::embolden (float x_strength, float y_strength,
 	  if ( orientation_negative )
 	    q = -q;
 
-	  l = hb_min (l_in, l_out);
+	  l = min (l_in, l_out);
 
 	  /* non-strict inequalities avoid divide-by-zero when q == l == 0 */
 	  if (x_strength * q <= l * d)
@@ -219,87 +219,87 @@ void hb_outline_t::embolden (float x_strength, float y_strength,
 }
 
 static void
-hb_outline_recording_pen_move_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
+outline_recording_pen_move_to (draw_funcs_t *dfuncs HB_UNUSED,
 				  void *data,
-				  hb_draw_state_t *st,
+				  draw_state_t *st,
 				  float to_x, float to_y,
 				  void *user_data HB_UNUSED)
 {
-  hb_outline_t *c = (hb_outline_t *) data;
+  outline_t *c = (outline_t *) data;
 
-  c->points.push (hb_outline_point_t {to_x, to_y, hb_outline_point_t::type_t::MOVE_TO});
+  c->points.push (outline_point_t {to_x, to_y, outline_point_t::type_t::MOVE_TO});
 }
 
 static void
-hb_outline_recording_pen_line_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
+outline_recording_pen_line_to (draw_funcs_t *dfuncs HB_UNUSED,
 				  void *data,
-				  hb_draw_state_t *st,
+				  draw_state_t *st,
 				  float to_x, float to_y,
 				  void *user_data HB_UNUSED)
 {
-  hb_outline_t *c = (hb_outline_t *) data;
+  outline_t *c = (outline_t *) data;
 
-  c->points.push (hb_outline_point_t {to_x, to_y, hb_outline_point_t::type_t::LINE_TO});
+  c->points.push (outline_point_t {to_x, to_y, outline_point_t::type_t::LINE_TO});
 }
 
 static void
-hb_outline_recording_pen_quadratic_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
+outline_recording_pen_quadratic_to (draw_funcs_t *dfuncs HB_UNUSED,
 				       void *data,
-				       hb_draw_state_t *st,
+				       draw_state_t *st,
 				       float control_x, float control_y,
 				       float to_x, float to_y,
 				       void *user_data HB_UNUSED)
 {
-  hb_outline_t *c = (hb_outline_t *) data;
+  outline_t *c = (outline_t *) data;
 
-  c->points.push (hb_outline_point_t {control_x, control_y, hb_outline_point_t::type_t::QUADRATIC_TO});
-  c->points.push (hb_outline_point_t {to_x, to_y, hb_outline_point_t::type_t::QUADRATIC_TO});
+  c->points.push (outline_point_t {control_x, control_y, outline_point_t::type_t::QUADRATIC_TO});
+  c->points.push (outline_point_t {to_x, to_y, outline_point_t::type_t::QUADRATIC_TO});
 }
 
 static void
-hb_outline_recording_pen_cubic_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
+outline_recording_pen_cubic_to (draw_funcs_t *dfuncs HB_UNUSED,
 				   void *data,
-				   hb_draw_state_t *st,
+				   draw_state_t *st,
 				   float control1_x, float control1_y,
 				   float control2_x, float control2_y,
 				   float to_x, float to_y,
 				   void *user_data HB_UNUSED)
 {
-  hb_outline_t *c = (hb_outline_t *) data;
+  outline_t *c = (outline_t *) data;
 
-  c->points.push (hb_outline_point_t {control1_x, control1_y, hb_outline_point_t::type_t::CUBIC_TO});
-  c->points.push (hb_outline_point_t {control2_x, control2_y, hb_outline_point_t::type_t::CUBIC_TO});
-  c->points.push (hb_outline_point_t {to_x, to_y, hb_outline_point_t::type_t::CUBIC_TO});
+  c->points.push (outline_point_t {control1_x, control1_y, outline_point_t::type_t::CUBIC_TO});
+  c->points.push (outline_point_t {control2_x, control2_y, outline_point_t::type_t::CUBIC_TO});
+  c->points.push (outline_point_t {to_x, to_y, outline_point_t::type_t::CUBIC_TO});
 }
 
 static void
-hb_outline_recording_pen_close_path (hb_draw_funcs_t *dfuncs HB_UNUSED,
+outline_recording_pen_close_path (draw_funcs_t *dfuncs HB_UNUSED,
 				     void *data,
-				     hb_draw_state_t *st,
+				     draw_state_t *st,
 				     void *user_data HB_UNUSED)
 {
-  hb_outline_t *c = (hb_outline_t *) data;
+  outline_t *c = (outline_t *) data;
 
   c->contours.push (c->points.length);
 }
 
 static inline void free_static_outline_recording_pen_funcs ();
 
-static struct hb_outline_recording_pen_funcs_lazy_loader_t : hb_draw_funcs_lazy_loader_t<hb_outline_recording_pen_funcs_lazy_loader_t>
+static struct outline_recording_pen_funcs_lazy_loader_t : draw_funcs_lazy_loader_t<outline_recording_pen_funcs_lazy_loader_t>
 {
-  static hb_draw_funcs_t *create ()
+  static draw_funcs_t *create ()
   {
-    hb_draw_funcs_t *funcs = hb_draw_funcs_create ();
+    draw_funcs_t *funcs = draw_funcs_create ();
 
-    hb_draw_funcs_set_move_to_func (funcs, hb_outline_recording_pen_move_to, nullptr, nullptr);
-    hb_draw_funcs_set_line_to_func (funcs, hb_outline_recording_pen_line_to, nullptr, nullptr);
-    hb_draw_funcs_set_quadratic_to_func (funcs, hb_outline_recording_pen_quadratic_to, nullptr, nullptr);
-    hb_draw_funcs_set_cubic_to_func (funcs, hb_outline_recording_pen_cubic_to, nullptr, nullptr);
-    hb_draw_funcs_set_close_path_func (funcs, hb_outline_recording_pen_close_path, nullptr, nullptr);
+    draw_funcs_set_move_to_func (funcs, outline_recording_pen_move_to, nullptr, nullptr);
+    draw_funcs_set_line_to_func (funcs, outline_recording_pen_line_to, nullptr, nullptr);
+    draw_funcs_set_quadratic_to_func (funcs, outline_recording_pen_quadratic_to, nullptr, nullptr);
+    draw_funcs_set_cubic_to_func (funcs, outline_recording_pen_cubic_to, nullptr, nullptr);
+    draw_funcs_set_close_path_func (funcs, outline_recording_pen_close_path, nullptr, nullptr);
 
-    hb_draw_funcs_make_immutable (funcs);
+    draw_funcs_make_immutable (funcs);
 
-    hb_atexit (free_static_outline_recording_pen_funcs);
+    atexit (free_static_outline_recording_pen_funcs);
 
     return funcs;
   }
@@ -311,8 +311,8 @@ void free_static_outline_recording_pen_funcs ()
   static_outline_recording_pen_funcs.free_instance ();
 }
 
-hb_draw_funcs_t *
-hb_outline_recording_pen_get_funcs ()
+draw_funcs_t *
+outline_recording_pen_get_funcs ()
 {
   return static_outline_recording_pen_funcs.get_unconst ();
 }

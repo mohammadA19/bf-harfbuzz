@@ -29,7 +29,7 @@
 /* Unit tests for hb-shape.h */
 
 /*
- * This test provides a framework to test aspects of hb_shape() that are
+ * This test provides a framework to test aspects of shape() that are
  * font-independent.  Please add tests for any feature that fits that
  * description.
  */
@@ -40,9 +40,9 @@
 
 static const char test_data[] = "test\0data";
 
-static hb_position_t
-glyph_h_advance_func (hb_font_t *font HB_UNUSED, void *font_data HB_UNUSED,
-		      hb_codepoint_t glyph,
+static position_t
+glyph_h_advance_func (font_t *font HB_UNUSED, void *font_data HB_UNUSED,
+		      codepoint_t glyph,
 		      void *user_data HB_UNUSED)
 {
   switch (glyph) {
@@ -53,10 +53,10 @@ glyph_h_advance_func (hb_font_t *font HB_UNUSED, void *font_data HB_UNUSED,
   return 0;
 }
 
-static hb_bool_t
-glyph_func (hb_font_t *font HB_UNUSED, void *font_data HB_UNUSED,
-	    hb_codepoint_t unicode,
-	    hb_codepoint_t *glyph,
+static bool_t
+glyph_func (font_t *font HB_UNUSED, void *font_data HB_UNUSED,
+	    codepoint_t unicode,
+	    codepoint_t *glyph,
 	    void *user_data HB_UNUSED)
 {
   switch (unicode) {
@@ -70,27 +70,27 @@ glyph_func (hb_font_t *font HB_UNUSED, void *font_data HB_UNUSED,
 static const char TesT[] = "TesT";
 
 static void
-test_font (hb_font_t *font)
+test_font (font_t *font)
 {
-  hb_buffer_t *buffer;
+  buffer_t *buffer;
   unsigned int len;
-  hb_glyph_info_t *glyphs;
-  hb_glyph_position_t *positions;
+  glyph_info_t *glyphs;
+  glyph_position_t *positions;
 
-  buffer =  hb_buffer_create ();
-  hb_buffer_set_direction (buffer, HB_DIRECTION_LTR);
-  hb_buffer_add_utf8 (buffer, TesT, 4, 0, 4);
+  buffer =  buffer_create ();
+  buffer_set_direction (buffer, HB_DIRECTION_LTR);
+  buffer_add_utf8 (buffer, TesT, 4, 0, 4);
 
-  hb_shape (font, buffer, NULL, 0);
+  shape (font, buffer, NULL, 0);
 
-  len = hb_buffer_get_length (buffer);
-  glyphs = hb_buffer_get_glyph_infos (buffer, NULL);
-  positions = hb_buffer_get_glyph_positions (buffer, NULL);
+  len = buffer_get_length (buffer);
+  glyphs = buffer_get_glyph_infos (buffer, NULL);
+  positions = buffer_get_glyph_positions (buffer, NULL);
 
   {
-    const hb_codepoint_t output_glyphs[] = {1, 2, 3, 1};
-    const hb_position_t output_x_advances[] = {10, 6, 5, 10};
-    const hb_position_t output_x_offsets[] = {0, 0, 0, 0};
+    const codepoint_t output_glyphs[] = {1, 2, 3, 1};
+    const position_t output_x_advances[] = {10, 6, 5, 10};
+    const position_t output_x_offsets[] = {0, 0, 0, 0};
     unsigned int i;
     g_assert_cmpint (len, ==, 4);
     for (i = 0; i < len; i++) {
@@ -105,68 +105,68 @@ test_font (hb_font_t *font)
     }
   }
 
-  hb_buffer_destroy (buffer);
+  buffer_destroy (buffer);
 }
 
 static void
 test_shape (void)
 {
-  hb_blob_t *blob;
-  hb_face_t *face;
-  hb_font_funcs_t *ffuncs;
-  hb_font_t *font, *sub_font;
+  blob_t *blob;
+  face_t *face;
+  font_funcs_t *ffuncs;
+  font_t *font, *sub_font;
 
-  blob = hb_blob_create (test_data, sizeof (test_data), HB_MEMORY_MODE_READONLY, NULL, NULL);
-  face = hb_face_create (blob, 0);
-  hb_blob_destroy (blob);
-  font = hb_font_create (face);
-  hb_face_destroy (face);
-  hb_font_set_scale (font, 10, 10);
+  blob = blob_create (test_data, sizeof (test_data), HB_MEMORY_MODE_READONLY, NULL, NULL);
+  face = face_create (blob, 0);
+  blob_destroy (blob);
+  font = font_create (face);
+  face_destroy (face);
+  font_set_scale (font, 10, 10);
 
-  ffuncs = hb_font_funcs_create ();
-  hb_font_funcs_set_glyph_h_advance_func (ffuncs, glyph_h_advance_func, NULL, NULL);
-  hb_font_funcs_set_nominal_glyph_func (ffuncs, glyph_func, malloc (10), free);
-  hb_font_set_funcs (font, ffuncs, NULL, NULL);
-  hb_font_funcs_destroy (ffuncs);
+  ffuncs = font_funcs_create ();
+  font_funcs_set_glyph_h_advance_func (ffuncs, glyph_h_advance_func, NULL, NULL);
+  font_funcs_set_nominal_glyph_func (ffuncs, glyph_func, malloc (10), free);
+  font_set_funcs (font, ffuncs, NULL, NULL);
+  font_funcs_destroy (ffuncs);
 
   test_font (font);
 
-  sub_font = hb_font_create_sub_font (font);
+  sub_font = font_create_sub_font (font);
   test_font (sub_font);
 
-  hb_font_destroy (sub_font);
-  hb_font_destroy (font);
+  font_destroy (sub_font);
+  font_destroy (font);
 }
 
 static void
 test_shape_clusters (void)
 {
-  hb_face_t *face;
-  hb_font_t *font;
-  hb_buffer_t *buffer;
+  face_t *face;
+  font_t *font;
+  buffer_t *buffer;
   unsigned int len;
-  hb_glyph_info_t *glyphs;
+  glyph_info_t *glyphs;
 
-  face = hb_face_create (NULL, 0);
-  font = hb_font_create (face);
-  hb_face_destroy (face);
+  face = face_create (NULL, 0);
+  font = font_create (face);
+  face_destroy (face);
 
-  buffer =  hb_buffer_create ();
-  hb_buffer_set_direction (buffer, HB_DIRECTION_LTR);
+  buffer =  buffer_create ();
+  buffer_set_direction (buffer, HB_DIRECTION_LTR);
   {
     /* https://crbug.com/497578 */
-    hb_codepoint_t test[] = {0xFFF1, 0xF0B6};
-    hb_buffer_add_utf32 (buffer, test, 2, 0, 2);
+    codepoint_t test[] = {0xFFF1, 0xF0B6};
+    buffer_add_utf32 (buffer, test, 2, 0, 2);
   }
 
-  hb_shape (font, buffer, NULL, 0);
+  shape (font, buffer, NULL, 0);
 
-  len = hb_buffer_get_length (buffer);
-  glyphs = hb_buffer_get_glyph_infos (buffer, NULL);
+  len = buffer_get_length (buffer);
+  glyphs = buffer_get_glyph_infos (buffer, NULL);
 
   {
-    const hb_codepoint_t output_glyphs[] = {0};
-    const hb_position_t output_clusters[] = {0};
+    const codepoint_t output_glyphs[] = {0};
+    const position_t output_clusters[] = {0};
     unsigned int i;
     g_assert_cmpint (len, ==, 1);
     for (i = 0; i < len; i++) {
@@ -175,15 +175,15 @@ test_shape_clusters (void)
     }
   }
 
-  hb_buffer_destroy (buffer);
-  hb_font_destroy (font);
+  buffer_destroy (buffer);
+  font_destroy (font);
 }
 
 
 static void
 test_shape_list (void)
 {
-  const char **shapers = hb_shape_list_shapers ();
+  const char **shapers = shape_list_shapers ();
 
   unsigned int i;
   for (i = 0; shapers[i]; i++)
@@ -196,13 +196,13 @@ test_shape_list (void)
 int
 main (int argc, char **argv)
 {
-  hb_test_init (&argc, &argv);
+  test_init (&argc, &argv);
 
-  hb_test_add (test_shape);
-  hb_test_add (test_shape_clusters);
+  test_add (test_shape);
+  test_add (test_shape_clusters);
   /* TODO test fallback shaper */
   /* TODO test shaper_full */
-  hb_test_add (test_shape_list);
+  test_add (test_shape_list);
 
-  return hb_test_run();
+  return test_run();
 }

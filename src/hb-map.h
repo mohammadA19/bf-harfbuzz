@@ -40,103 +40,103 @@ HB_BEGIN_DECLS
 /**
  * HB_MAP_VALUE_INVALID:
  *
- * Unset #hb_map_t value.
+ * Unset #map_t value.
  *
  * Since: 1.7.7
  */
 #define HB_MAP_VALUE_INVALID HB_CODEPOINT_INVALID
 
 /**
- * hb_map_t:
+ * map_t:
  *
  * Data type for holding integer-to-integer hash maps.
  *
  **/
-typedef struct hb_map_t hb_map_t;
+typedef struct map_t map_t;
 
 
-HB_EXTERN hb_map_t *
-hb_map_create (void);
+HB_EXTERN map_t *
+map_create (void);
 
-HB_EXTERN hb_map_t *
-hb_map_get_empty (void);
+HB_EXTERN map_t *
+map_get_empty (void);
 
-HB_EXTERN hb_map_t *
-hb_map_reference (hb_map_t *map);
+HB_EXTERN map_t *
+map_reference (map_t *map);
 
 HB_EXTERN void
-hb_map_destroy (hb_map_t *map);
+map_destroy (map_t *map);
 
-HB_EXTERN hb_bool_t
-hb_map_set_user_data (hb_map_t           *map,
-		      hb_user_data_key_t *key,
+HB_EXTERN bool_t
+map_set_user_data (map_t           *map,
+		      user_data_key_t *key,
 		      void *              data,
-		      hb_destroy_func_t   destroy,
-		      hb_bool_t           replace);
+		      destroy_func_t   destroy,
+		      bool_t           replace);
 
 HB_EXTERN void *
-hb_map_get_user_data (const hb_map_t     *map,
-		      hb_user_data_key_t *key);
+map_get_user_data (const map_t     *map,
+		      user_data_key_t *key);
 
 
 /* Returns false if allocation has failed before */
-HB_EXTERN hb_bool_t
-hb_map_allocation_successful (const hb_map_t *map);
+HB_EXTERN bool_t
+map_allocation_successful (const map_t *map);
 
-HB_EXTERN hb_map_t *
-hb_map_copy (const hb_map_t *map);
+HB_EXTERN map_t *
+map_copy (const map_t *map);
 
 HB_EXTERN void
-hb_map_clear (hb_map_t *map);
+map_clear (map_t *map);
 
-HB_EXTERN hb_bool_t
-hb_map_is_empty (const hb_map_t *map);
+HB_EXTERN bool_t
+map_is_empty (const map_t *map);
 
 HB_EXTERN unsigned int
-hb_map_get_population (const hb_map_t *map);
+map_get_population (const map_t *map);
 
-HB_EXTERN hb_bool_t
-hb_map_is_equal (const hb_map_t *map,
-		 const hb_map_t *other);
+HB_EXTERN bool_t
+map_is_equal (const map_t *map,
+		 const map_t *other);
 
 HB_EXTERN unsigned int
-hb_map_hash (const hb_map_t *map);
+map_hash (const map_t *map);
 
 HB_EXTERN void
-hb_map_set (hb_map_t       *map,
-	    hb_codepoint_t  key,
-	    hb_codepoint_t  value);
+map_set (map_t       *map,
+	    codepoint_t  key,
+	    codepoint_t  value);
 
-HB_EXTERN hb_codepoint_t
-hb_map_get (const hb_map_t *map,
-	    hb_codepoint_t  key);
-
-HB_EXTERN void
-hb_map_del (hb_map_t       *map,
-	    hb_codepoint_t  key);
-
-HB_EXTERN hb_bool_t
-hb_map_has (const hb_map_t *map,
-	    hb_codepoint_t  key);
+HB_EXTERN codepoint_t
+map_get (const map_t *map,
+	    codepoint_t  key);
 
 HB_EXTERN void
-hb_map_update (hb_map_t *map,
-	       const hb_map_t *other);
+map_del (map_t       *map,
+	    codepoint_t  key);
+
+HB_EXTERN bool_t
+map_has (const map_t *map,
+	    codepoint_t  key);
+
+HB_EXTERN void
+map_update (map_t *map,
+	       const map_t *other);
 
 /* Pass -1 in for idx to get started. */
-HB_EXTERN hb_bool_t
-hb_map_next (const hb_map_t *map,
+HB_EXTERN bool_t
+map_next (const map_t *map,
 	     int *idx,
-	     hb_codepoint_t *key,
-	     hb_codepoint_t *value);
+	     codepoint_t *key,
+	     codepoint_t *value);
 
 HB_EXTERN void
-hb_map_keys (const hb_map_t *map,
-	     hb_set_t *keys);
+map_keys (const map_t *map,
+	     set_t *keys);
 
 HB_EXTERN void
-hb_map_values (const hb_map_t *map,
-	       hb_set_t *values);
+map_values (const map_t *map,
+	       set_t *values);
 
 HB_END_DECLS
 

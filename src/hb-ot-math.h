@@ -54,9 +54,9 @@ HB_BEGIN_DECLS
  *
  * OpenType script tag, `math`, for features specific to math shaping.
  *
- * <note>#HB_OT_TAG_MATH_SCRIPT is not a valid #hb_script_t and should only be
+ * <note>#HB_OT_TAG_MATH_SCRIPT is not a valid #script_t and should only be
  * used with functions that accept raw OpenType script tags, such as
- * #hb_ot_layout_collect_features. In other cases, #HB_SCRIPT_MATH should be
+ * #ot_layout_collect_features. In other cases, #HB_SCRIPT_MATH should be
  * used instead.</note>
  *
  * Since: 3.4.0
@@ -66,7 +66,7 @@ HB_BEGIN_DECLS
 /* Types */
 
 /**
- * hb_ot_math_constant_t:
+ * ot_math_constant_t:
  * @HB_OT_MATH_CONSTANT_SCRIPT_PERCENT_SCALE_DOWN: scriptPercentScaleDown
  * @HB_OT_MATH_CONSTANT_SCRIPT_SCRIPT_PERCENT_SCALE_DOWN: scriptScriptPercentScaleDown
  * @HB_OT_MATH_CONSTANT_DELIMITED_SUB_FORMULA_MIN_HEIGHT: delimitedSubFormulaMinHeight
@@ -187,10 +187,10 @@ typedef enum {
   HB_OT_MATH_CONSTANT_RADICAL_KERN_BEFORE_DEGREE = 53,
   HB_OT_MATH_CONSTANT_RADICAL_KERN_AFTER_DEGREE = 54,
   HB_OT_MATH_CONSTANT_RADICAL_DEGREE_BOTTOM_RAISE_PERCENT = 55
-} hb_ot_math_constant_t;
+} ot_math_constant_t;
 
 /**
- * hb_ot_math_kern_t:
+ * ot_math_kern_t:
  * @HB_OT_MATH_KERN_TOP_RIGHT: The top right corner of the glyph.
  * @HB_OT_MATH_KERN_TOP_LEFT: The top left corner of the glyph.
  * @HB_OT_MATH_KERN_BOTTOM_RIGHT: The bottom right corner of the glyph.
@@ -206,10 +206,10 @@ typedef enum {
   HB_OT_MATH_KERN_TOP_LEFT = 1,
   HB_OT_MATH_KERN_BOTTOM_RIGHT = 2,
   HB_OT_MATH_KERN_BOTTOM_LEFT = 3
-} hb_ot_math_kern_t;
+} ot_math_kern_t;
 
 /**
- * hb_ot_math_kern_entry_t:
+ * ot_math_kern_entry_t:
  * @max_correction_height: The maximum height at which this entry should be used
  * @kern_value: The kern value of the entry
  *
@@ -218,12 +218,12 @@ typedef enum {
  * Since: 3.4.0
  */
 typedef struct {
-  hb_position_t max_correction_height;
-  hb_position_t kern_value;
-} hb_ot_math_kern_entry_t;
+  position_t max_correction_height;
+  position_t kern_value;
+} ot_math_kern_entry_t;
 
 /**
- * hb_ot_math_glyph_variant_t:
+ * ot_math_glyph_variant_t:
  * @glyph: The glyph index of the variant
  * @advance: The advance width of the variant
  *
@@ -231,13 +231,13 @@ typedef struct {
  *
  * Since: 1.3.3
  */
-typedef struct hb_ot_math_glyph_variant_t {
-  hb_codepoint_t glyph;
-  hb_position_t advance;
-} hb_ot_math_glyph_variant_t;
+typedef struct ot_math_glyph_variant_t {
+  codepoint_t glyph;
+  position_t advance;
+} ot_math_glyph_variant_t;
 
 /**
- * hb_ot_math_glyph_part_flags_t:
+ * ot_math_glyph_part_flags_t:
  * @HB_OT_MATH_GLYPH_PART_FLAG_EXTENDER: This is an extender glyph part that
  * can be repeated to reach the desired length.
  *
@@ -247,15 +247,15 @@ typedef struct hb_ot_math_glyph_variant_t {
  */
 typedef enum { /*< flags >*/
   HB_OT_MATH_GLYPH_PART_FLAG_EXTENDER	= 0x00000001u  /* Extender glyph */
-} hb_ot_math_glyph_part_flags_t;
+} ot_math_glyph_part_flags_t;
 
 /**
- * hb_ot_math_glyph_part_t:
+ * ot_math_glyph_part_t:
  * @glyph: The glyph index of the variant part
  * @start_connector_length: The length of the connector on the starting side of the variant part
  * @end_connector_length: The length of the connector on the ending side of the variant part
  * @full_advance: The total advance of the part
- * @flags: #hb_ot_math_glyph_part_flags_t flags for the part
+ * @flags: #ot_math_glyph_part_flags_t flags for the part
  * 
  * Data type to hold information for a "part" component of a math-variant glyph.
  * Large variants for stretchable math glyphs (such as parentheses) can be constructed
@@ -263,69 +263,69 @@ typedef enum { /*< flags >*/
  *
  * Since: 1.3.3
  */
-typedef struct hb_ot_math_glyph_part_t {
-  hb_codepoint_t glyph;
-  hb_position_t start_connector_length;
-  hb_position_t end_connector_length;
-  hb_position_t full_advance;
-  hb_ot_math_glyph_part_flags_t flags;
-} hb_ot_math_glyph_part_t;
+typedef struct ot_math_glyph_part_t {
+  codepoint_t glyph;
+  position_t start_connector_length;
+  position_t end_connector_length;
+  position_t full_advance;
+  ot_math_glyph_part_flags_t flags;
+} ot_math_glyph_part_t;
 
 /* Methods */
 
-HB_EXTERN hb_bool_t
-hb_ot_math_has_data (hb_face_t *face);
+HB_EXTERN bool_t
+ot_math_has_data (face_t *face);
 
-HB_EXTERN hb_position_t
-hb_ot_math_get_constant (hb_font_t *font,
-			 hb_ot_math_constant_t constant);
+HB_EXTERN position_t
+ot_math_get_constant (font_t *font,
+			 ot_math_constant_t constant);
 
-HB_EXTERN hb_position_t
-hb_ot_math_get_glyph_italics_correction (hb_font_t *font,
-					 hb_codepoint_t glyph);
+HB_EXTERN position_t
+ot_math_get_glyph_italics_correction (font_t *font,
+					 codepoint_t glyph);
 
-HB_EXTERN hb_position_t
-hb_ot_math_get_glyph_top_accent_attachment (hb_font_t *font,
-					    hb_codepoint_t glyph);
+HB_EXTERN position_t
+ot_math_get_glyph_top_accent_attachment (font_t *font,
+					    codepoint_t glyph);
 
-HB_EXTERN hb_bool_t
-hb_ot_math_is_glyph_extended_shape (hb_face_t *face,
-				    hb_codepoint_t glyph);
+HB_EXTERN bool_t
+ot_math_is_glyph_extended_shape (face_t *face,
+				    codepoint_t glyph);
 
-HB_EXTERN hb_position_t
-hb_ot_math_get_glyph_kerning (hb_font_t *font,
-			      hb_codepoint_t glyph,
-			      hb_ot_math_kern_t kern,
-			      hb_position_t correction_height);
+HB_EXTERN position_t
+ot_math_get_glyph_kerning (font_t *font,
+			      codepoint_t glyph,
+			      ot_math_kern_t kern,
+			      position_t correction_height);
 
 HB_EXTERN unsigned int
-hb_ot_math_get_glyph_kernings (hb_font_t *font,
-			       hb_codepoint_t glyph,
-			       hb_ot_math_kern_t kern,
+ot_math_get_glyph_kernings (font_t *font,
+			       codepoint_t glyph,
+			       ot_math_kern_t kern,
 			       unsigned int start_offset,
 			       unsigned int *entries_count, /* IN/OUT */
-			       hb_ot_math_kern_entry_t *kern_entries /* OUT */);
+			       ot_math_kern_entry_t *kern_entries /* OUT */);
 
 HB_EXTERN unsigned int
-hb_ot_math_get_glyph_variants (hb_font_t *font,
-			       hb_codepoint_t glyph,
-			       hb_direction_t direction,
+ot_math_get_glyph_variants (font_t *font,
+			       codepoint_t glyph,
+			       direction_t direction,
 			       unsigned int start_offset,
 			       unsigned int *variants_count, /* IN/OUT */
-			       hb_ot_math_glyph_variant_t *variants /* OUT */);
+			       ot_math_glyph_variant_t *variants /* OUT */);
 
-HB_EXTERN hb_position_t
-hb_ot_math_get_min_connector_overlap (hb_font_t *font,
-				      hb_direction_t direction);
+HB_EXTERN position_t
+ot_math_get_min_connector_overlap (font_t *font,
+				      direction_t direction);
 
 HB_EXTERN unsigned int
-hb_ot_math_get_glyph_assembly (hb_font_t *font,
-			       hb_codepoint_t glyph,
-			       hb_direction_t direction,
+ot_math_get_glyph_assembly (font_t *font,
+			       codepoint_t glyph,
+			       direction_t direction,
 			       unsigned int start_offset,
 			       unsigned int *parts_count, /* IN/OUT */
-			       hb_ot_math_glyph_part_t *parts, /* OUT */
-			       hb_position_t *italics_correction /* OUT */);
+			       ot_math_glyph_part_t *parts, /* OUT */
+			       position_t *italics_correction /* OUT */);
 
 
 HB_END_DECLS

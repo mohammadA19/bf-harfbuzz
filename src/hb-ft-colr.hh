@@ -32,8 +32,8 @@
 #include FT_COLOR_H
 
 
-static hb_paint_composite_mode_t
-_hb_ft_paint_composite_mode (FT_Composite_Mode mode)
+static paint_composite_mode_t
+_ft_paint_composite_mode (FT_Composite_Mode mode)
 {
   switch (mode)
   {
@@ -71,20 +71,20 @@ _hb_ft_paint_composite_mode (FT_Composite_Mode mode)
   }
 }
 
-typedef struct hb_ft_paint_context_t hb_ft_paint_context_t;
+typedef struct ft_paint_context_t ft_paint_context_t;
 
 static void
-_hb_ft_paint (hb_ft_paint_context_t *c,
+_ft_paint (ft_paint_context_t *c,
 	      FT_OpaquePaint opaque_paint);
 
-struct hb_ft_paint_context_t
+struct ft_paint_context_t
 {
-  hb_ft_paint_context_t (const hb_ft_font_t *ft_font,
-			 hb_font_t *font,
-			 hb_paint_funcs_t *paint_funcs, void *paint_data,
+  ft_paint_context_t (const ft_font_t *ft_font,
+			 font_t *font,
+			 paint_funcs_t *paint_funcs, void *paint_data,
 			 FT_Color *palette,
 			 unsigned palette_index,
-			 hb_color_t foreground) :
+			 color_t foreground) :
     ft_font (ft_font), font(font),
     funcs (paint_funcs), data (paint_data),
     palette (palette), palette_index (palette_index), foreground (foreground) {}
@@ -94,33 +94,33 @@ struct hb_ft_paint_context_t
     if (unlikely (depth_left <= 0 || edge_count <= 0)) return;
     depth_left--;
     edge_count--;
-    _hb_ft_paint (this, paint);
+    _ft_paint (this, paint);
     depth_left++;
   }
 
-  const hb_ft_font_t *ft_font;
-  hb_font_t *font;
-  hb_paint_funcs_t *funcs;
+  const ft_font_t *ft_font;
+  font_t *font;
+  paint_funcs_t *funcs;
   void *data;
   FT_Color *palette;
   unsigned palette_index;
-  hb_color_t foreground;
-  hb_map_t current_glyphs;
-  hb_map_t current_layers;
+  color_t foreground;
+  map_t current_glyphs;
+  map_t current_layers;
   int depth_left = HB_MAX_NESTING_LEVEL;
   int edge_count = HB_MAX_GRAPH_EDGE_COUNT;
 };
 
 static unsigned
-_hb_ft_color_line_get_color_stops (hb_color_line_t *color_line,
+_ft_color_line_get_color_stops (color_line_t *color_line,
 				   void *color_line_data,
 				   unsigned int start,
 				   unsigned int *count,
-				   hb_color_stop_t *color_stops,
+				   color_stop_t *color_stops,
 				   void *user_data)
 {
   FT_ColorLine *cl = (FT_ColorLine *) color_line_data;
-  hb_ft_paint_context_t *c = (hb_ft_paint_context_t *) user_data;
+  ft_paint_context_t *c = (ft_paint_context_t *) user_data;
 
   if (count)
   {
@@ -152,19 +152,19 @@ _hb_ft_color_line_get_color_stops (hb_color_line_t *color_line,
 
       color_stops->is_foreground = stop.color.palette_index == 0xFFFF;
       if (color_stops->is_foreground)
-	color_stops->color = HB_COLOR (hb_color_get_blue (c->foreground),
-				       hb_color_get_green (c->foreground),
-				       hb_color_get_red (c->foreground),
-				       (hb_color_get_alpha (c->foreground) * stop.color.alpha) >> 14);
+	color_stops->color = HB_COLOR (color_get_blue (c->foreground),
+				       color_get_green (c->foreground),
+				       color_get_red (c->foreground),
+				       (color_get_alpha (c->foreground) * stop.color.alpha) >> 14);
       else
       {
-	hb_color_t color;
+	color_t color;
         if (c->funcs->custom_palette_color (c->data, stop.color.palette_index, &color))
 	{
-	  color_stops->color = HB_COLOR (hb_color_get_blue (color),
-					 hb_color_get_green (color),
-					 hb_color_get_red (color),
-					 (hb_color_get_alpha (color) * stop.color.alpha) >> 14);
+	  color_stops->color = HB_COLOR (color_get_blue (color),
+					 color_get_green (color),
+					 color_get_red (color),
+					 (color_get_alpha (color) * stop.color.alpha) >> 14);
 	}
 	else
 	{
@@ -189,8 +189,8 @@ _hb_ft_color_line_get_color_stops (hb_color_line_t *color_line,
   return cl->color_stop_iterator.num_color_stops;
 }
 
-static hb_paint_extend_t
-_hb_ft_color_line_get_extend (hb_color_line_t *color_line,
+static paint_extend_t
+_ft_color_line_get_extend (color_line_t *color_line,
 			      void *color_line_data,
 			      void *user_data)
 {
@@ -205,7 +205,7 @@ _hb_ft_color_line_get_extend (hb_color_line_t *color_line,
 }
 
 void
-_hb_ft_paint (hb_ft_paint_context_t *c,
+_ft_paint (ft_paint_context_t *c,
 	      FT_OpaquePaint opaque_paint)
 {
   FT_Face ft_face = c->ft_font->ft_face;
@@ -240,20 +240,20 @@ _hb_ft_paint (hb_ft_paint_context_t *c,
     case FT_COLR_PAINTFORMAT_SOLID:
     {
       bool is_foreground = paint.u.solid.color.palette_index ==  0xFFFF;
-      hb_color_t color;
+      color_t color;
       if (is_foreground)
-	color = HB_COLOR (hb_color_get_blue (c->foreground),
-			  hb_color_get_green (c->foreground),
-			  hb_color_get_red (c->foreground),
-			  (hb_color_get_alpha (c->foreground) * paint.u.solid.color.alpha) >> 14);
+	color = HB_COLOR (color_get_blue (c->foreground),
+			  color_get_green (c->foreground),
+			  color_get_red (c->foreground),
+			  (color_get_alpha (c->foreground) * paint.u.solid.color.alpha) >> 14);
       else
       {
 	if (c->funcs->custom_palette_color (c->data, paint.u.solid.color.palette_index, &color))
 	{
-	  color = HB_COLOR (hb_color_get_blue (color),
-			    hb_color_get_green (color),
-			    hb_color_get_red (color),
-			    (hb_color_get_alpha (color) * paint.u.solid.color.alpha) >> 14);
+	  color = HB_COLOR (color_get_blue (color),
+			    color_get_green (color),
+			    color_get_red (color),
+			    (color_get_alpha (color) * paint.u.solid.color.alpha) >> 14);
 	}
 	else
 	{
@@ -269,10 +269,10 @@ _hb_ft_paint (hb_ft_paint_context_t *c,
     break;
     case FT_COLR_PAINTFORMAT_LINEAR_GRADIENT:
     {
-      hb_color_line_t cl = {
+      color_line_t cl = {
 	&paint.u.linear_gradient.colorline,
-	_hb_ft_color_line_get_color_stops, c,
-	_hb_ft_color_line_get_extend, nullptr
+	_ft_color_line_get_color_stops, c,
+	_ft_color_line_get_extend, nullptr
       };
 
       c->funcs->linear_gradient (c->data, &cl,
@@ -286,10 +286,10 @@ _hb_ft_paint (hb_ft_paint_context_t *c,
     break;
     case FT_COLR_PAINTFORMAT_RADIAL_GRADIENT:
     {
-      hb_color_line_t cl = {
+      color_line_t cl = {
 	&paint.u.linear_gradient.colorline,
-	_hb_ft_color_line_get_color_stops, c,
-	_hb_ft_color_line_get_extend, nullptr
+	_ft_color_line_get_color_stops, c,
+	_ft_color_line_get_extend, nullptr
       };
 
       c->funcs->radial_gradient (c->data, &cl,
@@ -303,10 +303,10 @@ _hb_ft_paint (hb_ft_paint_context_t *c,
     break;
     case FT_COLR_PAINTFORMAT_SWEEP_GRADIENT:
     {
-      hb_color_line_t cl = {
+      color_line_t cl = {
 	&paint.u.linear_gradient.colorline,
-	_hb_ft_color_line_get_color_stops, c,
-	_hb_ft_color_line_get_extend, nullptr
+	_ft_color_line_get_color_stops, c,
+	_ft_color_line_get_extend, nullptr
       };
 
       c->funcs->sweep_gradient (c->data, &cl,
@@ -331,7 +331,7 @@ _hb_ft_paint (hb_ft_paint_context_t *c,
     break;
     case FT_COLR_PAINTFORMAT_COLR_GLYPH:
     {
-      hb_codepoint_t gid = paint.u.colr_glyph.glyphID;
+      codepoint_t gid = paint.u.colr_glyph.glyphID;
 
       if (unlikely (c->current_glyphs.has (gid)))
 	return;
@@ -460,7 +460,7 @@ _hb_ft_paint (hb_ft_paint_context_t *c,
       c->recurse (paint.u.composite.backdrop_paint);
       c->funcs->push_group (c->data);
       c->recurse (paint.u.composite.source_paint);
-      c->funcs->pop_group (c->data, _hb_ft_paint_composite_mode (paint.u.composite.composite_mode));
+      c->funcs->pop_group (c->data, _ft_paint_composite_mode (paint.u.composite.composite_mode));
     }
     break;
 
@@ -472,15 +472,15 @@ _hb_ft_paint (hb_ft_paint_context_t *c,
 
 
 static bool
-hb_ft_paint_glyph_colr (hb_font_t *font,
+ft_paint_glyph_colr (font_t *font,
 			void *font_data,
-			hb_codepoint_t gid,
-			hb_paint_funcs_t *paint_funcs, void *paint_data,
+			codepoint_t gid,
+			paint_funcs_t *paint_funcs, void *paint_data,
 			unsigned int palette_index,
-			hb_color_t foreground,
+			color_t foreground,
 			void *user_data)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
   FT_Face ft_face = ft_font->ft_face;
 
   /* Face is locked. */
@@ -503,7 +503,7 @@ hb_ft_paint_glyph_colr (hb_font_t *font,
 			        FT_COLOR_NO_ROOT_TRANSFORM,
 			        &paint))
   {
-    hb_ft_paint_context_t c (ft_font, font,
+    ft_paint_context_t c (ft_font, font,
 			     paint_funcs, paint_data,
 			     palette, palette_index, foreground);
     c.current_glyphs.add (gid);
@@ -514,27 +514,27 @@ hb_ft_paint_glyph_colr (hb_font_t *font,
     {
       c.funcs->push_clip_rectangle (c.data,
 				    clip_box.bottom_left.x +
-				      roundf (hb_min (font->slant_xy * clip_box.bottom_left.y,
+				      roundf (min (font->slant_xy * clip_box.bottom_left.y,
 						      font->slant_xy * clip_box.top_left.y)),
 				    clip_box.bottom_left.y,
 				    clip_box.top_right.x +
-				      roundf (hb_max (font->slant_xy * clip_box.bottom_right.y,
+				      roundf (max (font->slant_xy * clip_box.bottom_right.y,
 						      font->slant_xy * clip_box.top_right.y)),
 				    clip_box.top_right.y);
     }
     else
     {
 
-      auto *extents_funcs = hb_paint_extents_get_funcs ();
-      hb_paint_extents_context_t extents_data;
-      hb_ft_paint_context_t ce (ft_font, font,
+      auto *extents_funcs = paint_extents_get_funcs ();
+      paint_extents_context_t extents_data;
+      ft_paint_context_t ce (ft_font, font,
 			        extents_funcs, &extents_data,
 			        palette, palette_index, foreground);
       ce.current_glyphs.add (gid);
       ce.funcs->push_root_transform (ce.data, font);
       ce.recurse (paint);
       ce.funcs->pop_transform (ce.data);
-      hb_extents_t extents = extents_data.get_extents ();
+      extents_t extents = extents_data.get_extents ();
       is_bounded = extents_data.is_bounded ();
 
       c.funcs->push_clip_rectangle (c.data,
@@ -567,8 +567,8 @@ hb_ft_paint_glyph_colr (hb_font_t *font,
   {
     do
     {
-      hb_bool_t is_foreground = true;
-      hb_color_t color = foreground;
+      bool_t is_foreground = true;
+      color_t color = foreground;
 
       if ( layer_color_index != 0xFFFF )
       {

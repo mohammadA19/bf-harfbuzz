@@ -12,22 +12,22 @@ namespace OT {
 //namespace Var {
 
 
-struct hb_transforming_pen_context_t
+struct transforming_pen_context_t
 {
-  hb_transform_t transform;
-  hb_draw_funcs_t *dfuncs;
+  transform_t transform;
+  draw_funcs_t *dfuncs;
   void *data;
-  hb_draw_state_t *st;
+  draw_state_t *st;
 };
 
 static void
-hb_transforming_pen_move_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
+transforming_pen_move_to (draw_funcs_t *dfuncs HB_UNUSED,
 			     void *data,
-			     hb_draw_state_t *st,
+			     draw_state_t *st,
 			     float to_x, float to_y,
 			     void *user_data HB_UNUSED)
 {
-  hb_transforming_pen_context_t *c = (hb_transforming_pen_context_t *) data;
+  transforming_pen_context_t *c = (transforming_pen_context_t *) data;
 
   c->transform.transform_point (to_x, to_y);
 
@@ -35,13 +35,13 @@ hb_transforming_pen_move_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
 }
 
 static void
-hb_transforming_pen_line_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
+transforming_pen_line_to (draw_funcs_t *dfuncs HB_UNUSED,
 			     void *data,
-			     hb_draw_state_t *st,
+			     draw_state_t *st,
 			     float to_x, float to_y,
 			     void *user_data HB_UNUSED)
 {
-  hb_transforming_pen_context_t *c = (hb_transforming_pen_context_t *) data;
+  transforming_pen_context_t *c = (transforming_pen_context_t *) data;
 
   c->transform.transform_point (to_x, to_y);
 
@@ -49,14 +49,14 @@ hb_transforming_pen_line_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
 }
 
 static void
-hb_transforming_pen_quadratic_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
+transforming_pen_quadratic_to (draw_funcs_t *dfuncs HB_UNUSED,
 				  void *data,
-				  hb_draw_state_t *st,
+				  draw_state_t *st,
 				  float control_x, float control_y,
 				  float to_x, float to_y,
 				  void *user_data HB_UNUSED)
 {
-  hb_transforming_pen_context_t *c = (hb_transforming_pen_context_t *) data;
+  transforming_pen_context_t *c = (transforming_pen_context_t *) data;
 
   c->transform.transform_point (control_x, control_y);
   c->transform.transform_point (to_x, to_y);
@@ -65,15 +65,15 @@ hb_transforming_pen_quadratic_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
 }
 
 static void
-hb_transforming_pen_cubic_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
+transforming_pen_cubic_to (draw_funcs_t *dfuncs HB_UNUSED,
 			      void *data,
-			      hb_draw_state_t *st,
+			      draw_state_t *st,
 			      float control1_x, float control1_y,
 			      float control2_x, float control2_y,
 			      float to_x, float to_y,
 			      void *user_data HB_UNUSED)
 {
-  hb_transforming_pen_context_t *c = (hb_transforming_pen_context_t *) data;
+  transforming_pen_context_t *c = (transforming_pen_context_t *) data;
 
   c->transform.transform_point (control1_x, control1_y);
   c->transform.transform_point (control2_x, control2_y);
@@ -83,33 +83,33 @@ hb_transforming_pen_cubic_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
 }
 
 static void
-hb_transforming_pen_close_path (hb_draw_funcs_t *dfuncs HB_UNUSED,
+transforming_pen_close_path (draw_funcs_t *dfuncs HB_UNUSED,
 				void *data,
-				hb_draw_state_t *st,
+				draw_state_t *st,
 				void *user_data HB_UNUSED)
 {
-  hb_transforming_pen_context_t *c = (hb_transforming_pen_context_t *) data;
+  transforming_pen_context_t *c = (transforming_pen_context_t *) data;
 
   c->dfuncs->close_path (c->data, *c->st);
 }
 
 static inline void free_static_transforming_pen_funcs ();
 
-static struct hb_transforming_pen_funcs_lazy_loader_t : hb_draw_funcs_lazy_loader_t<hb_transforming_pen_funcs_lazy_loader_t>
+static struct transforming_pen_funcs_lazy_loader_t : draw_funcs_lazy_loader_t<transforming_pen_funcs_lazy_loader_t>
 {
-  static hb_draw_funcs_t *create ()
+  static draw_funcs_t *create ()
   {
-    hb_draw_funcs_t *funcs = hb_draw_funcs_create ();
+    draw_funcs_t *funcs = draw_funcs_create ();
 
-    hb_draw_funcs_set_move_to_func (funcs, hb_transforming_pen_move_to, nullptr, nullptr);
-    hb_draw_funcs_set_line_to_func (funcs, hb_transforming_pen_line_to, nullptr, nullptr);
-    hb_draw_funcs_set_quadratic_to_func (funcs, hb_transforming_pen_quadratic_to, nullptr, nullptr);
-    hb_draw_funcs_set_cubic_to_func (funcs, hb_transforming_pen_cubic_to, nullptr, nullptr);
-    hb_draw_funcs_set_close_path_func (funcs, hb_transforming_pen_close_path, nullptr, nullptr);
+    draw_funcs_set_move_to_func (funcs, transforming_pen_move_to, nullptr, nullptr);
+    draw_funcs_set_line_to_func (funcs, transforming_pen_line_to, nullptr, nullptr);
+    draw_funcs_set_quadratic_to_func (funcs, transforming_pen_quadratic_to, nullptr, nullptr);
+    draw_funcs_set_cubic_to_func (funcs, transforming_pen_cubic_to, nullptr, nullptr);
+    draw_funcs_set_close_path_func (funcs, transforming_pen_close_path, nullptr, nullptr);
 
-    hb_draw_funcs_make_immutable (funcs);
+    draw_funcs_make_immutable (funcs);
 
-    hb_atexit (free_static_transforming_pen_funcs);
+    atexit (free_static_transforming_pen_funcs);
 
     return funcs;
   }
@@ -121,20 +121,20 @@ void free_static_transforming_pen_funcs ()
   static_transforming_pen_funcs.free_instance ();
 }
 
-static hb_draw_funcs_t *
-hb_transforming_pen_get_funcs ()
+static draw_funcs_t *
+transforming_pen_get_funcs ()
 {
   return static_transforming_pen_funcs.get_unconst ();
 }
 
 
-hb_ubytes_t
-VarComponent::get_path_at (hb_font_t *font,
-			   hb_codepoint_t parent_gid,
-			   hb_draw_session_t &draw_session,
-			   hb_array_t<const int> coords,
-			   hb_ubytes_t total_record,
-			   hb_set_t *visited,
+ubytes_t
+VarComponent::get_path_at (font_t *font,
+			   codepoint_t parent_gid,
+			   draw_session_t &draw_session,
+			   array_t<const int> coords,
+			   ubytes_t total_record,
+			   set_t *visited,
 			   signed *edges_left,
 			   signed depth_left,
 			   VarRegionList::cache_t *cache) const
@@ -148,11 +148,11 @@ VarComponent::get_path_at (hb_font_t *font,
 
 #define READ_UINT32VAR(name) \
   HB_STMT_START { \
-    if (unlikely (unsigned (end - record) < HBUINT32VAR::min_size)) return hb_ubytes_t (); \
-    hb_barrier (); \
+    if (unlikely (unsigned (end - record) < HBUINT32VAR::min_size)) return ubytes_t (); \
+    barrier (); \
     auto &varint = * (const HBUINT32VAR *) record; \
     unsigned size = varint.get_size (); \
-    if (unlikely (unsigned (end - record) < size)) return hb_ubytes_t (); \
+    if (unlikely (unsigned (end - record) < size)) return ubytes_t (); \
     name = (uint32_t) varint; \
     record += size; \
   } HB_STMT_END
@@ -162,20 +162,20 @@ VarComponent::get_path_at (hb_font_t *font,
 
   // gid
 
-  hb_codepoint_t gid = 0;
+  codepoint_t gid = 0;
   if (flags & (unsigned) flags_t::GID_IS_24BIT)
   {
     if (unlikely (unsigned (end - record) < HBGlyphID24::static_size))
-      return hb_ubytes_t ();
-    hb_barrier ();
+      return ubytes_t ();
+    barrier ();
     gid = * (const HBGlyphID24 *) record;
     record += HBGlyphID24::static_size;
   }
   else
   {
     if (unlikely (unsigned (end - record) < HBGlyphID16::static_size))
-      return hb_ubytes_t ();
-    hb_barrier ();
+      return ubytes_t ();
+    barrier ();
     gid = * (const HBGlyphID16 *) record;
     record += HBGlyphID16::static_size;
   }
@@ -192,8 +192,8 @@ VarComponent::get_path_at (hb_font_t *font,
 
   // Axis values
 
-  hb_vector_t<unsigned> axisIndices;
-  hb_vector_t<float> axisValues;
+  vector_t<unsigned> axisIndices;
+  vector_t<float> axisValues;
   if (flags & (unsigned) flags_t::HAVE_AXES)
   {
     unsigned axisIndicesIndex;
@@ -219,7 +219,7 @@ VarComponent::get_path_at (hb_font_t *font,
    * limit on the max number of coords for now. */
   if ((flags & (unsigned) flags_t::RESET_UNSPECIFIED_AXES) ||
       coords.length > HB_VAR_COMPOSITE_MAX_AXES)
-    component_coords = hb_array<int> (font->coords, font->num_coords);
+    component_coords = array<int> (font->coords, font->num_coords);
 
   // Transform
 
@@ -240,7 +240,7 @@ VarComponent::get_path_at (hb_font_t *font,
 	PROCESS_TRANSFORM_COMPONENT (FWORD, HAVE_TCENTER_Y, tCenterY); \
 	} HB_STMT_END
 
-  hb_transform_decomposed_t transform;
+  transform_decomposed_t transform;
 
   // Read transform components
 #define PROCESS_TRANSFORM_COMPONENT(type, flag, name) \
@@ -248,8 +248,8 @@ VarComponent::get_path_at (hb_font_t *font,
 	{ \
 	  static_assert (type::static_size == HBINT16::static_size, ""); \
 	  if (unlikely (unsigned (end - record) < HBINT16::static_size)) \
-	    return hb_ubytes_t (); \
-	  hb_barrier (); \
+	    return ubytes_t (); \
+	  barrier (); \
 	  transform.name = * (const HBINT16 *) record; \
 	  record += HBINT16::static_size; \
 	}
@@ -270,7 +270,7 @@ VarComponent::get_path_at (hb_font_t *font,
   if (show)
   {
     // Only use coord_setter if there's actually any axis overrides.
-    coord_setter_t coord_setter (axisIndices ? component_coords : hb_array<int> ());
+    coord_setter_t coord_setter (axisIndices ? component_coords : array<int> ());
     // Go backwards, to reduce coord_setter vector reallocations.
     for (unsigned i = axisIndices.length; i; i--)
       coord_setter[axisIndices[i - 1]] = axisValues[i - 1];
@@ -287,7 +287,7 @@ VarComponent::get_path_at (hb_font_t *font,
 	    transformValues[numTransformValues++] = transform.name;
       PROCESS_TRANSFORM_COMPONENTS;
 #undef PROCESS_TRANSFORM_COMPONENT
-      varStore.get_delta (transformVarIdx, coords, hb_array (transformValues, numTransformValues), cache);
+      varStore.get_delta (transformVarIdx, coords, array (transformValues, numTransformValues), cache);
       numTransformValues = 0;
 #define PROCESS_TRANSFORM_COMPONENT(type, flag, name) \
 	  if (flags & (unsigned) flags_t::flag) \
@@ -321,12 +321,12 @@ VarComponent::get_path_at (hb_font_t *font,
     transform.tCenterY *= y_scale;
 
     // Build a transforming pen to apply the transform.
-    hb_draw_funcs_t *transformer_funcs = hb_transforming_pen_get_funcs ();
-    hb_transforming_pen_context_t context {transform.to_transform (),
+    draw_funcs_t *transformer_funcs = transforming_pen_get_funcs ();
+    transforming_pen_context_t context {transform.to_transform (),
 					   draw_session.funcs,
 					   draw_session.draw_data,
 					   &draw_session.st};
-    hb_draw_session_t transformer_session {transformer_funcs, &context};
+    draw_session_t transformer_session {transformer_funcs, &context};
 
     VARC.get_path_at (font, gid,
 		      transformer_session, component_coords,
@@ -337,7 +337,7 @@ VarComponent::get_path_at (hb_font_t *font,
 #undef PROCESS_TRANSFORM_COMPONENTS
 #undef READ_UINT32VAR
 
-  return hb_ubytes_t (record, end - record);
+  return ubytes_t (record, end - record);
 }
 
 //} // namespace Var

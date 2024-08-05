@@ -29,15 +29,15 @@ struct glyf
 {
   friend struct glyf_accelerator_t;
 
-  static constexpr hb_tag_t tableTag = HB_OT_TAG_glyf;
+  static constexpr tag_t tableTag = HB_OT_TAG_glyf;
 
-  static bool has_valid_glyf_format(const hb_face_t* face)
+  static bool has_valid_glyf_format(const face_t* face)
   {
     const OT::head &head = *face->table.head;
     return head.indexToLocFormat <= 1 && head.glyphDataFormat <= 1;
   }
 
-  bool sanitize (hb_sanitize_context_t *c HB_UNUSED) const
+  bool sanitize (sanitize_context_t *c HB_UNUSED) const
   {
     TRACE_SANITIZE (this);
     /* Runtime checks as eager sanitizing each glyph is costy */
@@ -46,10 +46,10 @@ struct glyf
 
   /* requires source of SubsetGlyph complains the identifier isn't declared */
   template <typename Iterator>
-  bool serialize (hb_serialize_context_t *c,
+  bool serialize (serialize_context_t *c,
 		  Iterator it,
                   bool use_short_loca,
-		  const hb_subset_plan_t *plan)
+		  const subset_plan_t *plan)
   {
     TRACE_SERIALIZE (this);
 
@@ -74,7 +74,7 @@ struct glyf
   /* Byte region(s) per glyph to output
      unpadded, hints removed if so requested
      If we fail to process a glyph we produce an empty (0-length) glyph */
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
 
@@ -85,7 +85,7 @@ struct glyf
       return_trace (false);
     }
 
-    hb_font_t *font = nullptr;
+    font_t *font = nullptr;
     if (c->plan->normalized_coords)
     {
       font = _create_font_for_instancing (c->plan);
@@ -93,19 +93,19 @@ struct glyf
 	return_trace (false);
     }
 
-    hb_vector_t<unsigned> padded_offsets;
+    vector_t<unsigned> padded_offsets;
     if (unlikely (!padded_offsets.alloc (c->plan->new_to_old_gid_list.length, true)))
       return_trace (false);
 
-    hb_vector_t<glyf_impl::SubsetGlyph> glyphs;
+    vector_t<glyf_impl::SubsetGlyph> glyphs;
     if (!_populate_subset_glyphs (c->plan, font, glyphs))
     {
-      hb_font_destroy (font);
+      font_destroy (font);
       return_trace (false);
     }
 
     if (font)
-      hb_font_destroy (font);
+      font_destroy (font);
 
     unsigned max_offset = 0;
     for (auto &g : glyphs)
@@ -127,7 +127,7 @@ struct glyf
     }
 
     auto *glyf_prime = c->serializer->start_embed <glyf> ();
-    bool result = glyf_prime->serialize (c->serializer, hb_iter (glyphs), use_short_loca, c->plan);
+    bool result = glyf_prime->serialize (c->serializer, iter (glyphs), use_short_loca, c->plan);
     if (c->plan->normalized_coords && !c->plan->pinned_at_default)
       _free_compiled_subset_glyphs (glyphs);
 
@@ -140,14 +140,14 @@ struct glyf
   }
 
   bool
-  _populate_subset_glyphs (const hb_subset_plan_t   *plan,
-			   hb_font_t                *font,
-			   hb_vector_t<glyf_impl::SubsetGlyph>& glyphs /* OUT */) const;
+  _populate_subset_glyphs (const subset_plan_t   *plan,
+			   font_t                *font,
+			   vector_t<glyf_impl::SubsetGlyph>& glyphs /* OUT */) const;
 
-  hb_font_t *
-  _create_font_for_instancing (const hb_subset_plan_t *plan) const;
+  font_t *
+  _create_font_for_instancing (const subset_plan_t *plan) const;
 
-  void _free_compiled_subset_glyphs (hb_vector_t<glyf_impl::SubsetGlyph> &glyphs) const
+  void _free_compiled_subset_glyphs (vector_t<glyf_impl::SubsetGlyph> &glyphs) const
   {
     for (auto &g : glyphs)
       g.free_compiled_bytes ();
@@ -164,7 +164,7 @@ struct glyf
 
 struct glyf_accelerator_t
 {
-  glyf_accelerator_t (hb_face_t *face)
+  glyf_accelerator_t (face_t *face)
   {
     short_offset = false;
     num_glyphs = 0;
@@ -184,7 +184,7 @@ struct glyf_accelerator_t
     short_offset = 0 == head.indexToLocFormat;
 
     loca_table = face->table.loca.get_blob (); // Needs no destruct!
-    glyf_table = hb_sanitize_context_t ().reference_table<glyf> (face);
+    glyf_table = sanitize_context_t ().reference_table<glyf> (face);
 #ifndef HB_NO_VAR
     gvar = face->table.gvar;
 #endif
@@ -193,8 +193,8 @@ struct glyf_accelerator_t
     vmtx = face->table.vmtx;
 #endif
 
-    num_glyphs = hb_max (1u, loca_table.get_length () / (short_offset ? 2 : 4)) - 1;
-    num_glyphs = hb_min (num_glyphs, face->get_num_glyphs ());
+    num_glyphs = max (1u, loca_table.get_length () / (short_offset ? 2 : 4)) - 1;
+    num_glyphs = min (num_glyphs, face->get_num_glyphs ());
   }
   ~glyf_accelerator_t ()
   {
@@ -205,11 +205,11 @@ struct glyf_accelerator_t
 
   protected:
   template<typename T>
-  bool get_points (hb_font_t *font, hb_codepoint_t gid, T consumer,
-		   hb_array_t<const int> coords = hb_array_t<const int> ()) const
+  bool get_points (font_t *font, codepoint_t gid, T consumer,
+		   array_t<const int> coords = array_t<const int> ()) const
   {
     if (!coords)
-      coords = hb_array (font->coords, font->num_coords);
+      coords = array (font->coords, font->num_coords);
 
     if (gid >= num_glyphs) return false;
 
@@ -248,8 +248,8 @@ struct glyf_accelerator_t
 #ifndef HB_NO_VAR
   struct points_aggregator_t
   {
-    hb_font_t *font;
-    hb_glyph_extents_t *extents;
+    font_t *font;
+    glyph_extents_t *extents;
     contour_point_t *phantoms;
     bool scaled;
 
@@ -259,15 +259,15 @@ struct glyf_accelerator_t
 
       void add (const contour_point_t &p)
       {
-	min_x = hb_min (min_x, p.x);
-	min_y = hb_min (min_y, p.y);
-	max_x = hb_max (max_x, p.x);
-	max_y = hb_max (max_y, p.y);
+	min_x = min (min_x, p.x);
+	min_y = min (min_y, p.y);
+	max_x = max (max_x, p.x);
+	max_y = max (max_y, p.y);
       }
 
       bool empty () const { return (min_x >= max_x) || (min_y >= max_y); }
 
-      void get_extents (hb_font_t *font, hb_glyph_extents_t *extents, bool scaled)
+      void get_extents (font_t *font, glyph_extents_t *extents, bool scaled)
       {
 	if (unlikely (empty ()))
 	{
@@ -292,7 +292,7 @@ struct glyf_accelerator_t
       float min_x, min_y, max_x, max_y;
     } bounds;
 
-    points_aggregator_t (hb_font_t *font_, hb_glyph_extents_t *extents_, contour_point_t *phantoms_, bool scaled_)
+    points_aggregator_t (font_t *font_, glyph_extents_t *extents_, contour_point_t *phantoms_, bool scaled_)
     {
       font = font_;
       extents = extents_;
@@ -310,7 +310,7 @@ struct glyf_accelerator_t
   };
 
   unsigned
-  get_advance_with_var_unscaled (hb_font_t *font, hb_codepoint_t gid, bool is_vertical) const
+  get_advance_with_var_unscaled (font_t *font, codepoint_t gid, bool is_vertical) const
   {
     if (unlikely (gid >= num_glyphs)) return 0;
 
@@ -330,14 +330,14 @@ struct glyf_accelerator_t
     float result = is_vertical
 		 ? phantoms[glyf_impl::PHANTOM_TOP].y - phantoms[glyf_impl::PHANTOM_BOTTOM].y
 		 : phantoms[glyf_impl::PHANTOM_RIGHT].x - phantoms[glyf_impl::PHANTOM_LEFT].x;
-    return hb_clamp (roundf (result), 0.f, (float) UINT_MAX / 2);
+    return clamp (roundf (result), 0.f, (float) UINT_MAX / 2);
   }
 
-  bool get_leading_bearing_with_var_unscaled (hb_font_t *font, hb_codepoint_t gid, bool is_vertical, int *lsb) const
+  bool get_leading_bearing_with_var_unscaled (font_t *font, codepoint_t gid, bool is_vertical, int *lsb) const
   {
     if (unlikely (gid >= num_glyphs)) return false;
 
-    hb_glyph_extents_t extents;
+    glyph_extents_t extents;
 
     contour_point_t phantoms[glyf_impl::PHANTOM_COUNT];
     if (unlikely (!get_points (font, gid, points_aggregator_t (font, &extents, phantoms, false))))
@@ -350,7 +350,7 @@ struct glyf_accelerator_t
   }
 #endif
 
-  bool get_leading_bearing_without_var_unscaled (hb_codepoint_t gid, bool is_vertical, int *lsb) const
+  bool get_leading_bearing_without_var_unscaled (codepoint_t gid, bool is_vertical, int *lsb) const
   {
     if (unlikely (gid >= num_glyphs)) return false;
     if (is_vertical) return false; // TODO Humm, what to do here?
@@ -360,7 +360,7 @@ struct glyf_accelerator_t
   }
 
   public:
-  bool get_extents (hb_font_t *font, hb_codepoint_t gid, hb_glyph_extents_t *extents) const
+  bool get_extents (font_t *font, codepoint_t gid, glyph_extents_t *extents) const
   {
     if (unlikely (gid >= num_glyphs)) return false;
 
@@ -371,7 +371,7 @@ struct glyf_accelerator_t
     return glyph_for_gid (gid).get_extents_without_var_scaled (font, *this, extents);
   }
 
-  bool paint_glyph (hb_font_t *font, hb_codepoint_t gid, hb_paint_funcs_t *funcs, void *data, hb_color_t foreground) const
+  bool paint_glyph (font_t *font, codepoint_t gid, paint_funcs_t *funcs, void *data, color_t foreground) const
   {
     funcs->push_clip_glyph (data, gid, font);
     funcs->color (data, true, foreground);
@@ -381,7 +381,7 @@ struct glyf_accelerator_t
   }
 
   const glyf_impl::Glyph
-  glyph_for_gid (hb_codepoint_t gid, bool needs_padding_removal = false) const
+  glyph_for_gid (codepoint_t gid, bool needs_padding_removal = false) const
   {
     if (unlikely (gid >= num_glyphs)) return glyf_impl::Glyph ();
 
@@ -403,18 +403,18 @@ struct glyf_accelerator_t
     if (unlikely (start_offset > end_offset || end_offset > glyf_table.get_length ()))
       return glyf_impl::Glyph ();
 
-    glyf_impl::Glyph glyph (hb_bytes_t ((const char *) this->glyf_table + start_offset,
+    glyf_impl::Glyph glyph (bytes_t ((const char *) this->glyf_table + start_offset,
 			     end_offset - start_offset), gid);
     return needs_padding_removal ? glyf_impl::Glyph (glyph.trim_padding (), gid) : glyph;
   }
 
   bool
-  get_path (hb_font_t *font, hb_codepoint_t gid, hb_draw_session_t &draw_session) const
+  get_path (font_t *font, codepoint_t gid, draw_session_t &draw_session) const
   { return get_points (font, gid, glyf_impl::path_builder_t (font, draw_session)); }
 
   bool
-  get_path_at (hb_font_t *font, hb_codepoint_t gid, hb_draw_session_t &draw_session,
-	       hb_array_t<const int> coords) const
+  get_path_at (font_t *font, codepoint_t gid, draw_session_t &draw_session,
+	       array_t<const int> coords) const
   { return get_points (font, gid, glyf_impl::path_builder_t (font, draw_session), coords); }
 
 #ifndef HB_NO_VAR
@@ -428,23 +428,23 @@ struct glyf_accelerator_t
   private:
   bool short_offset;
   unsigned int num_glyphs;
-  hb_blob_ptr_t<loca> loca_table;
-  hb_blob_ptr_t<glyf> glyf_table;
+  blob_ptr_t<loca> loca_table;
+  blob_ptr_t<glyf> glyf_table;
 };
 
 
 inline bool
-glyf::_populate_subset_glyphs (const hb_subset_plan_t   *plan,
-			       hb_font_t *font,
-			       hb_vector_t<glyf_impl::SubsetGlyph>& glyphs /* OUT */) const
+glyf::_populate_subset_glyphs (const subset_plan_t   *plan,
+			       font_t *font,
+			       vector_t<glyf_impl::SubsetGlyph>& glyphs /* OUT */) const
 {
   OT::glyf_accelerator_t glyf (plan->source);
   if (!glyphs.alloc (plan->new_to_old_gid_list.length, true)) return false;
 
   for (const auto &pair : plan->new_to_old_gid_list)
   {
-    hb_codepoint_t new_gid = pair.first;
-    hb_codepoint_t old_gid = pair.second;
+    codepoint_t new_gid = pair.first;
+    codepoint_t old_gid = pair.second;
     glyf_impl::SubsetGlyph *p = glyphs.push ();
     glyf_impl::SubsetGlyph& subset_glyph = *p;
     subset_glyph.old_gid = old_gid;
@@ -479,29 +479,29 @@ glyf::_populate_subset_glyphs (const hb_subset_plan_t   *plan,
   return true;
 }
 
-inline hb_font_t *
-glyf::_create_font_for_instancing (const hb_subset_plan_t *plan) const
+inline font_t *
+glyf::_create_font_for_instancing (const subset_plan_t *plan) const
 {
-  hb_font_t *font = hb_font_create (plan->source);
-  if (unlikely (font == hb_font_get_empty ())) return nullptr;
+  font_t *font = font_create (plan->source);
+  if (unlikely (font == font_get_empty ())) return nullptr;
 
-  hb_vector_t<hb_variation_t> vars;
+  vector_t<variation_t> vars;
   if (unlikely (!vars.alloc (plan->user_axes_location.get_population (), true)))
   {
-    hb_font_destroy (font);
+    font_destroy (font);
     return nullptr;
   }
 
   for (auto _ : plan->user_axes_location)
   {
-    hb_variation_t var;
+    variation_t var;
     var.tag = _.first;
     var.value = _.second.middle;
     vars.push (var);
   }
 
 #ifndef HB_NO_VAR
-  hb_font_set_variations (font, vars.arrayZ, plan->user_axes_location.get_population ());
+  font_set_variations (font, vars.arrayZ, plan->user_axes_location.get_population ());
 #endif
   return font;
 }

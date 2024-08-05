@@ -80,15 +80,15 @@ HB_BEGIN_DECLS
 #define HB_BUFFER_SERIALIZE_FLAGS_DEFAULT	HB_BUFFER_SERIALIZE_FLAG_DEFAULT
 
 /**
- * hb_font_get_glyph_func_t:
- * @font: #hb_font_t to work upon
+ * font_get_glyph_func_t:
+ * @font: #font_t to work upon
  * @font_data: @font user data pointer
  * @unicode: The Unicode code point to query
  * @variation_selector: The  variation-selector code point to query
  * @glyph: (out): The glyph ID retrieved
  * @user_data: User data pointer passed by the caller
  *
- * A virtual method for the #hb_font_funcs_t of an #hb_font_t object.
+ * A virtual method for the #font_funcs_t of an #font_t object.
  *
  * This method should retrieve the glyph ID for a specified Unicode code point
  * font, with an optional variation selector.
@@ -97,16 +97,16 @@ HB_BEGIN_DECLS
  * Deprecated: 1.2.3
  *
  **/
-typedef hb_bool_t (*hb_font_get_glyph_func_t) (hb_font_t *font, void *font_data,
-					       hb_codepoint_t unicode, hb_codepoint_t variation_selector,
-					       hb_codepoint_t *glyph,
+typedef bool_t (*font_get_glyph_func_t) (font_t *font, void *font_data,
+					       codepoint_t unicode, codepoint_t variation_selector,
+					       codepoint_t *glyph,
 					       void *user_data);
 
-HB_DEPRECATED_FOR (hb_font_funcs_set_nominal_glyph_func and hb_font_funcs_set_variation_glyph_func)
+HB_DEPRECATED_FOR (font_funcs_set_nominal_glyph_func and font_funcs_set_variation_glyph_func)
 HB_EXTERN void
-hb_font_funcs_set_glyph_func (hb_font_funcs_t *ffuncs,
-			      hb_font_get_glyph_func_t func,
-			      void *user_data, hb_destroy_func_t destroy);
+font_funcs_set_glyph_func (font_funcs_t *ffuncs,
+			      font_get_glyph_func_t func,
+			      void *user_data, destroy_func_t destroy);
 
 /* https://github.com/harfbuzz/harfbuzz/pull/4207 */
 /**
@@ -119,38 +119,38 @@ hb_font_funcs_set_glyph_func (hb_font_funcs_t *ffuncs,
 #define HB_UNICODE_COMBINING_CLASS_CCC133 133
 
 /**
- * hb_unicode_eastasian_width_func_t:
+ * unicode_eastasian_width_func_t:
  * @ufuncs: A Unicode-functions structure
  * @unicode: The code point to query
  * @user_data: User data pointer passed by the caller
  *
- * A virtual method for the #hb_unicode_funcs_t structure.
+ * A virtual method for the #unicode_funcs_t structure.
  *
  * Deprecated: 2.0.0
  */
-typedef unsigned int			(*hb_unicode_eastasian_width_func_t)	(hb_unicode_funcs_t *ufuncs,
-										 hb_codepoint_t      unicode,
+typedef unsigned int			(*unicode_eastasian_width_func_t)	(unicode_funcs_t *ufuncs,
+										 codepoint_t      unicode,
 										 void               *user_data);
 
 /**
- * hb_unicode_funcs_set_eastasian_width_func:
+ * unicode_funcs_set_eastasian_width_func:
  * @ufuncs: a Unicode-function structure
  * @func: (closure user_data) (destroy destroy) (scope notified): The callback function to assign
  * @user_data: Data to pass to @func
  * @destroy: (nullable): The function to call when @user_data is not needed anymore
  *
- * Sets the implementation function for #hb_unicode_eastasian_width_func_t.
+ * Sets the implementation function for #unicode_eastasian_width_func_t.
  *
  * Since: 0.9.2
  * Deprecated: 2.0.0
  **/
 HB_EXTERN HB_DEPRECATED void
-hb_unicode_funcs_set_eastasian_width_func (hb_unicode_funcs_t *ufuncs,
-					   hb_unicode_eastasian_width_func_t func,
-					   void *user_data, hb_destroy_func_t destroy);
+unicode_funcs_set_eastasian_width_func (unicode_funcs_t *ufuncs,
+					   unicode_eastasian_width_func_t func,
+					   void *user_data, destroy_func_t destroy);
 
 /**
- * hb_unicode_eastasian_width:
+ * unicode_eastasian_width:
  * @ufuncs: a Unicode-function structure
  * @unicode: The code point to query
  *
@@ -160,16 +160,16 @@ hb_unicode_funcs_set_eastasian_width_func (hb_unicode_funcs_t *ufuncs,
  * Deprecated: 2.0.0
  **/
 HB_EXTERN HB_DEPRECATED unsigned int
-hb_unicode_eastasian_width (hb_unicode_funcs_t *ufuncs,
-			    hb_codepoint_t unicode);
+unicode_eastasian_width (unicode_funcs_t *ufuncs,
+			    codepoint_t unicode);
 
 
 /**
- * hb_unicode_decompose_compatibility_func_t:
+ * unicode_decompose_compatibility_func_t:
  * @ufuncs: a Unicode function structure
  * @u: codepoint to decompose
  * @decomposed: address of codepoint array (of length #HB_UNICODE_MAX_DECOMPOSITION_LEN) to write decomposition into
- * @user_data: user data pointer as passed to hb_unicode_funcs_set_decompose_compatibility_func()
+ * @user_data: user data pointer as passed to unicode_funcs_set_decompose_compatibility_func()
  *
  * Fully decompose @u to its Unicode compatibility decomposition. The codepoints of the decomposition will be written to @decomposed.
  * The complete length of the decomposition will be returned.
@@ -184,9 +184,9 @@ hb_unicode_eastasian_width (hb_unicode_funcs_t *ufuncs,
  *
  * Deprecated: 2.0.0
  */
-typedef unsigned int			(*hb_unicode_decompose_compatibility_func_t)	(hb_unicode_funcs_t *ufuncs,
-											 hb_codepoint_t      u,
-											 hb_codepoint_t     *decomposed,
+typedef unsigned int			(*unicode_decompose_compatibility_func_t)	(unicode_funcs_t *ufuncs,
+											 codepoint_t      u,
+											 codepoint_t     *decomposed,
 											 void               *user_data);
 
 /**
@@ -199,13 +199,13 @@ typedef unsigned int			(*hb_unicode_decompose_compatibility_func_t)	(hb_unicode_
 #define HB_UNICODE_MAX_DECOMPOSITION_LEN (18+1) /* codepoints */
 
 /**
- * hb_unicode_funcs_set_decompose_compatibility_func:
+ * unicode_funcs_set_decompose_compatibility_func:
  * @ufuncs: A Unicode-functions structure
  * @func: (closure user_data) (destroy destroy) (scope notified): The callback function to assign
  * @user_data: Data to pass to @func
  * @destroy: (nullable): The function to call when @user_data is not needed anymore
  *
- * Sets the implementation function for #hb_unicode_decompose_compatibility_func_t.
+ * Sets the implementation function for #unicode_decompose_compatibility_func_t.
  *
  * 
  *
@@ -213,92 +213,92 @@ typedef unsigned int			(*hb_unicode_decompose_compatibility_func_t)	(hb_unicode_
  * Deprecated: 2.0.0
  **/
 HB_EXTERN HB_DEPRECATED void
-hb_unicode_funcs_set_decompose_compatibility_func (hb_unicode_funcs_t *ufuncs,
-						   hb_unicode_decompose_compatibility_func_t func,
-						   void *user_data, hb_destroy_func_t destroy);
+unicode_funcs_set_decompose_compatibility_func (unicode_funcs_t *ufuncs,
+						   unicode_decompose_compatibility_func_t func,
+						   void *user_data, destroy_func_t destroy);
 
 HB_EXTERN HB_DEPRECATED unsigned int
-hb_unicode_decompose_compatibility (hb_unicode_funcs_t *ufuncs,
-				    hb_codepoint_t      u,
-				    hb_codepoint_t     *decomposed);
+unicode_decompose_compatibility (unicode_funcs_t *ufuncs,
+				    codepoint_t      u,
+				    codepoint_t     *decomposed);
 
 
 /**
- * hb_font_get_glyph_v_kerning_func_t:
+ * font_get_glyph_v_kerning_func_t:
  *
- * A virtual method for the #hb_font_funcs_t of an #hb_font_t object.
+ * A virtual method for the #font_funcs_t of an #font_t object.
  *
  * This method should retrieve the kerning-adjustment value for a glyph-pair in
  * the specified font, for vertical text segments.
  *
  **/
-typedef hb_font_get_glyph_kerning_func_t hb_font_get_glyph_v_kerning_func_t;
+typedef font_get_glyph_kerning_func_t font_get_glyph_v_kerning_func_t;
 
 /**
- * hb_font_funcs_set_glyph_v_kerning_func:
+ * font_funcs_set_glyph_v_kerning_func:
  * @ffuncs: A font-function structure
  * @func: (closure user_data) (destroy destroy) (scope notified): The callback function to assign
  * @user_data: Data to pass to @func
  * @destroy: (nullable): The function to call when @user_data is not needed anymore
  *
- * Sets the implementation function for #hb_font_get_glyph_v_kerning_func_t.
+ * Sets the implementation function for #font_get_glyph_v_kerning_func_t.
  *
  * Since: 0.9.2
  * Deprecated: 2.0.0
  **/
 HB_EXTERN void
-hb_font_funcs_set_glyph_v_kerning_func (hb_font_funcs_t *ffuncs,
-					hb_font_get_glyph_v_kerning_func_t func,
-					void *user_data, hb_destroy_func_t destroy);
+font_funcs_set_glyph_v_kerning_func (font_funcs_t *ffuncs,
+					font_get_glyph_v_kerning_func_t func,
+					void *user_data, destroy_func_t destroy);
 
-HB_EXTERN hb_position_t
-hb_font_get_glyph_v_kerning (hb_font_t *font,
-			     hb_codepoint_t top_glyph, hb_codepoint_t bottom_glyph);
+HB_EXTERN position_t
+font_get_glyph_v_kerning (font_t *font,
+			     codepoint_t top_glyph, codepoint_t bottom_glyph);
 
 
 /**
- * hb_font_get_glyph_shape_func_t:
- * @font: #hb_font_t to work upon
+ * font_get_glyph_shape_func_t:
+ * @font: #font_t to work upon
  * @font_data: @font user data pointer
  * @glyph: The glyph ID to query
  * @draw_funcs: The draw functions to send the shape data to
  * @draw_data: The data accompanying the draw functions
  * @user_data: User data pointer passed by the caller
  *
- * A virtual method for the #hb_font_funcs_t of an #hb_font_t object.
+ * A virtual method for the #font_funcs_t of an #font_t object.
  *
  * Since: 4.0.0
- * Deprecated: 7.0.0: Use #hb_font_draw_glyph_func_t instead
+ * Deprecated: 7.0.0: Use #font_draw_glyph_func_t instead
  **/
-typedef void (*hb_font_get_glyph_shape_func_t) (hb_font_t *font, void *font_data,
-						hb_codepoint_t glyph,
-						hb_draw_funcs_t *draw_funcs, void *draw_data,
+typedef void (*font_get_glyph_shape_func_t) (font_t *font, void *font_data,
+						codepoint_t glyph,
+						draw_funcs_t *draw_funcs, void *draw_data,
 						void *user_data);
 
 /**
- * hb_font_funcs_set_glyph_shape_func:
+ * font_funcs_set_glyph_shape_func:
  * @ffuncs: A font-function structure
  * @func: (closure user_data) (destroy destroy) (scope notified): The callback function to assign
  * @user_data: Data to pass to @func
  * @destroy: (nullable): The function to call when @user_data is not needed anymore
  *
- * Sets the implementation function for #hb_font_get_glyph_shape_func_t,
- * which is the same as #hb_font_draw_glyph_func_t.
+ * Sets the implementation function for #font_get_glyph_shape_func_t,
+ * which is the same as #font_draw_glyph_func_t.
  *
  * Since: 4.0.0
- * Deprecated: 7.0.0: Use hb_font_funcs_set_draw_glyph_func() instead
+ * Deprecated: 7.0.0: Use font_funcs_set_draw_glyph_func() instead
  **/
-HB_DEPRECATED_FOR (hb_font_funcs_set_draw_glyph_func)
+HB_DEPRECATED_FOR (font_funcs_set_draw_glyph_func)
 HB_EXTERN void
-hb_font_funcs_set_glyph_shape_func (hb_font_funcs_t *ffuncs,
-				    hb_font_get_glyph_shape_func_t func,
-				    void *user_data, hb_destroy_func_t destroy);
+font_funcs_set_glyph_shape_func (font_funcs_t *ffuncs,
+				    font_get_glyph_shape_func_t func,
+				    void *user_data, destroy_func_t destroy);
 
-HB_DEPRECATED_FOR (hb_font_draw_glyph)
+HB_DEPRECATED_FOR (font_draw_glyph)
 HB_EXTERN void
-hb_font_get_glyph_shape (hb_font_t *font,
-			 hb_codepoint_t glyph,
-			 hb_draw_funcs_t *dfuncs, void *draw_data);
+font_get_glyph_shape (font_t *font,
+			 codepoint_t glyph,
+			 draw_funcs_t *dfuncs, void *draw_data);
 
 
 /**

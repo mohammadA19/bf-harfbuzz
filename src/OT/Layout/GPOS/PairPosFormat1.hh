@@ -31,12 +31,12 @@ struct PairPosFormat1_3
   public:
   DEFINE_SIZE_ARRAY (8 + Types::size, pairSet);
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
 
     if (!c->check_struct (this)) return_trace (false);
-    hb_barrier ();
+    barrier ();
 
     unsigned int len1 = valueFormat[0].get_len ();
     unsigned int len2 = valueFormat[1].get_len ();
@@ -50,13 +50,13 @@ struct PairPosFormat1_3
     return_trace (coverage.sanitize (c, this) && pairSet.sanitize (c, this, &closure));
   }
 
-  bool intersects (const hb_set_t *glyphs) const
+  bool intersects (const set_t *glyphs) const
   {
     auto &cov = this+coverage;
 
-    if (pairSet.len > glyphs->get_population () * hb_bit_storage ((unsigned) pairSet.len) / 4)
+    if (pairSet.len > glyphs->get_population () * bit_storage ((unsigned) pairSet.len) / 4)
     {
-      for (hb_codepoint_t g : glyphs->iter())
+      for (codepoint_t g : glyphs->iter())
       {
 	unsigned i = cov.get_coverage (g);
 	if ((this+pairSet[i]).intersects (glyphs, valueFormat))
@@ -66,34 +66,34 @@ struct PairPosFormat1_3
     }
 
     return
-    + hb_zip (cov, pairSet)
-    | hb_filter (*glyphs, hb_first)
-    | hb_map (hb_second)
-    | hb_map ([glyphs, this] (const typename Types::template OffsetTo<PairSet> &_)
+    + zip (cov, pairSet)
+    | filter (*glyphs, first)
+    | map (second)
+    | map ([glyphs, this] (const typename Types::template OffsetTo<PairSet> &_)
               { return (this+_).intersects (glyphs, valueFormat); })
-    | hb_any
+    | any
     ;
   }
 
-  void closure_lookups (hb_closure_lookups_context_t *c) const {}
-  void collect_variation_indices (hb_collect_variation_indices_context_t *c) const
+  void closure_lookups (closure_lookups_context_t *c) const {}
+  void collect_variation_indices (collect_variation_indices_context_t *c) const
   {
     if ((!valueFormat[0].has_device ()) && (!valueFormat[1].has_device ())) return;
 
     auto it =
-    + hb_zip (this+coverage, pairSet)
-    | hb_filter (c->glyph_set, hb_first)
-    | hb_map (hb_second)
+    + zip (this+coverage, pairSet)
+    | filter (c->glyph_set, first)
+    | map (second)
     ;
 
     if (!it) return;
     + it
-    | hb_map (hb_add (this))
-    | hb_apply ([&] (const PairSet& _) { _.collect_variation_indices (c, valueFormat); })
+    | map (add (this))
+    | apply ([&] (const PairSet& _) { _.collect_variation_indices (c, valueFormat); })
     ;
   }
 
-  void collect_glyphs (hb_collect_glyphs_context_t *c) const
+  void collect_glyphs (collect_glyphs_context_t *c) const
   {
     if (unlikely (!(this+coverage).collect_coverage (c->input))) return;
     unsigned int count = pairSet.len;
@@ -103,14 +103,14 @@ struct PairPosFormat1_3
 
   const Coverage &get_coverage () const { return this+coverage; }
 
-  bool apply (hb_ot_apply_context_t *c) const
+  bool apply (ot_apply_context_t *c) const
   {
     TRACE_APPLY (this);
-    hb_buffer_t *buffer = c->buffer;
+    buffer_t *buffer = c->buffer;
     unsigned int index = (this+coverage).get_coverage  (buffer->cur().codepoint);
     if (likely (index == NOT_COVERED)) return_trace (false);
 
-    hb_ot_apply_context_t::skipping_iterator_t &skippy_iter = c->iter_input;
+    ot_apply_context_t::skipping_iterator_t &skippy_iter = c->iter_input;
     skippy_iter.reset_fast (buffer->idx);
     unsigned unsafe_to;
     if (unlikely (!skippy_iter.next (&unsafe_to)))
@@ -122,18 +122,18 @@ struct PairPosFormat1_3
     return_trace ((this+pairSet[index]).apply (c, valueFormat, skippy_iter.idx));
   }
 
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
 
-    const hb_set_t &glyphset = *c->plan->glyphset_gsub ();
-    const hb_map_t &glyph_map = *c->plan->glyph_map;
+    const set_t &glyphset = *c->plan->glyphset_gsub ();
+    const map_t &glyph_map = *c->plan->glyph_map;
 
     auto *out = c->serializer->start_embed (*this);
     if (unlikely (!c->serializer->extend_min (out))) return_trace (false);
     out->format = format;
 
-    hb_pair_t<unsigned, unsigned> newFormats = hb_pair (valueFormat[0], valueFormat[1]);
+    pair_t<unsigned, unsigned> newFormats = pair (valueFormat[0], valueFormat[1]);
 
     if (c->plan->normalized_coords)
     {
@@ -145,9 +145,9 @@ struct PairPosFormat1_3
     /* do not strip hints for VF */
     else if (c->plan->flags & HB_SUBSET_FLAGS_NO_HINTING)
     {
-      hb_blob_t* blob = hb_face_reference_table (c->plan->source, HB_TAG ('f','v','a','r'));
-      bool has_fvar = (blob != hb_blob_get_empty ());
-      hb_blob_destroy (blob);
+      blob_t* blob = face_reference_table (c->plan->source, HB_TAG ('f','v','a','r'));
+      bool has_fvar = (blob != blob_get_empty ());
+      blob_destroy (blob);
 
       bool strip = !has_fvar;
       /* special case: strip hints when a VF has no GDEF varstore after
@@ -160,11 +160,11 @@ struct PairPosFormat1_3
     out->valueFormat[0] = newFormats.first;
     out->valueFormat[1] = newFormats.second;
 
-    hb_sorted_vector_t<hb_codepoint_t> new_coverage;
+    sorted_vector_t<codepoint_t> new_coverage;
 
-    + hb_zip (this+coverage, pairSet)
-    | hb_filter (glyphset, hb_first)
-    | hb_filter ([this, c, out] (const typename Types::template OffsetTo<PairSet>& _)
+    + zip (this+coverage, pairSet)
+    | filter (glyphset, first)
+    | filter ([this, c, out] (const typename Types::template OffsetTo<PairSet>& _)
                  {
                    auto snap = c->serializer->snapshot ();
                    auto *o = out->pairSet.serialize_append (c->serializer);
@@ -177,10 +177,10 @@ struct PairPosFormat1_3
                    }
                    return ret;
                  },
-                 hb_second)
-    | hb_map (hb_first)
-    | hb_map (glyph_map)
-    | hb_sink (new_coverage)
+                 second)
+    | map (first)
+    | map (glyph_map)
+    | sink (new_coverage)
     ;
 
     out->coverage.serialize_serialize (c->serializer, new_coverage.iter ());
@@ -189,18 +189,18 @@ struct PairPosFormat1_3
   }
 
 
-  hb_pair_t<unsigned, unsigned> compute_effective_value_formats (const hb_set_t& glyphset,
+  pair_t<unsigned, unsigned> compute_effective_value_formats (const set_t& glyphset,
                                                                  bool strip_hints, bool strip_empty,
-                                                                 const hb_hashmap_t<unsigned, hb_pair_t<unsigned, int>> *varidx_delta_map = nullptr) const
+                                                                 const hashmap_t<unsigned, pair_t<unsigned, int>> *varidx_delta_map = nullptr) const
   {
     unsigned record_size = PairSet::get_size (valueFormat);
 
     unsigned format1 = 0;
     unsigned format2 = 0;
     for (const auto & _ :
-	  + hb_zip (this+coverage, pairSet)
-	  | hb_filter (glyphset, hb_first)
-	  | hb_map (hb_second)
+	  + zip (this+coverage, pairSet)
+	  | filter (glyphset, first)
+	  | map (second)
 	)
     {
       const PairSet& set = (this + _);
@@ -221,7 +221,7 @@ struct PairPosFormat1_3
         break;
     }
 
-    return hb_pair (format1, format2);
+    return pair (format1, format2);
   }
 };
 

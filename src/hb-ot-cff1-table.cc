@@ -213,54 +213,54 @@ static const uint8_t standard_encoding_to_sid [] =
     0,   144,   0,    0,    0,  145,    0,    0,  146,  147,  148,  149,    0,    0,    0,    0
 };
 
-hb_codepoint_t OT::cff1::lookup_standard_encoding_for_code (hb_codepoint_t sid)
+codepoint_t OT::cff1::lookup_standard_encoding_for_code (codepoint_t sid)
 {
   if (sid < ARRAY_LENGTH (standard_encoding_to_code))
-    return (hb_codepoint_t)standard_encoding_to_code[sid];
+    return (codepoint_t)standard_encoding_to_code[sid];
   else
     return 0;
 }
 
-hb_codepoint_t OT::cff1::lookup_expert_encoding_for_code (hb_codepoint_t sid)
+codepoint_t OT::cff1::lookup_expert_encoding_for_code (codepoint_t sid)
 {
   if (sid < ARRAY_LENGTH (expert_encoding_to_code))
-    return (hb_codepoint_t)expert_encoding_to_code[sid];
+    return (codepoint_t)expert_encoding_to_code[sid];
   else
     return 0;
 }
 
-hb_codepoint_t OT::cff1::lookup_expert_charset_for_sid (hb_codepoint_t glyph)
+codepoint_t OT::cff1::lookup_expert_charset_for_sid (codepoint_t glyph)
 {
   if (glyph < ARRAY_LENGTH (expert_charset_to_sid))
-    return (hb_codepoint_t)expert_charset_to_sid[glyph];
+    return (codepoint_t)expert_charset_to_sid[glyph];
   else
     return 0;
 }
 
-hb_codepoint_t OT::cff1::lookup_expert_subset_charset_for_sid (hb_codepoint_t glyph)
+codepoint_t OT::cff1::lookup_expert_subset_charset_for_sid (codepoint_t glyph)
 {
   if (glyph < ARRAY_LENGTH (expert_subset_charset_to_sid))
-    return (hb_codepoint_t)expert_subset_charset_to_sid[glyph];
+    return (codepoint_t)expert_subset_charset_to_sid[glyph];
   else
     return 0;
 }
 
-hb_codepoint_t OT::cff1::lookup_expert_charset_for_glyph (hb_codepoint_t sid)
+codepoint_t OT::cff1::lookup_expert_charset_for_glyph (codepoint_t sid)
 {
-  const auto *pair = hb_sorted_array (expert_charset_sid_to_gid).bsearch (sid);
+  const auto *pair = sorted_array (expert_charset_sid_to_gid).bsearch (sid);
   return pair ? pair->gid : 0;
 }
 
-hb_codepoint_t OT::cff1::lookup_expert_subset_charset_for_glyph (hb_codepoint_t sid)
+codepoint_t OT::cff1::lookup_expert_subset_charset_for_glyph (codepoint_t sid)
 {
-  const auto *pair = hb_sorted_array (expert_subset_charset_sid_to_gid).bsearch (sid);
+  const auto *pair = sorted_array (expert_subset_charset_sid_to_gid).bsearch (sid);
   return pair ? pair->gid : 0;
 }
 
-hb_codepoint_t OT::cff1::lookup_standard_encoding_for_sid (hb_codepoint_t code)
+codepoint_t OT::cff1::lookup_standard_encoding_for_sid (codepoint_t code)
 {
   if (code < ARRAY_LENGTH (standard_encoding_to_sid))
-    return (hb_codepoint_t)standard_encoding_to_sid[code];
+    return (codepoint_t)standard_encoding_to_sid[code];
   else
     return CFF_UNDEF_SID;
 }
@@ -360,7 +360,7 @@ struct cff1_path_procs_extents_t : path_procs_t<cff1_path_procs_extents_t, cff1_
   }
 };
 
-static bool _get_bounds (const OT::cff1::accelerator_t *cff, hb_codepoint_t glyph, bounds_t &bounds, bool in_seac=false);
+static bool _get_bounds (const OT::cff1::accelerator_t *cff, codepoint_t glyph, bounds_t &bounds, bool in_seac=false);
 
 struct cff1_cs_opset_extents_t : cff1_cs_opset_t<cff1_cs_opset_extents_t, cff1_extents_param_t, cff1_path_procs_extents_t>
 {
@@ -370,8 +370,8 @@ struct cff1_cs_opset_extents_t : cff1_cs_opset_t<cff1_cs_opset_extents_t, cff1_e
     point_t delta;
     delta.x = env.argStack[n-4];
     delta.y = env.argStack[n-3];
-    hb_codepoint_t base = param.cff->std_code_to_glyph (env.argStack[n-2].to_int ());
-    hb_codepoint_t accent = param.cff->std_code_to_glyph (env.argStack[n-1].to_int ());
+    codepoint_t base = param.cff->std_code_to_glyph (env.argStack[n-2].to_int ());
+    codepoint_t accent = param.cff->std_code_to_glyph (env.argStack[n-1].to_int ());
 
     bounds_t  base_bounds, accent_bounds;
     if (likely (!env.in_seac && base && accent
@@ -387,13 +387,13 @@ struct cff1_cs_opset_extents_t : cff1_cs_opset_t<cff1_cs_opset_extents_t, cff1_e
   }
 };
 
-bool _get_bounds (const OT::cff1::accelerator_t *cff, hb_codepoint_t glyph, bounds_t &bounds, bool in_seac)
+bool _get_bounds (const OT::cff1::accelerator_t *cff, codepoint_t glyph, bounds_t &bounds, bool in_seac)
 {
   bounds.init ();
   if (unlikely (!cff->is_valid () || (glyph >= cff->num_glyphs))) return false;
 
   unsigned int fd = cff->fdSelect->get_fd (glyph);
-  const hb_ubytes_t str = (*cff->charStrings)[glyph];
+  const ubytes_t str = (*cff->charStrings)[glyph];
   cff1_cs_interp_env_t env (str, *cff, fd);
   env.set_in_seac (in_seac);
   cff1_cs_interpreter_t<cff1_cs_opset_extents_t, cff1_extents_param_t> interp (env);
@@ -403,7 +403,7 @@ bool _get_bounds (const OT::cff1::accelerator_t *cff, hb_codepoint_t glyph, boun
   return true;
 }
 
-bool OT::cff1::accelerator_t::get_extents (hb_font_t *font, hb_codepoint_t glyph, hb_glyph_extents_t *extents) const
+bool OT::cff1::accelerator_t::get_extents (font_t *font, codepoint_t glyph, glyph_extents_t *extents) const
 {
 #ifdef HB_NO_OT_FONT_CFF
   /* XXX Remove check when this code moves to .hh file. */
@@ -443,8 +443,8 @@ bool OT::cff1::accelerator_t::get_extents (hb_font_t *font, hb_codepoint_t glyph
 
 struct cff1_path_param_t
 {
-  cff1_path_param_t (const OT::cff1::accelerator_t *cff_, hb_font_t *font_,
-		     hb_draw_session_t &draw_session_, point_t *delta_)
+  cff1_path_param_t (const OT::cff1::accelerator_t *cff_, font_t *font_,
+		     draw_session_t &draw_session_, point_t *delta_)
   {
     draw_session = &draw_session_;
     cff = cff_;
@@ -482,8 +482,8 @@ struct cff1_path_param_t
 
   void end_path () { draw_session->close_path (); }
 
-  hb_font_t *font;
-  hb_draw_session_t *draw_session;
+  font_t *font;
+  draw_session_t *draw_session;
   point_t *delta;
 
   const OT::cff1::accelerator_t *cff;
@@ -510,8 +510,8 @@ struct cff1_path_procs_path_t : path_procs_t<cff1_path_procs_path_t, cff1_cs_int
   }
 };
 
-static bool _get_path (const OT::cff1::accelerator_t *cff, hb_font_t *font, hb_codepoint_t glyph,
-		       hb_draw_session_t &draw_session, bool in_seac = false, point_t *delta = nullptr);
+static bool _get_path (const OT::cff1::accelerator_t *cff, font_t *font, codepoint_t glyph,
+		       draw_session_t &draw_session, bool in_seac = false, point_t *delta = nullptr);
 
 struct cff1_cs_opset_path_t : cff1_cs_opset_t<cff1_cs_opset_path_t, cff1_path_param_t, cff1_path_procs_path_t>
 {
@@ -524,8 +524,8 @@ struct cff1_cs_opset_path_t : cff1_cs_opset_t<cff1_cs_opset_path_t, cff1_path_pa
     point_t delta;
     delta.x = env.argStack[n-4];
     delta.y = env.argStack[n-3];
-    hb_codepoint_t base = param.cff->std_code_to_glyph (env.argStack[n-2].to_int ());
-    hb_codepoint_t accent = param.cff->std_code_to_glyph (env.argStack[n-1].to_int ());
+    codepoint_t base = param.cff->std_code_to_glyph (env.argStack[n-2].to_int ());
+    codepoint_t accent = param.cff->std_code_to_glyph (env.argStack[n-1].to_int ());
 
     if (unlikely (!(!env.in_seac && base && accent
 		    && _get_path (param.cff, param.font, base, *param.draw_session, true)
@@ -534,13 +534,13 @@ struct cff1_cs_opset_path_t : cff1_cs_opset_t<cff1_cs_opset_path_t, cff1_path_pa
   }
 };
 
-bool _get_path (const OT::cff1::accelerator_t *cff, hb_font_t *font, hb_codepoint_t glyph,
-		hb_draw_session_t &draw_session, bool in_seac, point_t *delta)
+bool _get_path (const OT::cff1::accelerator_t *cff, font_t *font, codepoint_t glyph,
+		draw_session_t &draw_session, bool in_seac, point_t *delta)
 {
   if (unlikely (!cff->is_valid () || (glyph >= cff->num_glyphs))) return false;
 
   unsigned int fd = cff->fdSelect->get_fd (glyph);
-  const hb_ubytes_t str = (*cff->charStrings)[glyph];
+  const ubytes_t str = (*cff->charStrings)[glyph];
   cff1_cs_interp_env_t env (str, *cff, fd);
   env.set_in_seac (in_seac);
   cff1_cs_interpreter_t<cff1_cs_opset_path_t, cff1_path_param_t> interp (env);
@@ -553,7 +553,7 @@ bool _get_path (const OT::cff1::accelerator_t *cff, hb_font_t *font, hb_codepoin
   return true;
 }
 
-bool OT::cff1::accelerator_t::paint_glyph (hb_font_t *font, hb_codepoint_t glyph, hb_paint_funcs_t *funcs, void *data, hb_color_t foreground) const
+bool OT::cff1::accelerator_t::paint_glyph (font_t *font, codepoint_t glyph, paint_funcs_t *funcs, void *data, color_t foreground) const
 {
   funcs->push_clip_glyph (data, glyph, font);
   funcs->color (data, true, foreground);
@@ -562,7 +562,7 @@ bool OT::cff1::accelerator_t::paint_glyph (hb_font_t *font, hb_codepoint_t glyph
   return true;
 }
 
-bool OT::cff1::accelerator_t::get_path (hb_font_t *font, hb_codepoint_t glyph, hb_draw_session_t &draw_session) const
+bool OT::cff1::accelerator_t::get_path (font_t *font, codepoint_t glyph, draw_session_t &draw_session) const
 {
 #ifdef HB_NO_OT_FONT_CFF
   /* XXX Remove check when this code moves to .hh file. */
@@ -579,8 +579,8 @@ struct get_seac_param_t
   bool has_seac () const { return base && accent; }
 
   const OT::cff1::accelerator_subset_t *cff;
-  hb_codepoint_t  base = 0;
-  hb_codepoint_t  accent = 0;
+  codepoint_t  base = 0;
+  codepoint_t  accent = 0;
 };
 
 struct cff1_cs_opset_seac_t : cff1_cs_opset_t<cff1_cs_opset_seac_t, get_seac_param_t>
@@ -588,20 +588,20 @@ struct cff1_cs_opset_seac_t : cff1_cs_opset_t<cff1_cs_opset_seac_t, get_seac_par
   static void process_seac (cff1_cs_interp_env_t &env, get_seac_param_t& param)
   {
     unsigned int  n = env.argStack.get_count ();
-    hb_codepoint_t  base_char = (hb_codepoint_t)env.argStack[n-2].to_int ();
-    hb_codepoint_t  accent_char = (hb_codepoint_t)env.argStack[n-1].to_int ();
+    codepoint_t  base_char = (codepoint_t)env.argStack[n-2].to_int ();
+    codepoint_t  accent_char = (codepoint_t)env.argStack[n-1].to_int ();
 
     param.base = param.cff->std_code_to_glyph (base_char);
     param.accent = param.cff->std_code_to_glyph (accent_char);
   }
 };
 
-bool OT::cff1::accelerator_subset_t::get_seac_components (hb_codepoint_t glyph, hb_codepoint_t *base, hb_codepoint_t *accent) const
+bool OT::cff1::accelerator_subset_t::get_seac_components (codepoint_t glyph, codepoint_t *base, codepoint_t *accent) const
 {
   if (unlikely (!is_valid () || (glyph >= num_glyphs))) return false;
 
   unsigned int fd = fdSelect->get_fd (glyph);
-  const hb_ubytes_t str = (*charStrings)[glyph];
+  const ubytes_t str = (*charStrings)[glyph];
   cff1_cs_interp_env_t env (str, *this, fd);
   cff1_cs_interpreter_t<cff1_cs_opset_seac_t, get_seac_param_t> interp (env);
   get_seac_param_t  param (this);

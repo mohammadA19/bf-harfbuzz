@@ -56,42 +56,42 @@
  *
  * Functions for using HarfBuzz with the International Components for Unicode
  * (ICU) library. HarfBuzz supports using ICU to provide Unicode data, by attaching
- * ICU functions to the virtual methods in a #hb_unicode_funcs_t function
+ * ICU functions to the virtual methods in a #unicode_funcs_t function
  * structure.
  **/
 
 /**
- * hb_icu_script_to_script:
+ * icu_script_to_script:
  * @script: The UScriptCode identifier to query
  *
- * Fetches the #hb_script_t script that corresponds to the
+ * Fetches the #script_t script that corresponds to the
  * specified UScriptCode identifier.
  *
- * Return value: the #hb_script_t script found
+ * Return value: the #script_t script found
  *
  **/
 
-hb_script_t
-hb_icu_script_to_script (UScriptCode script)
+script_t
+icu_script_to_script (UScriptCode script)
 {
   if (unlikely (script == USCRIPT_INVALID_CODE))
     return HB_SCRIPT_INVALID;
 
-  return hb_script_from_string (uscript_getShortName (script), -1);
+  return script_from_string (uscript_getShortName (script), -1);
 }
 
 /**
- * hb_icu_script_from_script:
- * @script: The #hb_script_t script to query
+ * icu_script_from_script:
+ * @script: The #script_t script to query
  *
  * Fetches the UScriptCode identifier that corresponds to the
- * specified #hb_script_t script.
+ * specified #script_t script.
  *
  * Return value: the UScriptCode identifier found
  *
  **/
 UScriptCode
-hb_icu_script_from_script (hb_script_t script)
+icu_script_from_script (script_t script)
 {
   UScriptCode out = USCRIPT_INVALID_CODE;
 
@@ -106,18 +106,18 @@ hb_icu_script_from_script (hb_script_t script)
 }
 
 
-static hb_unicode_combining_class_t
-hb_icu_unicode_combining_class (hb_unicode_funcs_t *ufuncs HB_UNUSED,
-				hb_codepoint_t      unicode,
+static unicode_combining_class_t
+icu_unicode_combining_class (unicode_funcs_t *ufuncs HB_UNUSED,
+				codepoint_t      unicode,
 				void               *user_data HB_UNUSED)
 
 {
-  return (hb_unicode_combining_class_t) u_getCombiningClass (unicode);
+  return (unicode_combining_class_t) u_getCombiningClass (unicode);
 }
 
-static hb_unicode_general_category_t
-hb_icu_unicode_general_category (hb_unicode_funcs_t *ufuncs HB_UNUSED,
-				 hb_codepoint_t      unicode,
+static unicode_general_category_t
+icu_unicode_general_category (unicode_funcs_t *ufuncs HB_UNUSED,
+				 codepoint_t      unicode,
 				 void               *user_data HB_UNUSED)
 {
   switch (u_getIntPropertyValue(unicode, UCHAR_GENERAL_CATEGORY))
@@ -166,17 +166,17 @@ hb_icu_unicode_general_category (hb_unicode_funcs_t *ufuncs HB_UNUSED,
   return HB_UNICODE_GENERAL_CATEGORY_UNASSIGNED;
 }
 
-static hb_codepoint_t
-hb_icu_unicode_mirroring (hb_unicode_funcs_t *ufuncs HB_UNUSED,
-			  hb_codepoint_t      unicode,
+static codepoint_t
+icu_unicode_mirroring (unicode_funcs_t *ufuncs HB_UNUSED,
+			  codepoint_t      unicode,
 			  void               *user_data HB_UNUSED)
 {
   return u_charMirror(unicode);
 }
 
-static hb_script_t
-hb_icu_unicode_script (hb_unicode_funcs_t *ufuncs HB_UNUSED,
-		       hb_codepoint_t      unicode,
+static script_t
+icu_unicode_script (unicode_funcs_t *ufuncs HB_UNUSED,
+		       codepoint_t      unicode,
 		       void               *user_data HB_UNUSED)
 {
   UErrorCode status = U_ZERO_ERROR;
@@ -185,14 +185,14 @@ hb_icu_unicode_script (hb_unicode_funcs_t *ufuncs HB_UNUSED,
   if (unlikely (U_FAILURE (status)))
     return HB_SCRIPT_UNKNOWN;
 
-  return hb_icu_script_to_script (scriptCode);
+  return icu_script_to_script (scriptCode);
 }
 
-static hb_bool_t
-hb_icu_unicode_compose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
-			hb_codepoint_t      a,
-			hb_codepoint_t      b,
-			hb_codepoint_t     *ab,
+static bool_t
+icu_unicode_compose (unicode_funcs_t *ufuncs HB_UNUSED,
+			codepoint_t      a,
+			codepoint_t      b,
+			codepoint_t     *ab,
 			void               *user_data)
 {
   const UNormalizer2 *normalizer = (const UNormalizer2 *) user_data;
@@ -202,11 +202,11 @@ hb_icu_unicode_compose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
   return true;
 }
 
-static hb_bool_t
-hb_icu_unicode_decompose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
-			  hb_codepoint_t      ab,
-			  hb_codepoint_t     *a,
-			  hb_codepoint_t     *b,
+static bool_t
+icu_unicode_decompose (unicode_funcs_t *ufuncs HB_UNUSED,
+			  codepoint_t      ab,
+			  codepoint_t     *a,
+			  codepoint_t     *b,
 			  void               *user_data)
 {
   const UNormalizer2 *normalizer = (const UNormalizer2 *) user_data;
@@ -236,27 +236,27 @@ hb_icu_unicode_decompose (hb_unicode_funcs_t *ufuncs HB_UNUSED,
 
 static inline void free_static_icu_funcs ();
 
-static struct hb_icu_unicode_funcs_lazy_loader_t : hb_unicode_funcs_lazy_loader_t<hb_icu_unicode_funcs_lazy_loader_t>
+static struct icu_unicode_funcs_lazy_loader_t : unicode_funcs_lazy_loader_t<icu_unicode_funcs_lazy_loader_t>
 {
-  static hb_unicode_funcs_t *create ()
+  static unicode_funcs_t *create ()
   {
     void *user_data = nullptr;
     UErrorCode icu_err = U_ZERO_ERROR;
     user_data = (void *) unorm2_getNFCInstance (&icu_err);
     assert (user_data);
 
-    hb_unicode_funcs_t *funcs = hb_unicode_funcs_create (nullptr);
+    unicode_funcs_t *funcs = unicode_funcs_create (nullptr);
 
-    hb_unicode_funcs_set_combining_class_func (funcs, hb_icu_unicode_combining_class, nullptr, nullptr);
-    hb_unicode_funcs_set_general_category_func (funcs, hb_icu_unicode_general_category, nullptr, nullptr);
-    hb_unicode_funcs_set_mirroring_func (funcs, hb_icu_unicode_mirroring, nullptr, nullptr);
-    hb_unicode_funcs_set_script_func (funcs, hb_icu_unicode_script, nullptr, nullptr);
-    hb_unicode_funcs_set_compose_func (funcs, hb_icu_unicode_compose, user_data, nullptr);
-    hb_unicode_funcs_set_decompose_func (funcs, hb_icu_unicode_decompose, user_data, nullptr);
+    unicode_funcs_set_combining_class_func (funcs, icu_unicode_combining_class, nullptr, nullptr);
+    unicode_funcs_set_general_category_func (funcs, icu_unicode_general_category, nullptr, nullptr);
+    unicode_funcs_set_mirroring_func (funcs, icu_unicode_mirroring, nullptr, nullptr);
+    unicode_funcs_set_script_func (funcs, icu_unicode_script, nullptr, nullptr);
+    unicode_funcs_set_compose_func (funcs, icu_unicode_compose, user_data, nullptr);
+    unicode_funcs_set_decompose_func (funcs, icu_unicode_decompose, user_data, nullptr);
 
-    hb_unicode_funcs_make_immutable (funcs);
+    unicode_funcs_make_immutable (funcs);
 
-    hb_atexit (free_static_icu_funcs);
+    atexit (free_static_icu_funcs);
 
     return funcs;
   }
@@ -269,17 +269,17 @@ void free_static_icu_funcs ()
 }
 
 /**
- * hb_icu_get_unicode_funcs:
+ * icu_get_unicode_funcs:
  *
  * Fetches a Unicode-functions structure that is populated
  * with the appropriate ICU function for each method.
  *
- * Return value: (transfer none): a pointer to the #hb_unicode_funcs_t Unicode-functions structure
+ * Return value: (transfer none): a pointer to the #unicode_funcs_t Unicode-functions structure
  *
  * Since: 0.9.38
  **/
-hb_unicode_funcs_t *
-hb_icu_get_unicode_funcs ()
+unicode_funcs_t *
+icu_get_unicode_funcs ()
 {
   return static_icu_funcs.get_unconst ();
 }

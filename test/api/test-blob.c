@@ -45,35 +45,35 @@
 static void
 test_blob_empty (void)
 {
-  hb_blob_t *blob;
+  blob_t *blob;
   unsigned int len;
   const char *data;
   char *data_writable;
 
-  g_assert (hb_blob_is_immutable (hb_blob_get_empty ()));
-  g_assert (hb_blob_get_empty () != NULL);
-  g_assert (hb_blob_get_empty () == hb_blob_create (NULL, 0, HB_MEMORY_MODE_READONLY, NULL, NULL));
-  g_assert (hb_blob_get_empty () == hb_blob_create ("asdf", 0, HB_MEMORY_MODE_READONLY, NULL, NULL));
-  g_assert (hb_blob_get_empty () == hb_blob_create (NULL, -1, HB_MEMORY_MODE_READONLY, NULL, NULL));
-  g_assert (hb_blob_get_empty () == hb_blob_create ("asdfg", -1, HB_MEMORY_MODE_READONLY, NULL, NULL));
+  g_assert (blob_is_immutable (blob_get_empty ()));
+  g_assert (blob_get_empty () != NULL);
+  g_assert (blob_get_empty () == blob_create (NULL, 0, HB_MEMORY_MODE_READONLY, NULL, NULL));
+  g_assert (blob_get_empty () == blob_create ("asdf", 0, HB_MEMORY_MODE_READONLY, NULL, NULL));
+  g_assert (blob_get_empty () == blob_create (NULL, -1, HB_MEMORY_MODE_READONLY, NULL, NULL));
+  g_assert (blob_get_empty () == blob_create ("asdfg", -1, HB_MEMORY_MODE_READONLY, NULL, NULL));
 
-  blob = hb_blob_get_empty ();
-  g_assert (blob == hb_blob_get_empty ());
+  blob = blob_get_empty ();
+  g_assert (blob == blob_get_empty ());
 
-  len = hb_blob_get_length (blob);
+  len = blob_get_length (blob);
   g_assert_cmpint (len, ==, 0);
 
-  data = hb_blob_get_data (blob, NULL);
+  data = blob_get_data (blob, NULL);
   g_assert (data == NULL);
 
-  data = hb_blob_get_data (blob, &len);
+  data = blob_get_data (blob, &len);
   g_assert (data == NULL);
   g_assert_cmpint (len, ==, 0);
 
-  data_writable = hb_blob_get_data_writable (blob, NULL);
+  data_writable = blob_get_data_writable (blob, NULL);
   g_assert (data_writable == NULL);
 
-  data_writable = hb_blob_get_data_writable (blob, &len);
+  data_writable = blob_get_data_writable (blob, &len);
   g_assert (data_writable == NULL);
   g_assert_cmpint (len, ==, 0);
 }
@@ -91,7 +91,7 @@ static const char *blob_names[] = {
 
 typedef struct
 {
-  hb_blob_t *blob;
+  blob_t *blob;
   int freed;
   char *data;
   unsigned int len;
@@ -143,30 +143,30 @@ free_up_munmap (fixture_t *fixture)
 static void
 fixture_init (fixture_t *fixture, gconstpointer user_data)
 {
-  hb_memory_mode_t mm = (hb_memory_mode_t) GPOINTER_TO_INT (user_data);
+  memory_mode_t mm = (memory_mode_t) GPOINTER_TO_INT (user_data);
   unsigned int len;
   const char *data;
-  hb_destroy_func_t free_func;
+  destroy_func_t free_func;
 
   switch (GPOINTER_TO_INT (user_data))
   {
     case HB_MEMORY_MODE_DUPLICATE:
       data = test_data;
       len = sizeof (test_data);
-      free_func = (hb_destroy_func_t) free_up;
+      free_func = (destroy_func_t) free_up;
       break;
 
     case HB_MEMORY_MODE_READONLY:
       data = test_data;
       len = sizeof (test_data);
-      free_func = (hb_destroy_func_t) free_up;
+      free_func = (destroy_func_t) free_up;
       break;
 
     case HB_MEMORY_MODE_WRITABLE:
       data = malloc (sizeof (test_data));
       memcpy ((char *) data, test_data, sizeof (test_data));
       len = sizeof (test_data);
-      free_func = (hb_destroy_func_t) free_up_free;
+      free_func = (destroy_func_t) free_up_free;
       break;
 
 #ifdef TEST_MMAP
@@ -179,7 +179,7 @@ fixture_init (fixture_t *fixture, gconstpointer user_data)
       memcpy ((char *) data, test_data, sizeof (test_data));
       mprotect ((char *) data, pagesize, PROT_READ);
       len = sizeof (test_data);
-      free_func = (hb_destroy_func_t) free_up_munmap;
+      free_func = (destroy_func_t) free_up_munmap;
       break;
     }
 #endif
@@ -191,13 +191,13 @@ fixture_init (fixture_t *fixture, gconstpointer user_data)
   fixture->freed = 0;
   fixture->data = (char *) data;
   fixture->len = len;
-  fixture->blob = hb_blob_create (data, len, mm, fixture, free_func);
+  fixture->blob = blob_create (data, len, mm, fixture, free_func);
 }
 
 static void
 fixture_finish (fixture_t *fixture, gconstpointer user_data HB_UNUSED)
 {
-  hb_blob_destroy (fixture->blob);
+  blob_destroy (fixture->blob);
   g_assert_cmpint (fixture->freed, ==, 1);
 }
 
@@ -205,8 +205,8 @@ fixture_finish (fixture_t *fixture, gconstpointer user_data HB_UNUSED)
 static void
 test_blob (fixture_t *fixture, gconstpointer user_data)
 {
-  hb_blob_t *b = fixture->blob;
-  hb_memory_mode_t mm = GPOINTER_TO_INT (user_data);
+  blob_t *b = fixture->blob;
+  memory_mode_t mm = GPOINTER_TO_INT (user_data);
   unsigned int len;
   const char *data;
   char *data_writable;
@@ -214,10 +214,10 @@ test_blob (fixture_t *fixture, gconstpointer user_data)
 
   g_assert (b);
 
-  len = hb_blob_get_length (b);
+  len = blob_get_length (b);
   g_assert_cmpint (len, ==, fixture->len);
 
-  data = hb_blob_get_data (b, &len);
+  data = blob_get_data (b, &len);
   g_assert_cmpint (len, ==, fixture->len);
   if (mm == HB_MEMORY_MODE_DUPLICATE) {
     g_assert (data != fixture->data);
@@ -228,7 +228,7 @@ test_blob (fixture_t *fixture, gconstpointer user_data)
     g_assert_cmpint (fixture->freed, ==, 0);
   }
 
-  data_writable = hb_blob_get_data_writable (b, &len);
+  data_writable = blob_get_data_writable (b, &len);
   g_assert_cmpint (len, ==, fixture->len);
   g_assert (data_writable);
   g_assert (0 == memcmp (data_writable, fixture->data, fixture->len));
@@ -239,7 +239,7 @@ test_blob (fixture_t *fixture, gconstpointer user_data)
     g_assert (data_writable == data);
   }
 
-  data = hb_blob_get_data (b, &len);
+  data = blob_get_data (b, &len);
   g_assert_cmpint (len, ==, fixture->len);
   g_assert (data == data_writable);
 
@@ -247,15 +247,15 @@ test_blob (fixture_t *fixture, gconstpointer user_data)
 
   /* Now, make it immutable and watch get_data_writable() fail */
 
-  g_assert (!hb_blob_is_immutable (b));
-  hb_blob_make_immutable (b);
-  g_assert (hb_blob_is_immutable (b));
+  g_assert (!blob_is_immutable (b));
+  blob_make_immutable (b);
+  g_assert (blob_is_immutable (b));
 
-  data_writable = hb_blob_get_data_writable (b, &len);
+  data_writable = blob_get_data_writable (b, &len);
   g_assert (!data_writable);
   g_assert_cmpint (len, ==, 0);
 
-  data = hb_blob_get_data (b, &len);
+  data = blob_get_data (b, &len);
   g_assert_cmpint (len, ==, fixture->len);
   for (i = 0; i < len; i++)
     g_assert ('\0' == data[i]);
@@ -264,8 +264,8 @@ test_blob (fixture_t *fixture, gconstpointer user_data)
 static void
 test_blob_subblob (fixture_t *fixture, gconstpointer user_data)
 {
-  hb_blob_t *b = fixture->blob;
-  hb_memory_mode_t mm = GPOINTER_TO_INT (user_data);
+  blob_t *b = fixture->blob;
+  memory_mode_t mm = GPOINTER_TO_INT (user_data);
   unsigned int len;
   const char *data;
   char *data_writable;
@@ -273,26 +273,26 @@ test_blob_subblob (fixture_t *fixture, gconstpointer user_data)
 
   if (mm == HB_MEMORY_MODE_DUPLICATE) {
     g_assert_cmpint (fixture->freed, ==, 1);
-    fixture->data = (char *) hb_blob_get_data (b, NULL);
+    fixture->data = (char *) blob_get_data (b, NULL);
   } else {
     g_assert_cmpint (fixture->freed, ==, 0);
   }
-  fixture->blob = hb_blob_create_sub_blob (b, 1, fixture->len - 2);
-  hb_blob_destroy (b);
+  fixture->blob = blob_create_sub_blob (b, 1, fixture->len - 2);
+  blob_destroy (b);
   b = fixture->blob;
 
   /* A sub-blob is always created READONLY. */
 
   g_assert (b);
 
-  len = hb_blob_get_length (b);
+  len = blob_get_length (b);
   g_assert_cmpint (len, ==, fixture->len - 2);
 
-  data = hb_blob_get_data (b, &len);
+  data = blob_get_data (b, &len);
   g_assert_cmpint (len, ==, fixture->len - 2);
   g_assert (data == fixture->data + 1);
 
-  data_writable = hb_blob_get_data_writable (b, &len);
+  data_writable = blob_get_data_writable (b, &len);
   g_assert_cmpint (len, ==, fixture->len - 2);
   g_assert (data_writable);
   if (mm == HB_MEMORY_MODE_READONLY)
@@ -300,7 +300,7 @@ test_blob_subblob (fixture_t *fixture, gconstpointer user_data)
   g_assert (data_writable != data);
   g_assert_cmpint (fixture->freed, ==, 1);
 
-  data = hb_blob_get_data (b, &len);
+  data = blob_get_data (b, &len);
   g_assert_cmpint (len, ==, fixture->len - 2);
   g_assert (data == data_writable);
 
@@ -308,15 +308,15 @@ test_blob_subblob (fixture_t *fixture, gconstpointer user_data)
 
   /* Now, make it immutable and watch get_data_writable() fail */
 
-  g_assert (!hb_blob_is_immutable (b));
-  hb_blob_make_immutable (b);
-  g_assert (hb_blob_is_immutable (b));
+  g_assert (!blob_is_immutable (b));
+  blob_make_immutable (b);
+  g_assert (blob_is_immutable (b));
 
-  data_writable = hb_blob_get_data_writable (b, &len);
+  data_writable = blob_get_data_writable (b, &len);
   g_assert (!data_writable);
   g_assert_cmpint (len, ==, 0);
 
-  data = hb_blob_get_data (b, &len);
+  data = blob_get_data (b, &len);
   g_assert_cmpint (len, ==, fixture->len - 2);
   for (i = 0; i < len; i++)
     g_assert ('\0' == data[i]);
@@ -328,22 +328,22 @@ main (int argc, char **argv)
 {
   unsigned int i;
 
-  hb_test_init (&argc, &argv);
+  test_init (&argc, &argv);
 
-  hb_test_add (test_blob_empty);
+  test_add (test_blob_empty);
 
   for (i = 0; i < G_N_ELEMENTS (blob_names); i++)
   {
     const void *blob_type = GINT_TO_POINTER (i);
     const char *blob_name = blob_names[i];
 
-    hb_test_add_fixture_flavor (fixture, blob_type, blob_name, test_blob);
-    hb_test_add_fixture_flavor (fixture, blob_type, blob_name, test_blob_subblob);
+    test_add_fixture_flavor (fixture, blob_type, blob_name, test_blob);
+    test_add_fixture_flavor (fixture, blob_type, blob_name, test_blob_subblob);
   }
 
   /*
    * create_sub_blob
    */
 
-  return hb_test_run ();
+  return test_run ();
 }

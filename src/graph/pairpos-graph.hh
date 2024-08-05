@@ -42,17 +42,17 @@ struct PairPosFormat1 : public OT::Layout::GPOS_impl::PairPosFormat1_3<SmallType
     int64_t vertex_len = vertex.obj.tail - vertex.obj.head;
     unsigned min_size = OT::Layout::GPOS_impl::PairPosFormat1_3<SmallTypes>::min_size;
     if (vertex_len < min_size) return false;
-    hb_barrier ();
+    barrier ();
 
     return vertex_len >=
         min_size + pairSet.get_size () - pairSet.len.get_size();
   }
 
-  hb_vector_t<unsigned> split_subtables (gsubgpos_graph_context_t& c,
+  vector_t<unsigned> split_subtables (gsubgpos_graph_context_t& c,
                                          unsigned parent_index,
                                          unsigned this_index)
   {
-    hb_set_t visited;
+    set_t visited;
 
     const unsigned coverage_id = c.graph.index_for_offset (this_index, &coverage);
     const unsigned coverage_size = c.graph.vertices_[coverage_id].table_size ();
@@ -60,7 +60,7 @@ struct PairPosFormat1 : public OT::Layout::GPOS_impl::PairPosFormat1_3<SmallType
 
     unsigned partial_coverage_size = 4;
     unsigned accumulated = base_size;
-    hb_vector_t<unsigned> split_points;
+    vector_t<unsigned> split_points;
     for (unsigned i = 0; i < pairSet.len; i++)
     {
       unsigned pair_set_index = pair_set_graph_index (c, this_index, i);
@@ -70,7 +70,7 @@ struct PairPosFormat1 : public OT::Layout::GPOS_impl::PairPosFormat1_3<SmallType
       partial_coverage_size += OT::HBUINT16::static_size;
 
       accumulated += accumulated_delta;
-      unsigned total = accumulated + hb_min (partial_coverage_size, coverage_size);
+      unsigned total = accumulated + min (partial_coverage_size, coverage_size);
 
       if (total >= (1 << 16))
       {
@@ -133,11 +133,11 @@ struct PairPosFormat1 : public OT::Layout::GPOS_impl::PairPosFormat1_3<SmallType
 
     unsigned coverage_size = coverage.vertex->table_size ();
     auto new_coverage =
-        + hb_zip (coverage.table->iter (), hb_range ())
-        | hb_filter ([&] (hb_pair_t<unsigned, unsigned> p) {
+        + zip (coverage.table->iter (), range ())
+        | filter ([&] (pair_t<unsigned, unsigned> p) {
           return p.second < count;
         })
-        | hb_map_retains_sorting (hb_first)
+        | map_retains_sorting (first)
         ;
 
     return Coverage::make_coverage (c, new_coverage, coverage.index, coverage_size);
@@ -199,14 +199,14 @@ struct PairPosFormat2 : public OT::Layout::GPOS_impl::PairPosFormat2_4<SmallType
     size_t vertex_len = vertex.table_size ();
     unsigned min_size = OT::Layout::GPOS_impl::PairPosFormat2_4<SmallTypes>::min_size;
     if (vertex_len < min_size) return false;
-    hb_barrier ();
+    barrier ();
 
     const unsigned class1_count = class1Count;
     return vertex_len >=
         min_size + class1_count * get_class1_record_size ();
   }
 
-  hb_vector_t<unsigned> split_subtables (gsubgpos_graph_context_t& c,
+  vector_t<unsigned> split_subtables (gsubgpos_graph_context_t& c,
                                          unsigned parent_index,
                                          unsigned this_index)
   {
@@ -216,8 +216,8 @@ struct PairPosFormat2 : public OT::Layout::GPOS_impl::PairPosFormat2_4<SmallType
     const ClassDef* class_def_1 = get_class_def_1 (c, this_index);
     auto gid_and_class =
         + coverage->iter ()
-        | hb_map_retains_sorting ([&] (hb_codepoint_t gid) {
-          return hb_codepoint_pair_t (gid, class_def_1->get_class (gid));
+        | map_retains_sorting ([&] (codepoint_t gid) {
+          return codepoint_pair_t (gid, class_def_1->get_class (gid));
         })
         ;
     class_def_size_estimator_t estimator (gid_and_class);
@@ -236,21 +236,21 @@ struct PairPosFormat2 : public OT::Layout::GPOS_impl::PairPosFormat2_4<SmallType
     unsigned max_coverage_size = coverage_size;
     unsigned max_class_def_1_size = class_def_1_size;
 
-    hb_vector_t<unsigned> split_points;
+    vector_t<unsigned> split_points;
 
-    hb_hashmap_t<unsigned, unsigned> device_tables = get_all_device_tables (c, this_index);
-    hb_vector_t<unsigned> format1_device_table_indices = valueFormat1.get_device_table_indices ();
-    hb_vector_t<unsigned> format2_device_table_indices = valueFormat2.get_device_table_indices ();
+    hashmap_t<unsigned, unsigned> device_tables = get_all_device_tables (c, this_index);
+    vector_t<unsigned> format1_device_table_indices = valueFormat1.get_device_table_indices ();
+    vector_t<unsigned> format2_device_table_indices = valueFormat2.get_device_table_indices ();
     bool has_device_tables = bool(format1_device_table_indices) || bool(format2_device_table_indices);
 
-    hb_set_t visited;
+    set_t visited;
     for (unsigned i = 0; i < class1_count; i++)
     {
       unsigned accumulated_delta = class1_record_size;
       class_def_1_size = estimator.add_class_def_size (i);
       coverage_size = estimator.coverage_size ();
-      max_coverage_size = hb_max (max_coverage_size, coverage_size);
-      max_class_def_1_size = hb_max (max_class_def_1_size, class_def_1_size);
+      max_coverage_size = max (max_coverage_size, coverage_size);
+      max_class_def_1_size = max (max_class_def_1_size, class_def_1_size);
 
       if (has_device_tables) {
         for (unsigned j = 0; j < class2_count; j++)
@@ -274,7 +274,7 @@ struct PairPosFormat2 : public OT::Layout::GPOS_impl::PairPosFormat2_4<SmallType
       unsigned total = accumulated
                        + coverage_size + class_def_1_size + class_def_2_size
                        // The largest object will pack last and can exceed the size limit.
-                       - hb_max (hb_max (coverage_size, class_def_1_size), class_def_2_size);
+                       - max (max (coverage_size, class_def_1_size), class_def_2_size);
       if (total >= (1 << 16))
       {
         split_points.push (i);
@@ -319,9 +319,9 @@ struct PairPosFormat2 : public OT::Layout::GPOS_impl::PairPosFormat2_4<SmallType
     unsigned max_coverage_size;
     unsigned max_class_def_size;
 
-    const hb_hashmap_t<unsigned, unsigned>& device_tables;
-    const hb_vector_t<unsigned>& format1_device_table_indices;
-    const hb_vector_t<unsigned>& format2_device_table_indices;
+    const hashmap_t<unsigned, unsigned>& device_tables;
+    const vector_t<unsigned>& format1_device_table_indices;
+    const vector_t<unsigned>& format2_device_table_indices;
 
     unsigned original_count ()
     {
@@ -389,22 +389,22 @@ struct PairPosFormat2 : public OT::Layout::GPOS_impl::PairPosFormat2_4<SmallType
 
     auto klass_map =
     + coverage_table->iter ()
-    | hb_map_retains_sorting ([&] (hb_codepoint_t gid) {
-      return hb_codepoint_pair_t (gid, class_def_1_table->get_class (gid));
+    | map_retains_sorting ([&] (codepoint_t gid) {
+      return codepoint_pair_t (gid, class_def_1_table->get_class (gid));
     })
-    | hb_filter ([&] (hb_codepoint_t klass) {
+    | filter ([&] (codepoint_t klass) {
       return klass >= start && klass < end;
-    }, hb_second)
-    | hb_map_retains_sorting ([&] (hb_codepoint_pair_t gid_and_class) {
+    }, second)
+    | map_retains_sorting ([&] (codepoint_pair_t gid_and_class) {
       // Classes must be from 0...N so subtract start
-      return hb_codepoint_pair_t (gid_and_class.first, gid_and_class.second - start);
+      return codepoint_pair_t (gid_and_class.first, gid_and_class.second - start);
     })
     ;
 
     if (!Coverage::add_coverage (split_context.c,
                                  pair_pos_prime_id,
                                  2,
-                                 + klass_map | hb_map_retains_sorting (hb_first),
+                                 + klass_map | map_retains_sorting (first),
                                  split_context.max_coverage_size))
       return -1;
 
@@ -438,7 +438,7 @@ struct PairPosFormat2 : public OT::Layout::GPOS_impl::PairPosFormat2_4<SmallType
 
     char* start_addr = ((char*)&values[0]) + start * split_context.class1_record_size;
     unsigned num_records = end - start;
-    hb_memcpy (&pair_pos_prime->values[0],
+    memcpy (&pair_pos_prime->values[0],
             start_addr,
             num_records * split_context.class1_record_size);
 
@@ -475,7 +475,7 @@ struct PairPosFormat2 : public OT::Layout::GPOS_impl::PairPosFormat2_4<SmallType
 
   void transfer_device_tables (split_context_t& split_context,
                                unsigned pair_pos_prime_id,
-                               const hb_vector_t<unsigned>& device_table_indices,
+                               const vector_t<unsigned>& device_table_indices,
                                unsigned old_value_record_index,
                                unsigned new_value_record_index) const
   {
@@ -522,15 +522,15 @@ struct PairPosFormat2 : public OT::Layout::GPOS_impl::PairPosFormat2_4<SmallType
 
     auto klass_map =
     + coverage.table->iter ()
-    | hb_map_retains_sorting ([&] (hb_codepoint_t gid) {
-      return hb_codepoint_pair_t (gid, class_def_1.table->get_class (gid));
+    | map_retains_sorting ([&] (codepoint_t gid) {
+      return codepoint_pair_t (gid, class_def_1.table->get_class (gid));
     })
-    | hb_filter ([&] (hb_codepoint_t klass) {
+    | filter ([&] (codepoint_t klass) {
       return klass < count;
-    }, hb_second)
+    }, second)
     ;
 
-    auto new_coverage = + klass_map | hb_map_retains_sorting (hb_first);
+    auto new_coverage = + klass_map | map_retains_sorting (first);
     if (!Coverage::make_coverage (split_context.c,
                                   + new_coverage,
                                   coverage.index,
@@ -545,7 +545,7 @@ struct PairPosFormat2 : public OT::Layout::GPOS_impl::PairPosFormat2_4<SmallType
                                      class_def_1.vertex->table_size ());
   }
 
-  hb_hashmap_t<unsigned, unsigned>
+  hashmap_t<unsigned, unsigned>
   get_all_device_tables (gsubgpos_graph_context_t& c,
                          unsigned this_index) const
   {
@@ -578,10 +578,10 @@ struct PairPosFormat2 : public OT::Layout::GPOS_impl::PairPosFormat2_4<SmallType
   }
 
   unsigned size_of_value_record_children (gsubgpos_graph_context_t& c,
-                                          const hb_hashmap_t<unsigned, unsigned>& device_tables,
-                                          const hb_vector_t<unsigned> device_table_indices,
+                                          const hashmap_t<unsigned, unsigned>& device_tables,
+                                          const vector_t<unsigned> device_table_indices,
                                           unsigned value_record_index,
-                                          hb_set_t& visited)
+                                          set_t& visited)
   {
     unsigned size = 0;
     for (unsigned i : device_table_indices)
@@ -606,7 +606,7 @@ struct PairPosFormat2 : public OT::Layout::GPOS_impl::PairPosFormat2_4<SmallType
 
 struct PairPos : public OT::Layout::GPOS_impl::PairPos
 {
-  hb_vector_t<unsigned> split_subtables (gsubgpos_graph_context_t& c,
+  vector_t<unsigned> split_subtables (gsubgpos_graph_context_t& c,
                                          unsigned parent_index,
                                          unsigned this_index)
   {
@@ -621,7 +621,7 @@ struct PairPos : public OT::Layout::GPOS_impl::PairPos
       // Don't split 24bit PairPos's.
 #endif
     default:
-      return hb_vector_t<unsigned> ();
+      return vector_t<unsigned> ();
     }
   }
 
@@ -629,7 +629,7 @@ struct PairPos : public OT::Layout::GPOS_impl::PairPos
   {
     int64_t vertex_len = vertex.obj.tail - vertex.obj.head;
     if (vertex_len < u.format.get_size ()) return false;
-    hb_barrier ();
+    barrier ();
 
     switch (u.format) {
     case 1:

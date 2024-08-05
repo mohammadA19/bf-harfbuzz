@@ -43,7 +43,7 @@
  **/
 
 static float
-_fix_ascender_descender (float value, hb_ot_metrics_tag_t metrics_tag)
+_fix_ascender_descender (float value, ot_metrics_tag_t metrics_tag)
 {
   if (metrics_tag == HB_OT_METRICS_TAG_HORIZONTAL_ASCENDER ||
       metrics_tag == HB_OT_METRICS_TAG_VERTICAL_ASCENDER)
@@ -57,11 +57,11 @@ _fix_ascender_descender (float value, hb_ot_metrics_tag_t metrics_tag)
 /* The common part of _get_position logic needed on hb-ot-font and here
    to be able to have slim builds without the not always needed parts */
 bool
-_hb_ot_metrics_get_position_common (hb_font_t           *font,
-				    hb_ot_metrics_tag_t  metrics_tag,
-				    hb_position_t       *position     /* OUT.  May be NULL. */)
+_ot_metrics_get_position_common (font_t           *font,
+				    ot_metrics_tag_t  metrics_tag,
+				    position_t       *position     /* OUT.  May be NULL. */)
 {
-  hb_face_t *face = font->face;
+  face_t *face = font->face;
   switch ((unsigned) metrics_tag)
   {
 #ifndef HB_NO_VAR
@@ -105,7 +105,7 @@ _hb_ot_metrics_get_position_common (hb_font_t           *font,
 
 #if 0
 static bool
-_get_gasp (hb_face_t *face, float *result, hb_ot_metrics_tag_t metrics_tag)
+_get_gasp (face_t *face, float *result, ot_metrics_tag_t metrics_tag)
 {
   const OT::GaspRange& range = face->table.gasp->get_gasp_range (metrics_tag - HB_TAG ('g','s','p','0'));
   if (&range == &Null (OT::GaspRange)) return false;
@@ -123,8 +123,8 @@ _get_gasp (hb_face_t *face, float *result, hb_ot_metrics_tag_t metrics_tag)
 #define _HB_OT_METRICS_TAG_HORIZONTAL_LINE_GAP_HHEA  HB_TAG ('H','l','g','p')
 
 /**
- * hb_ot_metrics_get_position:
- * @font: an #hb_font_t object.
+ * ot_metrics_get_position:
+ * @font: an #font_t object.
  * @metrics_tag: tag of metrics value you like to fetch.
  * @position: (out) (optional): result of metrics value from the font.
  *
@@ -133,12 +133,12 @@ _get_gasp (hb_face_t *face, float *result, hb_ot_metrics_tag_t metrics_tag)
  * Returns: Whether found the requested metrics in the font.
  * Since: 2.6.0
  **/
-hb_bool_t
-hb_ot_metrics_get_position (hb_font_t           *font,
-			    hb_ot_metrics_tag_t  metrics_tag,
-			    hb_position_t       *position     /* OUT.  May be NULL. */)
+bool_t
+ot_metrics_get_position (font_t           *font,
+			    ot_metrics_tag_t  metrics_tag,
+			    position_t       *position     /* OUT.  May be NULL. */)
 {
-  hb_face_t *face = font->face;
+  face_t *face = font->face;
   switch ((unsigned) metrics_tag)
   {
   case HB_OT_METRICS_TAG_HORIZONTAL_ASCENDER:
@@ -146,9 +146,9 @@ hb_ot_metrics_get_position (hb_font_t           *font,
   case HB_OT_METRICS_TAG_HORIZONTAL_LINE_GAP:
   case HB_OT_METRICS_TAG_VERTICAL_ASCENDER:
   case HB_OT_METRICS_TAG_VERTICAL_DESCENDER:
-  case HB_OT_METRICS_TAG_VERTICAL_LINE_GAP:           return _hb_ot_metrics_get_position_common (font, metrics_tag, position);
+  case HB_OT_METRICS_TAG_VERTICAL_LINE_GAP:           return _ot_metrics_get_position_common (font, metrics_tag, position);
 #ifndef HB_NO_VAR
-#define GET_VAR hb_ot_metrics_get_variation (font, metrics_tag)
+#define GET_VAR ot_metrics_get_variation (font, metrics_tag)
 #else
 #define GET_VAR 0
 #endif
@@ -170,7 +170,7 @@ hb_ot_metrics_get_position (hb_font_t           *font,
     {
       unsigned rise = face->table.hhea->caretSlopeRise;
       unsigned upem = face->get_upem ();
-      mult = (rise && rise < upem) ? hb_min (upem / rise, 256u) : 1u;
+      mult = (rise && rise < upem) ? min (upem / rise, 256u) : 1u;
     }
 
     if (metrics_tag == HB_OT_METRICS_TAG_HORIZONTAL_CARET_RISE)
@@ -184,7 +184,7 @@ hb_ot_metrics_get_position (hb_font_t           *font,
     }
     else
     {
-      hb_position_t rise = 0;
+      position_t rise = 0;
 
       if (font->slant && position && GET_METRIC_Y (hhea, caretSlopeRise))
 	rise = *position;
@@ -239,8 +239,8 @@ hb_ot_metrics_get_position (hb_font_t           *font,
 }
 
 /**
- * hb_ot_metrics_get_position_with_fallback:
- * @font: an #hb_font_t object.
+ * ot_metrics_get_position_with_fallback:
+ * @font: an #font_t object.
  * @metrics_tag: tag of metrics value you like to fetch.
  * @position: (out) (optional): result of metrics value from the font.
  *
@@ -250,15 +250,15 @@ hb_ot_metrics_get_position (hb_font_t           *font,
  * Since: 4.0.0
  **/
 void
-hb_ot_metrics_get_position_with_fallback (hb_font_t           *font,
-					  hb_ot_metrics_tag_t  metrics_tag,
-					  hb_position_t       *position     /* OUT */)
+ot_metrics_get_position_with_fallback (font_t           *font,
+					  ot_metrics_tag_t  metrics_tag,
+					  position_t       *position     /* OUT */)
 {
-  hb_font_extents_t font_extents;
-  hb_codepoint_t glyph;
-  hb_glyph_extents_t extents;
+  font_extents_t font_extents;
+  codepoint_t glyph;
+  glyph_extents_t extents;
 
-  if (hb_ot_metrics_get_position (font, metrics_tag, position))
+  if (ot_metrics_get_position (font, metrics_tag, position))
     {
       if ((metrics_tag != HB_OT_METRICS_TAG_STRIKEOUT_SIZE &&
            metrics_tag != HB_OT_METRICS_TAG_UNDERLINE_SIZE) ||
@@ -270,33 +270,33 @@ hb_ot_metrics_get_position_with_fallback (hb_font_t           *font,
   {
   case HB_OT_METRICS_TAG_HORIZONTAL_ASCENDER:
   case HB_OT_METRICS_TAG_HORIZONTAL_CLIPPING_ASCENT:
-    hb_font_get_extents_for_direction (font, HB_DIRECTION_LTR, &font_extents);
+    font_get_extents_for_direction (font, HB_DIRECTION_LTR, &font_extents);
     *position = font_extents.ascender;
     break;
 
   case HB_OT_METRICS_TAG_VERTICAL_ASCENDER:
-    hb_font_get_extents_for_direction (font, HB_DIRECTION_TTB, &font_extents);
+    font_get_extents_for_direction (font, HB_DIRECTION_TTB, &font_extents);
     *position = font_extents.ascender;
     break;
 
   case HB_OT_METRICS_TAG_HORIZONTAL_DESCENDER:
   case HB_OT_METRICS_TAG_HORIZONTAL_CLIPPING_DESCENT:
-    hb_font_get_extents_for_direction (font, HB_DIRECTION_LTR, &font_extents);
+    font_get_extents_for_direction (font, HB_DIRECTION_LTR, &font_extents);
     *position = font_extents.descender;
     break;
 
   case HB_OT_METRICS_TAG_VERTICAL_DESCENDER:
-    hb_font_get_extents_for_direction (font, HB_DIRECTION_TTB, &font_extents);
+    font_get_extents_for_direction (font, HB_DIRECTION_TTB, &font_extents);
     *position = font_extents.ascender;
     break;
 
   case HB_OT_METRICS_TAG_HORIZONTAL_LINE_GAP:
-    hb_font_get_extents_for_direction (font, HB_DIRECTION_LTR, &font_extents);
+    font_get_extents_for_direction (font, HB_DIRECTION_LTR, &font_extents);
     *position = font_extents.line_gap;
     break;
 
   case HB_OT_METRICS_TAG_VERTICAL_LINE_GAP:
-    hb_font_get_extents_for_direction (font, HB_DIRECTION_TTB, &font_extents);
+    font_get_extents_for_direction (font, HB_DIRECTION_TTB, &font_extents);
     *position = font_extents.line_gap;
     break;
 
@@ -316,16 +316,16 @@ hb_ot_metrics_get_position_with_fallback (hb_font_t           *font,
     break;
 
   case HB_OT_METRICS_TAG_X_HEIGHT:
-    if (hb_font_get_nominal_glyph (font, 'x', &glyph) &&
-        hb_font_get_glyph_extents (font, glyph, &extents))
+    if (font_get_nominal_glyph (font, 'x', &glyph) &&
+        font_get_glyph_extents (font, glyph, &extents))
       *position = extents.y_bearing;
     else
       *position = font->y_scale / 2;
     break;
 
   case HB_OT_METRICS_TAG_CAP_HEIGHT:
-    if (hb_font_get_nominal_glyph (font, 'O', &glyph) &&
-        hb_font_get_glyph_extents (font, glyph, &extents))
+    if (font_get_nominal_glyph (font, 'O', &glyph) &&
+        font_get_glyph_extents (font, glyph, &extents))
       *position = extents.height + 2 * extents.y_bearing;
     else
       *position = font->y_scale * 2 / 3;
@@ -338,8 +338,8 @@ hb_ot_metrics_get_position_with_fallback (hb_font_t           *font,
 
   case HB_OT_METRICS_TAG_STRIKEOUT_OFFSET:
     {
-      hb_position_t ascender;
-      hb_ot_metrics_get_position_with_fallback (font,
+      position_t ascender;
+      ot_metrics_get_position_with_fallback (font,
                                                 HB_OT_METRICS_TAG_HORIZONTAL_ASCENDER,
                                                 &ascender);
       *position = ascender / 2;
@@ -379,8 +379,8 @@ hb_ot_metrics_get_position_with_fallback (hb_font_t           *font,
 
 #ifndef HB_NO_VAR
 /**
- * hb_ot_metrics_get_variation:
- * @font: an #hb_font_t object.
+ * ot_metrics_get_variation:
+ * @font: an #font_t object.
  * @metrics_tag: tag of metrics value you like to fetch.
  *
  * Fetches metrics value corresponding to @metrics_tag from @font with the
@@ -391,14 +391,14 @@ hb_ot_metrics_get_position_with_fallback (hb_font_t           *font,
  * Since: 2.6.0
  **/
 float
-hb_ot_metrics_get_variation (hb_font_t *font, hb_ot_metrics_tag_t metrics_tag)
+ot_metrics_get_variation (font_t *font, ot_metrics_tag_t metrics_tag)
 {
   return font->face->table.MVAR->get_var (metrics_tag, font->coords, font->num_coords);
 }
 
 /**
- * hb_ot_metrics_get_x_variation:
- * @font: an #hb_font_t object.
+ * ot_metrics_get_x_variation:
+ * @font: an #font_t object.
  * @metrics_tag: tag of metrics value you like to fetch.
  *
  * Fetches horizontal metrics value corresponding to @metrics_tag from @font
@@ -408,15 +408,15 @@ hb_ot_metrics_get_variation (hb_font_t *font, hb_ot_metrics_tag_t metrics_tag)
  *
  * Since: 2.6.0
  **/
-hb_position_t
-hb_ot_metrics_get_x_variation (hb_font_t *font, hb_ot_metrics_tag_t metrics_tag)
+position_t
+ot_metrics_get_x_variation (font_t *font, ot_metrics_tag_t metrics_tag)
 {
-  return font->em_scalef_x (hb_ot_metrics_get_variation (font, metrics_tag));
+  return font->em_scalef_x (ot_metrics_get_variation (font, metrics_tag));
 }
 
 /**
- * hb_ot_metrics_get_y_variation:
- * @font: an #hb_font_t object.
+ * ot_metrics_get_y_variation:
+ * @font: an #font_t object.
  * @metrics_tag: tag of metrics value you like to fetch.
  *
  * Fetches vertical metrics value corresponding to @metrics_tag from @font with
@@ -426,10 +426,10 @@ hb_ot_metrics_get_x_variation (hb_font_t *font, hb_ot_metrics_tag_t metrics_tag)
  *
  * Since: 2.6.0
  **/
-hb_position_t
-hb_ot_metrics_get_y_variation (hb_font_t *font, hb_ot_metrics_tag_t metrics_tag)
+position_t
+ot_metrics_get_y_variation (font_t *font, ot_metrics_tag_t metrics_tag)
 {
-  return font->em_scalef_y (hb_ot_metrics_get_variation (font, metrics_tag));
+  return font->em_scalef_y (ot_metrics_get_variation (font, metrics_tag));
 }
 #endif
 

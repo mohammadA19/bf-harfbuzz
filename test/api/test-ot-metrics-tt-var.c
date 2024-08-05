@@ -32,15 +32,15 @@
 static void
 test_extents_tt_var (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/SourceSansVariable-Roman-nohvar-41,C1.ttf");
+  face_t *face = test_open_font_file ("fonts/SourceSansVariable-Roman-nohvar-41,C1.ttf");
   g_assert (face);
-  hb_font_t *font = hb_font_create (face);
-  hb_face_destroy (face);
+  font_t *font = font_create (face);
+  face_destroy (face);
   g_assert (font);
-  hb_ot_font_set_funcs (font);
+  ot_font_set_funcs (font);
 
-  hb_glyph_extents_t  extents;
-  hb_bool_t result = hb_font_get_glyph_extents (font, 2, &extents);
+  glyph_extents_t  extents;
+  bool_t result = font_get_glyph_extents (font, 2, &extents);
   g_assert (result);
 
   g_assert_cmpint (extents.x_bearing, ==, 10);
@@ -49,8 +49,8 @@ test_extents_tt_var (void)
   g_assert_cmpint (extents.height, ==, -846);
 
   float coords[1] = { 500.0f };
-  hb_font_set_var_coords_design (font, coords, 1);
-  result = hb_font_get_glyph_extents (font, 2, &extents);
+  font_set_var_coords_design (font, coords, 1);
+  result = font_get_glyph_extents (font, 2, &extents);
   g_assert (result);
 
   g_assert_cmpint (extents.x_bearing, ==, 0);
@@ -58,93 +58,93 @@ test_extents_tt_var (void)
   g_assert_cmpint (extents.width, ==, 551);
   g_assert_cmpint (extents.height, ==, -874);
 
-  hb_font_destroy (font);
+  font_destroy (font);
 }
 
 static void
 test_advance_tt_var_nohvar (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/SourceSansVariable-Roman-nohvar-41,C1.ttf");
+  face_t *face = test_open_font_file ("fonts/SourceSansVariable-Roman-nohvar-41,C1.ttf");
   g_assert (face);
-  hb_font_t *font = hb_font_create (face);
-  hb_face_destroy (face);
+  font_t *font = font_create (face);
+  face_destroy (face);
   g_assert (font);
-  hb_ot_font_set_funcs (font);
+  ot_font_set_funcs (font);
 
-  hb_position_t x, y;
-  hb_font_get_glyph_advance_for_direction(font, 2, HB_DIRECTION_LTR, &x, &y);
+  position_t x, y;
+  font_get_glyph_advance_for_direction(font, 2, HB_DIRECTION_LTR, &x, &y);
 
   g_assert_cmpint (x, ==, 520);
   g_assert_cmpint (y, ==, 0);
 
-  hb_font_get_glyph_advance_for_direction(font, 2, HB_DIRECTION_TTB, &x, &y);
+  font_get_glyph_advance_for_direction(font, 2, HB_DIRECTION_TTB, &x, &y);
 
   g_assert_cmpint (x, ==, 0);
   g_assert_cmpint (y, ==, -1257);
 
   float coords[1] = { 500.0f };
-  hb_font_set_var_coords_design (font, coords, 1);
-  hb_font_get_glyph_advance_for_direction(font, 2, HB_DIRECTION_LTR, &x, &y);
+  font_set_var_coords_design (font, coords, 1);
+  font_get_glyph_advance_for_direction(font, 2, HB_DIRECTION_LTR, &x, &y);
 
   g_assert_cmpint (x, ==, 551);
   g_assert_cmpint (y, ==, 0);
 
-  hb_font_get_glyph_advance_for_direction(font, 2, HB_DIRECTION_TTB, &x, &y);
+  font_get_glyph_advance_for_direction(font, 2, HB_DIRECTION_TTB, &x, &y);
 
   g_assert_cmpint (x, ==, 0);
   g_assert_cmpint (y, ==, -1257);
 
-  hb_font_destroy (font);
+  font_destroy (font);
 }
 
 static void
 test_advance_tt_var_hvarvvar (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/SourceSerifVariable-Roman-VVAR.abc.ttf");
+  face_t *face = test_open_font_file ("fonts/SourceSerifVariable-Roman-VVAR.abc.ttf");
   g_assert (face);
-  hb_font_t *font = hb_font_create (face);
-  hb_face_destroy (face);
+  font_t *font = font_create (face);
+  face_destroy (face);
   g_assert (font);
-  hb_ot_font_set_funcs (font);
+  ot_font_set_funcs (font);
 
-  hb_position_t x, y;
-  hb_font_get_glyph_advance_for_direction(font, 1, HB_DIRECTION_LTR, &x, &y);
+  position_t x, y;
+  font_get_glyph_advance_for_direction(font, 1, HB_DIRECTION_LTR, &x, &y);
 
   g_assert_cmpint (x, ==, 508);
   g_assert_cmpint (y, ==, 0);
 
-  hb_font_get_glyph_advance_for_direction(font, 1, HB_DIRECTION_TTB, &x, &y);
+  font_get_glyph_advance_for_direction(font, 1, HB_DIRECTION_TTB, &x, &y);
 
   g_assert_cmpint (x, ==, 0);
   g_assert_cmpint (y, ==, -1000);
 
   float coords[1] = { 700.0f };
-  hb_font_set_var_coords_design (font, coords, 1);
-  hb_font_get_glyph_advance_for_direction(font, 1, HB_DIRECTION_LTR, &x, &y);
+  font_set_var_coords_design (font, coords, 1);
+  font_get_glyph_advance_for_direction(font, 1, HB_DIRECTION_LTR, &x, &y);
 
   g_assert_cmpint (x, ==, 531);
   g_assert_cmpint (y, ==, 0);
 
-  hb_font_get_glyph_advance_for_direction(font, 1, HB_DIRECTION_TTB, &x, &y);
+  font_get_glyph_advance_for_direction(font, 1, HB_DIRECTION_TTB, &x, &y);
 
   g_assert_cmpint (x, ==, 0);
   g_assert_cmpint (y, ==, -1012);
 
-  hb_font_destroy (font);
+  font_destroy (font);
 }
 
 static void
 test_advance_tt_var_anchor (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/SourceSansVariable-Roman.anchor.ttf");
+  face_t *face = test_open_font_file ("fonts/SourceSansVariable-Roman.anchor.ttf");
   g_assert (face);
-  hb_font_t *font = hb_font_create (face);
-  hb_face_destroy (face);
+  font_t *font = font_create (face);
+  face_destroy (face);
   g_assert (font);
-  hb_ot_font_set_funcs (font);
+  ot_font_set_funcs (font);
 
-  hb_glyph_extents_t  extents;
-  hb_bool_t result = hb_font_get_glyph_extents (font, 2, &extents);
+  glyph_extents_t  extents;
+  bool_t result = font_get_glyph_extents (font, 2, &extents);
   g_assert (result);
 
   g_assert_cmpint (extents.x_bearing, ==, 56);
@@ -153,8 +153,8 @@ test_advance_tt_var_anchor (void)
   g_assert_cmpint (extents.height, ==, -684);
 
   float coords[1] = { 500.0f };
-  hb_font_set_var_coords_design (font, coords, 1);
-  result = hb_font_get_glyph_extents (font, 2, &extents);
+  font_set_var_coords_design (font, coords, 1);
+  result = font_get_glyph_extents (font, 2, &extents);
   g_assert (result);
 
   g_assert_cmpint (extents.x_bearing, ==, 50);
@@ -162,25 +162,25 @@ test_advance_tt_var_anchor (void)
   g_assert_cmpint (extents.width, ==, 592);
   g_assert_cmpint (extents.height, ==, -679);
 
-  hb_font_destroy (font);
+  font_destroy (font);
 }
 
 static void
 test_extents_tt_var_comp (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/SourceSansVariable-Roman.modcomp.ttf");
+  face_t *face = test_open_font_file ("fonts/SourceSansVariable-Roman.modcomp.ttf");
   g_assert (face);
-  hb_font_t *font = hb_font_create (face);
-  hb_face_destroy (face);
+  font_t *font = font_create (face);
+  face_destroy (face);
   g_assert (font);
-  hb_ot_font_set_funcs (font);
+  ot_font_set_funcs (font);
 
-  hb_glyph_extents_t  extents;
+  glyph_extents_t  extents;
   float coords[1] = { 800.0f };
-  hb_font_set_var_coords_design (font, coords, 1);
+  font_set_var_coords_design (font, coords, 1);
 
-  hb_bool_t result;
-  result = hb_font_get_glyph_extents (font, 2, &extents);	/* Ccedilla, cedilla y-scaled by 0.8, with unscaled component offset */
+  bool_t result;
+  result = font_get_glyph_extents (font, 2, &extents);	/* Ccedilla, cedilla y-scaled by 0.8, with unscaled component offset */
   g_assert (result);
 
   g_assert_cmpint (extents.x_bearing, ==, 19);
@@ -188,7 +188,7 @@ test_extents_tt_var_comp (void)
   g_assert_cmpint (extents.width, ==, 519);
   g_assert_cmpint (extents.height, ==, -895);
 
-  result = hb_font_get_glyph_extents (font, 3, &extents);	/* Cacute, acute y-scaled by 0.8, with unscaled component offset (default) */
+  result = font_get_glyph_extents (font, 3, &extents);	/* Cacute, acute y-scaled by 0.8, with unscaled component offset (default) */
   g_assert (result);
 
   g_assert_cmpint (extents.x_bearing, ==, 19);
@@ -196,7 +196,7 @@ test_extents_tt_var_comp (void)
   g_assert_cmpint (extents.width, ==, 519);
   g_assert_cmpint (extents.height, ==, -921);
 
-  result = hb_font_get_glyph_extents (font, 4, &extents);	/* Ccaron, caron y-scaled by 0.8, with scaled component offset */
+  result = font_get_glyph_extents (font, 4, &extents);	/* Ccaron, caron y-scaled by 0.8, with scaled component offset */
   g_assert (result);
 
   g_assert_cmpint (extents.x_bearing, ==, 19);
@@ -204,65 +204,65 @@ test_extents_tt_var_comp (void)
   g_assert_cmpint (extents.width, ==, 519);
   g_assert_cmpint (extents.height, ==, -878);
 
-  hb_font_destroy (font);
+  font_destroy (font);
 }
 
 static void
 test_advance_tt_var_comp_v (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/SourceSansVariable-Roman.modcomp.ttf");
+  face_t *face = test_open_font_file ("fonts/SourceSansVariable-Roman.modcomp.ttf");
   g_assert (face);
-  hb_font_t *font = hb_font_create (face);
-  hb_face_destroy (face);
+  font_t *font = font_create (face);
+  face_destroy (face);
   g_assert (font);
-  hb_ot_font_set_funcs (font);
+  ot_font_set_funcs (font);
 
   float coords[1] = { 800.0f };
-  hb_font_set_var_coords_design (font, coords, 1);
+  font_set_var_coords_design (font, coords, 1);
 
-  hb_position_t x, y;
-  hb_font_get_glyph_advance_for_direction(font, 2, HB_DIRECTION_TTB, &x, &y);	/* No VVAR; 'C' in composite Ccedilla determines metrics */
+  position_t x, y;
+  font_get_glyph_advance_for_direction(font, 2, HB_DIRECTION_TTB, &x, &y);	/* No VVAR; 'C' in composite Ccedilla determines metrics */
 
   g_assert_cmpint (x, ==, 0);
   g_assert_cmpint (y, ==, -991);
 
-  hb_font_get_glyph_origin_for_direction(font, 2, HB_DIRECTION_TTB, &x, &y);
+  font_get_glyph_origin_for_direction(font, 2, HB_DIRECTION_TTB, &x, &y);
 
   g_assert_cmpint (x, ==, 292);
   g_assert_cmpint (y, ==, 1013);
 
-  hb_font_destroy (font);
+  font_destroy (font);
 }
 
 static void
 test_advance_tt_var_gvar_infer (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("fonts/TestGVAREight.ttf");
-  hb_font_t *font = hb_font_create (face);
-  hb_ot_font_set_funcs (font);
-  hb_face_destroy (face);
+  face_t *face = test_open_font_file ("fonts/TestGVAREight.ttf");
+  font_t *font = font_create (face);
+  ot_font_set_funcs (font);
+  face_destroy (face);
 
   int coords[6] = {100};
-  hb_font_set_var_coords_normalized (font, coords, 6);
+  font_set_var_coords_normalized (font, coords, 6);
 
-  hb_glyph_extents_t extents = {0};
-  g_assert (hb_font_get_glyph_extents (font, 4, &extents));
+  glyph_extents_t extents = {0};
+  g_assert (font_get_glyph_extents (font, 4, &extents));
 
-  hb_font_destroy (font);
+  font_destroy (font);
 }
 
 int
 main (int argc, char **argv)
 {
-  hb_test_init (&argc, &argv);
+  test_init (&argc, &argv);
 
-  hb_test_add (test_extents_tt_var);
-  hb_test_add (test_advance_tt_var_nohvar);
-  hb_test_add (test_advance_tt_var_hvarvvar);
-  hb_test_add (test_advance_tt_var_anchor);
-  hb_test_add (test_extents_tt_var_comp);
-  hb_test_add (test_advance_tt_var_comp_v);
-  hb_test_add (test_advance_tt_var_gvar_infer);
+  test_add (test_extents_tt_var);
+  test_add (test_advance_tt_var_nohvar);
+  test_add (test_advance_tt_var_hvarvvar);
+  test_add (test_advance_tt_var_anchor);
+  test_add (test_extents_tt_var_comp);
+  test_add (test_advance_tt_var_comp_v);
+  test_add (test_advance_tt_var_gvar_infer);
 
-  return hb_test_run ();
+  return test_run ();
 }

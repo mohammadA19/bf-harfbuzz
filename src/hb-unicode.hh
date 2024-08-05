@@ -34,10 +34,10 @@
 #include "hb.hh"
 
 
-extern HB_INTERNAL const uint8_t _hb_modified_combining_class[256];
+extern HB_INTERNAL const uint8_t _modified_combining_class[256];
 
 /*
- * hb_unicode_funcs_t
+ * unicode_funcs_t
  */
 
 #define HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS \
@@ -51,43 +51,43 @@ extern HB_INTERNAL const uint8_t _hb_modified_combining_class[256];
   HB_IF_NOT_DEPRECATED (HB_UNICODE_FUNC_IMPLEMENT (decompose_compatibility)) \
   /* ^--- Add new callbacks here */
 
-/* Simple callbacks are those taking a hb_codepoint_t and returning a hb_codepoint_t */
+/* Simple callbacks are those taking a codepoint_t and returning a codepoint_t */
 #define HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE \
-  HB_UNICODE_FUNC_IMPLEMENT (hb_unicode_combining_class_t, combining_class) \
+  HB_UNICODE_FUNC_IMPLEMENT (unicode_combining_class_t, combining_class) \
   HB_IF_NOT_DEPRECATED (HB_UNICODE_FUNC_IMPLEMENT (unsigned int, eastasian_width)) \
-  HB_UNICODE_FUNC_IMPLEMENT (hb_unicode_general_category_t, general_category) \
-  HB_UNICODE_FUNC_IMPLEMENT (hb_codepoint_t, mirroring) \
-  HB_UNICODE_FUNC_IMPLEMENT (hb_script_t, script) \
+  HB_UNICODE_FUNC_IMPLEMENT (unicode_general_category_t, general_category) \
+  HB_UNICODE_FUNC_IMPLEMENT (codepoint_t, mirroring) \
+  HB_UNICODE_FUNC_IMPLEMENT (script_t, script) \
   /* ^--- Add new simple callbacks here */
 
-struct hb_unicode_funcs_t
+struct unicode_funcs_t
 {
-  hb_object_header_t header;
+  object_header_t header;
 
-  hb_unicode_funcs_t *parent;
+  unicode_funcs_t *parent;
 
 #define HB_UNICODE_FUNC_IMPLEMENT(return_type, name) \
-  return_type name (hb_codepoint_t unicode) { return func.name (this, unicode, user_data.name); }
+  return_type name (codepoint_t unicode) { return func.name (this, unicode, user_data.name); }
 HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
 #undef HB_UNICODE_FUNC_IMPLEMENT
 
-  hb_bool_t compose (hb_codepoint_t a, hb_codepoint_t b,
-		     hb_codepoint_t *ab)
+  bool_t compose (codepoint_t a, codepoint_t b,
+		     codepoint_t *ab)
   {
     *ab = 0;
     if (unlikely (!a || !b)) return false;
     return func.compose (this, a, b, ab, user_data.compose);
   }
 
-  hb_bool_t decompose (hb_codepoint_t ab,
-		       hb_codepoint_t *a, hb_codepoint_t *b)
+  bool_t decompose (codepoint_t ab,
+		       codepoint_t *a, codepoint_t *b)
   {
     *a = ab; *b = 0;
     return func.decompose (this, ab, a, b, user_data.decompose);
   }
 
-  unsigned int decompose_compatibility (hb_codepoint_t  u,
-					hb_codepoint_t *decomposed)
+  unsigned int decompose_compatibility (codepoint_t  u,
+					codepoint_t *decomposed)
   {
 #ifdef HB_DISABLE_DEPRECATED
     unsigned int ret  = 0;
@@ -103,7 +103,7 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
   }
 
   unsigned int
-  modified_combining_class (hb_codepoint_t u)
+  modified_combining_class (codepoint_t u)
   {
     /* Reorder SAKOT to ensure it comes after any tone marks. */
     if (unlikely (u == 0x1A60u)) return 254;
@@ -112,15 +112,15 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
     /* Reorder TSA -PHRU to reorder before U+0F74 */
     if (unlikely (u == 0x0F39u)) return 127;
 
-    return _hb_modified_combining_class[combining_class (u)];
+    return _modified_combining_class[combining_class (u)];
   }
 
-  static hb_bool_t
-  is_variation_selector (hb_codepoint_t unicode)
+  static bool_t
+  is_variation_selector (codepoint_t unicode)
   {
     /* U+180B..180D, U+180F MONGOLIAN FREE VARIATION SELECTORs are handled in the
      * Arabic shaper.  No need to match them here. */
-    return unlikely (hb_in_ranges<hb_codepoint_t> (unicode,
+    return unlikely (in_ranges<codepoint_t> (unicode,
 						   0xFE00u, 0xFE0Fu, /* VARIATION SELECTOR-1..16 */
 						   0xE0100u, 0xE01EFu));  /* VARIATION SELECTOR-17..256 */
   }
@@ -163,25 +163,25 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
    * E0100..E01EF  # Mn [240] VARIATION SELECTOR-17..VARIATION SELECTOR-256
    * E01F0..E0FFF  # Cn [3600] <reserved-E01F0>..<reserved-E0FFF>
    */
-  static hb_bool_t
-  is_default_ignorable (hb_codepoint_t ch)
+  static bool_t
+  is_default_ignorable (codepoint_t ch)
   {
-    hb_codepoint_t plane = ch >> 16;
+    codepoint_t plane = ch >> 16;
     if (likely (plane == 0))
     {
       /* BMP */
-      hb_codepoint_t page = ch >> 8;
+      codepoint_t page = ch >> 8;
       switch (page) {
 	case 0x00: return unlikely (ch == 0x00ADu);
 	case 0x03: return unlikely (ch == 0x034Fu);
 	case 0x06: return unlikely (ch == 0x061Cu);
-	case 0x17: return hb_in_range<hb_codepoint_t> (ch, 0x17B4u, 0x17B5u);
-	case 0x18: return hb_in_range<hb_codepoint_t> (ch, 0x180Bu, 0x180Eu);
-	case 0x20: return hb_in_ranges<hb_codepoint_t> (ch, 0x200Bu, 0x200Fu,
+	case 0x17: return in_range<codepoint_t> (ch, 0x17B4u, 0x17B5u);
+	case 0x18: return in_range<codepoint_t> (ch, 0x180Bu, 0x180Eu);
+	case 0x20: return in_ranges<codepoint_t> (ch, 0x200Bu, 0x200Fu,
 					    0x202Au, 0x202Eu,
 					    0x2060u, 0x206Fu);
-	case 0xFE: return hb_in_range<hb_codepoint_t> (ch, 0xFE00u, 0xFE0Fu) || ch == 0xFEFFu;
-	case 0xFF: return hb_in_range<hb_codepoint_t> (ch, 0xFFF0u, 0xFFF8u);
+	case 0xFE: return in_range<codepoint_t> (ch, 0xFE00u, 0xFE0Fu) || ch == 0xFEFFu;
+	case 0xFF: return in_range<codepoint_t> (ch, 0xFFF0u, 0xFFF8u);
 	default: return false;
       }
     }
@@ -189,8 +189,8 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
     {
       /* Other planes */
       switch (plane) {
-	case 0x01: return hb_in_range<hb_codepoint_t> (ch, 0x1D173u, 0x1D17Au);
-	case 0x0E: return hb_in_range<hb_codepoint_t> (ch, 0xE0000u, 0xE0FFFu);
+	case 0x01: return in_range<codepoint_t> (ch, 0x1D173u, 0x1D17Au);
+	case 0x0E: return in_range<codepoint_t> (ch, 0xE0000u, 0xE0FFFu);
 	default: return false;
       }
     }
@@ -216,7 +216,7 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
     SPACE_NARROW,
   };
   static space_t
-  space_fallback_type (hb_codepoint_t u)
+  space_fallback_type (codepoint_t u)
   {
     switch (u)
     {
@@ -242,7 +242,7 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
   }
 
   struct {
-#define HB_UNICODE_FUNC_IMPLEMENT(name) hb_unicode_##name##_func_t name;
+#define HB_UNICODE_FUNC_IMPLEMENT(name) unicode_##name##_func_t name;
     HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS
 #undef HB_UNICODE_FUNC_IMPLEMENT
   } func;
@@ -254,12 +254,12 @@ HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS_SIMPLE
   } user_data;
 
   struct {
-#define HB_UNICODE_FUNC_IMPLEMENT(name) hb_destroy_func_t name;
+#define HB_UNICODE_FUNC_IMPLEMENT(name) destroy_func_t name;
     HB_UNICODE_FUNCS_IMPLEMENT_CALLBACKS
 #undef HB_UNICODE_FUNC_IMPLEMENT
   } destroy;
 };
-DECLARE_NULL_INSTANCE (hb_unicode_funcs_t);
+DECLARE_NULL_INSTANCE (unicode_funcs_t);
 
 
 /*
@@ -369,13 +369,13 @@ DECLARE_NULL_INSTANCE (hb_unicode_funcs_t);
  * Ranges, used for bsearch tables.
  */
 
-struct hb_unicode_range_t
+struct unicode_range_t
 {
   static int
   cmp (const void *_key, const void *_item)
   {
-    hb_codepoint_t cp = *((hb_codepoint_t *) _key);
-    const hb_unicode_range_t *range = (hb_unicode_range_t *) _item;
+    codepoint_t cp = *((codepoint_t *) _key);
+    const unicode_range_t *range = (unicode_range_t *) _item;
 
     if (cp < range->start)
       return -1;
@@ -385,8 +385,8 @@ struct hb_unicode_range_t
       return +1;
   }
 
-  hb_codepoint_t start;
-  hb_codepoint_t end;
+  codepoint_t start;
+  codepoint_t end;
 };
 
 /*
@@ -394,10 +394,10 @@ struct hb_unicode_range_t
  */
 
 HB_INTERNAL bool
-_hb_unicode_is_emoji_Extended_Pictographic (hb_codepoint_t cp);
+_unicode_is_emoji_Extended_Pictographic (codepoint_t cp);
 
 
-extern "C" HB_INTERNAL hb_unicode_funcs_t *hb_ucd_get_unicode_funcs ();
+extern "C" HB_INTERNAL unicode_funcs_t *ucd_get_unicode_funcs ();
 
 
 #endif /* HB_UNICODE_HH */

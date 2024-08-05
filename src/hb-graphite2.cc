@@ -57,28 +57,28 @@
  * shaper face data
  */
 
-typedef struct hb_graphite2_tablelist_t
+typedef struct graphite2_tablelist_t
 {
-  struct hb_graphite2_tablelist_t *next;
-  hb_blob_t *blob;
+  struct graphite2_tablelist_t *next;
+  blob_t *blob;
   unsigned int tag;
-} hb_graphite2_tablelist_t;
+} graphite2_tablelist_t;
 
-struct hb_graphite2_face_data_t
+struct graphite2_face_data_t
 {
-  hb_face_t *face;
+  face_t *face;
   gr_face   *grface;
-  hb_atomic_ptr_t<hb_graphite2_tablelist_t> tlist;
+  atomic_ptr_t<graphite2_tablelist_t> tlist;
 };
 
-static const void *hb_graphite2_get_table (const void *data, unsigned int tag, size_t *len)
+static const void *graphite2_get_table (const void *data, unsigned int tag, size_t *len)
 {
-  hb_graphite2_face_data_t *face_data = (hb_graphite2_face_data_t *) data;
-  hb_graphite2_tablelist_t *tlist = face_data->tlist;
+  graphite2_face_data_t *face_data = (graphite2_face_data_t *) data;
+  graphite2_tablelist_t *tlist = face_data->tlist;
 
-  hb_blob_t *blob = nullptr;
+  blob_t *blob = nullptr;
 
-  for (hb_graphite2_tablelist_t *p = tlist; p; p = p->next)
+  for (graphite2_tablelist_t *p = tlist; p; p = p->next)
     if (p->tag == tag) {
       blob = p->blob;
       break;
@@ -88,16 +88,16 @@ static const void *hb_graphite2_get_table (const void *data, unsigned int tag, s
   {
     blob = face_data->face->reference_table (tag);
 
-    hb_graphite2_tablelist_t *p = (hb_graphite2_tablelist_t *) hb_calloc (1, sizeof (hb_graphite2_tablelist_t));
+    graphite2_tablelist_t *p = (graphite2_tablelist_t *) calloc (1, sizeof (graphite2_tablelist_t));
     if (unlikely (!p)) {
-      hb_blob_destroy (blob);
+      blob_destroy (blob);
       return nullptr;
     }
     p->blob = blob;
     p->tag = tag;
 
 retry:
-    hb_graphite2_tablelist_t *tlist = face_data->tlist;
+    graphite2_tablelist_t *tlist = face_data->tlist;
     p->next = tlist;
 
     if (unlikely (!face_data->tlist.cmpexch (tlist, p)))
@@ -105,34 +105,34 @@ retry:
   }
 
   unsigned int tlen;
-  const char *d = hb_blob_get_data (blob, &tlen);
+  const char *d = blob_get_data (blob, &tlen);
   *len = tlen;
   return d;
 }
 
-hb_graphite2_face_data_t *
-_hb_graphite2_shaper_face_data_create (hb_face_t *face)
+graphite2_face_data_t *
+_graphite2_shaper_face_data_create (face_t *face)
 {
-  hb_blob_t *silf_blob = face->reference_table (HB_GRAPHITE2_TAG_SILF);
+  blob_t *silf_blob = face->reference_table (HB_GRAPHITE2_TAG_SILF);
   /* Umm, we just reference the table to check whether it exists.
    * Maybe add better API for this? */
-  if (!hb_blob_get_length (silf_blob))
+  if (!blob_get_length (silf_blob))
   {
-    hb_blob_destroy (silf_blob);
+    blob_destroy (silf_blob);
     return nullptr;
   }
-  hb_blob_destroy (silf_blob);
+  blob_destroy (silf_blob);
 
-  hb_graphite2_face_data_t *data = (hb_graphite2_face_data_t *) hb_calloc (1, sizeof (hb_graphite2_face_data_t));
+  graphite2_face_data_t *data = (graphite2_face_data_t *) calloc (1, sizeof (graphite2_face_data_t));
   if (unlikely (!data))
     return nullptr;
 
   data->face = face;
-  const gr_face_ops ops = {sizeof(gr_face_ops), &hb_graphite2_get_table, NULL};
+  const gr_face_ops ops = {sizeof(gr_face_ops), &graphite2_get_table, NULL};
   data->grface = gr_make_face_with_ops (data, &ops, gr_face_preloadAll);
 
   if (unlikely (!data->grface)) {
-    hb_free (data);
+    free (data);
     return nullptr;
   }
 
@@ -140,38 +140,38 @@ _hb_graphite2_shaper_face_data_create (hb_face_t *face)
 }
 
 void
-_hb_graphite2_shaper_face_data_destroy (hb_graphite2_face_data_t *data)
+_graphite2_shaper_face_data_destroy (graphite2_face_data_t *data)
 {
-  hb_graphite2_tablelist_t *tlist = data->tlist;
+  graphite2_tablelist_t *tlist = data->tlist;
 
   while (tlist)
   {
-    hb_graphite2_tablelist_t *old = tlist;
-    hb_blob_destroy (tlist->blob);
+    graphite2_tablelist_t *old = tlist;
+    blob_destroy (tlist->blob);
     tlist = tlist->next;
-    hb_free (old);
+    free (old);
   }
 
   gr_face_destroy (data->grface);
 
-  hb_free (data);
+  free (data);
 }
 
 /**
- * hb_graphite2_face_get_gr_face: (skip)
- * @face: @hb_face_t to query
+ * graphite2_face_get_gr_face: (skip)
+ * @face: @face_t to query
  *
  * Fetches the Graphite2 gr_face corresponding to the specified
- * #hb_face_t face object.
+ * #face_t face object.
  *
  * Return value: the gr_face found
  *
  * Since: 0.9.10
  */
 gr_face *
-hb_graphite2_face_get_gr_face (hb_face_t *face)
+graphite2_face_get_gr_face (face_t *face)
 {
-  const hb_graphite2_face_data_t *data = face->data.graphite2;
+  const graphite2_face_data_t *data = face->data.graphite2;
   return data ? data->grface : nullptr;
 }
 
@@ -180,25 +180,25 @@ hb_graphite2_face_get_gr_face (hb_face_t *face)
  * shaper font data
  */
 
-struct hb_graphite2_font_data_t {};
+struct graphite2_font_data_t {};
 
-hb_graphite2_font_data_t *
-_hb_graphite2_shaper_font_data_create (hb_font_t *font HB_UNUSED)
+graphite2_font_data_t *
+_graphite2_shaper_font_data_create (font_t *font HB_UNUSED)
 {
-  return (hb_graphite2_font_data_t *) HB_SHAPER_DATA_SUCCEEDED;
+  return (graphite2_font_data_t *) HB_SHAPER_DATA_SUCCEEDED;
 }
 
 void
-_hb_graphite2_shaper_font_data_destroy (hb_graphite2_font_data_t *data HB_UNUSED)
+_graphite2_shaper_font_data_destroy (graphite2_font_data_t *data HB_UNUSED)
 {
 }
 
 #ifndef HB_DISABLE_DEPRECATED
 /**
- * hb_graphite2_font_get_gr_font: (skip)
- * @font: An #hb_font_t
+ * graphite2_font_get_gr_font: (skip)
+ * @font: An #font_t
  *
- * Always returns `NULL`. Use hb_graphite2_face_get_gr_face() instead.
+ * Always returns `NULL`. Use graphite2_face_get_gr_face() instead.
  *
  * Return value: (nullable): Graphite2 font associated with @font.
  *
@@ -206,7 +206,7 @@ _hb_graphite2_shaper_font_data_destroy (hb_graphite2_font_data_t *data HB_UNUSED
  * Deprecated: 1.4.2
  */
 gr_font *
-hb_graphite2_font_get_gr_font (hb_font_t *font HB_UNUSED)
+graphite2_font_get_gr_font (font_t *font HB_UNUSED)
 {
   return nullptr;
 }
@@ -217,7 +217,7 @@ hb_graphite2_font_get_gr_font (hb_font_t *font HB_UNUSED)
  * shaper
  */
 
-struct hb_graphite2_cluster_t {
+struct graphite2_cluster_t {
   unsigned int base_char;
   unsigned int num_chars;
   unsigned int base_glyph;
@@ -226,20 +226,20 @@ struct hb_graphite2_cluster_t {
   int advance;
 };
 
-hb_bool_t
-_hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
-		     hb_font_t          *font,
-		     hb_buffer_t        *buffer,
-		     const hb_feature_t *features,
+bool_t
+_graphite2_shape (shape_plan_t    *shape_plan HB_UNUSED,
+		     font_t          *font,
+		     buffer_t        *buffer,
+		     const feature_t *features,
 		     unsigned int        num_features)
 {
-  hb_face_t *face = font->face;
+  face_t *face = font->face;
   gr_face *grface = face->data.graphite2->grface;
 
-  const char *lang = hb_language_to_string (hb_buffer_get_language (buffer));
+  const char *lang = language_to_string (buffer_get_language (buffer));
   const char *lang_end = lang ? strchr (lang, '-') : nullptr;
   int lang_len = lang_end ? lang_end - lang : -1;
-  gr_feature_val *feats = gr_face_featureval_for_lang (grface, lang ? hb_tag_from_string (lang, lang_len) : 0);
+  gr_feature_val *feats = gr_face_featureval_for_lang (grface, lang ? tag_from_string (lang, lang_len) : 0);
 
   for (unsigned int i = 0; i < num_features; i++)
   {
@@ -248,8 +248,8 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
       gr_fref_set_feature_value (fref, features[i].value, feats);
   }
 
-  hb_direction_t direction = buffer->props.direction;
-  hb_direction_t horiz_dir = hb_script_get_horizontal_direction (buffer->props.script);
+  direction_t direction = buffer->props.direction;
+  direction_t horiz_dir = script_get_horizontal_direction (buffer->props.script);
   /* TODO vertical:
    * The only BTT vertical script is Ogham, but it's not clear to me whether OpenType
    * Ogham fonts are supposed to be implemented BTT or not.  Need to research that
@@ -259,7 +259,7 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
       (HB_DIRECTION_IS_VERTICAL   (direction) &&
        direction != HB_DIRECTION_TTB))
   {
-    hb_buffer_reverse_clusters (buffer);
+    buffer_reverse_clusters (buffer);
     direction = HB_DIRECTION_REVERSE (direction);
   }
 
@@ -269,7 +269,7 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
   unsigned int curradvx = 0, curradvy = 0;
 
   unsigned int scratch_size;
-  hb_buffer_t::scratch_buffer_t *scratch = buffer->get_scratch_buffer (&scratch_size);
+  buffer_t::scratch_buffer_t *scratch = buffer->get_scratch_buffer (&scratch_size);
 
   uint32_t *chars = (uint32_t *) scratch;
 
@@ -297,8 +297,8 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
 
   (void) buffer->ensure (glyph_count);
   scratch = buffer->get_scratch_buffer (&scratch_size);
-  while ((DIV_CEIL (sizeof (hb_graphite2_cluster_t) * buffer->len, sizeof (*scratch)) +
-	  DIV_CEIL (sizeof (hb_codepoint_t) * glyph_count, sizeof (*scratch))) > scratch_size)
+  while ((DIV_CEIL (sizeof (graphite2_cluster_t) * buffer->len, sizeof (*scratch)) +
+	  DIV_CEIL (sizeof (codepoint_t) * glyph_count, sizeof (*scratch))) > scratch_size)
   {
     if (unlikely (!buffer->ensure (buffer->allocated * 2)))
     {
@@ -318,16 +318,16 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
     scratch_size -= _consumed; \
   } while (0)
 
-  ALLOCATE_ARRAY (hb_graphite2_cluster_t, clusters, buffer->len);
-  ALLOCATE_ARRAY (hb_codepoint_t, gids, glyph_count);
+  ALLOCATE_ARRAY (graphite2_cluster_t, clusters, buffer->len);
+  ALLOCATE_ARRAY (codepoint_t, gids, glyph_count);
 
 #undef ALLOCATE_ARRAY
 
-  hb_memset (clusters, 0, sizeof (clusters[0]) * buffer->len);
+  memset (clusters, 0, sizeof (clusters[0]) * buffer->len);
 
-  hb_codepoint_t *pg = gids;
+  codepoint_t *pg = gids;
   clusters[0].cluster = buffer->info[0].cluster;
-  unsigned int upem = hb_face_get_upem (face);
+  unsigned int upem = face_get_upem (face);
   float xscale = (float) font->x_scale / upem;
   float yscale = (float) font->y_scale / upem;
   yscale *= yscale / xscale;
@@ -355,7 +355,7 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
 
     if (gr_slot_can_insert_before (is) && clusters[ci].num_chars && before >= clusters[ci].base_char + clusters[ci].num_chars)
     {
-      hb_graphite2_cluster_t *c = clusters + ci + 1;
+      graphite2_cluster_t *c = clusters + ci + 1;
       c->base_char = clusters[ci].base_char + clusters[ci].num_chars;
       c->cluster = buffer->info[c->base_char].cluster;
       c->num_chars = before - c->base_char;
@@ -391,7 +391,7 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
   {
     for (unsigned int j = 0; j < clusters[i].num_glyphs; ++j)
     {
-      hb_glyph_info_t *info = &buffer->info[clusters[i].base_glyph + j];
+      glyph_info_t *info = &buffer->info[clusters[i].base_glyph + j];
       info->codepoint = gids[clusters[i].base_glyph + j];
       info->cluster = clusters[i].cluster;
       info->var1.i32 = clusters[i].advance;     // all glyphs in the cluster get the same advance
@@ -401,8 +401,8 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
 
   /* Positioning. */
   unsigned int currclus = UINT_MAX;
-  const hb_glyph_info_t *info = buffer->info;
-  hb_glyph_position_t *pPos = hb_buffer_get_glyph_positions (buffer, nullptr);
+  const glyph_info_t *info = buffer->info;
+  glyph_position_t *pPos = buffer_get_glyph_positions (buffer, nullptr);
   if (!HB_DIRECTION_IS_BACKWARD (direction))
   {
     curradvx = 0;
@@ -439,7 +439,7 @@ _hb_graphite2_shape (hb_shape_plan_t    *shape_plan HB_UNUSED,
       pPos->x_offset = gr_slot_origin_X (is) * xscale - info->var1.i32 - curradvx + pPos->x_advance;
       pPos->y_offset = gr_slot_origin_Y (is) * yscale - curradvy;
     }
-    hb_buffer_reverse_clusters (buffer);
+    buffer_reverse_clusters (buffer);
   }
 
   if (feats) gr_featureval_destroy (feats);
