@@ -48,7 +48,7 @@
  * Font faces are typically built from a binary blob and a face index.
  * Font faces are used to create fonts.
  *
- * A font face can be created from a binary blob using hb_face_create().
+ * A font face can be created from a binary blob using face_create().
  * The face index is used to select a face from a binary blob that contains
  * multiple faces.  For example, a binary blob that contains both a regular
  * and a bold face can be used to create two font faces, one for each face
@@ -57,7 +57,7 @@
 
 
 /**
- * hb_face_count:
+ * face_count:
  * @blob: a blob.
  *
  * Fetches the number of faces in a blob.
@@ -67,26 +67,26 @@
  * Since: 1.7.7
  **/
 unsigned int
-hb_face_count (hb_blob_t *blob)
+face_count (blob_t *blob)
 {
   if (unlikely (!blob))
     return 0;
 
   /* TODO We shouldn't be sanitizing blob.  Port to run sanitizer and return if not sane. */
   /* Make API signature const after. */
-  hb_blob_t *sanitized = hb_sanitize_context_t ().sanitize_blob<OT::OpenTypeFontFile> (hb_blob_reference (blob));
+  blob_t *sanitized = sanitize_context_t ().sanitize_blob<OT::OpenTypeFontFile> (blob_reference (blob));
   const OT::OpenTypeFontFile& ot = *sanitized->as<OT::OpenTypeFontFile> ();
   unsigned int ret = ot.get_face_count ();
-  hb_blob_destroy (sanitized);
+  blob_destroy (sanitized);
 
   return ret;
 }
 
 /*
- * hb_face_t
+ * face_t
  */
 
-DEFINE_NULL_INSTANCE (hb_face_t) =
+DEFINE_NULL_INSTANCE (face_t) =
 {
   HB_OBJECT_HEADER_STATIC,
 
@@ -103,14 +103,14 @@ DEFINE_NULL_INSTANCE (hb_face_t) =
 
 
 /**
- * hb_face_create_for_tables:
+ * face_create_for_tables:
  * @reference_table_func: (closure user_data) (destroy destroy) (scope notified): Table-referencing function
  * @user_data: A pointer to the user data
  * @destroy: (nullable): A callback to call when @data is not needed anymore
  *
- * Variant of hb_face_create(), built for those cases where it is more
+ * Variant of face_create(), built for those cases where it is more
  * convenient to provide data for individual tables instead of the whole font
- * data. With the caveat that hb_face_get_table_tags() does not currently work
+ * data. With the caveat that face_get_table_tags() does not currently work
  * with faces created this way.
  *
  * Creates a new face object from the specified @user_data and @reference_table_func,
@@ -120,17 +120,17 @@ DEFINE_NULL_INSTANCE (hb_face_t) =
  *
  * Since: 0.9.2
  **/
-hb_face_t *
-hb_face_create_for_tables (hb_reference_table_func_t  reference_table_func,
+face_t *
+face_create_for_tables (reference_table_func_t  reference_table_func,
 			   void                      *user_data,
-			   hb_destroy_func_t          destroy)
+			   destroy_func_t          destroy)
 {
-  hb_face_t *face;
+  face_t *face;
 
-  if (!reference_table_func || !(face = hb_object_create<hb_face_t> ())) {
+  if (!reference_table_func || !(face = object_create<face_t> ())) {
     if (destroy)
       destroy (user_data);
-    return hb_face_get_empty ();
+    return face_get_empty ();
   }
 
   face->reference_table_func = reference_table_func;
@@ -146,17 +146,17 @@ hb_face_create_for_tables (hb_reference_table_func_t  reference_table_func,
 }
 
 
-typedef struct hb_face_for_data_closure_t {
-  hb_blob_t *blob;
+typedef struct face_for_data_closure_t {
+  blob_t *blob;
   uint16_t  index;
-} hb_face_for_data_closure_t;
+} face_for_data_closure_t;
 
-static hb_face_for_data_closure_t *
-_hb_face_for_data_closure_create (hb_blob_t *blob, unsigned int index)
+static face_for_data_closure_t *
+_face_for_data_closure_create (blob_t *blob, unsigned int index)
 {
-  hb_face_for_data_closure_t *closure;
+  face_for_data_closure_t *closure;
 
-  closure = (hb_face_for_data_closure_t *) hb_calloc (1, sizeof (hb_face_for_data_closure_t));
+  closure = (face_for_data_closure_t *) calloc (1, sizeof (face_for_data_closure_t));
   if (unlikely (!closure))
     return nullptr;
 
@@ -167,21 +167,21 @@ _hb_face_for_data_closure_create (hb_blob_t *blob, unsigned int index)
 }
 
 static void
-_hb_face_for_data_closure_destroy (void *data)
+_face_for_data_closure_destroy (void *data)
 {
-  hb_face_for_data_closure_t *closure = (hb_face_for_data_closure_t *) data;
+  face_for_data_closure_t *closure = (face_for_data_closure_t *) data;
 
-  hb_blob_destroy (closure->blob);
-  hb_free (closure);
+  blob_destroy (closure->blob);
+  free (closure);
 }
 
-static hb_blob_t *
-_hb_face_for_data_reference_table (hb_face_t *face HB_UNUSED, hb_tag_t tag, void *user_data)
+static blob_t *
+_face_for_data_reference_table (face_t *face HB_UNUSED, tag_t tag, void *user_data)
 {
-  hb_face_for_data_closure_t *data = (hb_face_for_data_closure_t *) user_data;
+  face_for_data_closure_t *data = (face_for_data_closure_t *) user_data;
 
   if (tag == HB_TAG_NONE)
-    return hb_blob_reference (data->blob);
+    return blob_reference (data->blob);
 
   const OT::OpenTypeFontFile &ot_file = *data->blob->as<OT::OpenTypeFontFile> ();
   unsigned int base_offset;
@@ -189,14 +189,14 @@ _hb_face_for_data_reference_table (hb_face_t *face HB_UNUSED, hb_tag_t tag, void
 
   const OT::OpenTypeTable &table = ot_face.get_table_by_tag (tag);
 
-  hb_blob_t *blob = hb_blob_create_sub_blob (data->blob, base_offset + table.offset, table.length);
+  blob_t *blob = blob_create_sub_blob (data->blob, base_offset + table.offset, table.length);
 
   return blob;
 }
 
 /**
- * hb_face_create:
- * @blob: #hb_blob_t to work upon
+ * face_create:
+ * @blob: #blob_t to work upon
  * @index: The index of the face within @blob
  *
  * Constructs a new face object from the specified blob and
@@ -208,38 +208,38 @@ _hb_face_for_data_reference_table (hb_face_t *face HB_UNUSED, hb_tag_t tag, void
  *
  * <note>Note: If the blob font format is not a collection, @index
  * is ignored.  Otherwise, only the lower 16-bits of @index are used.
- * The unmodified @index can be accessed via hb_face_get_index().</note>
+ * The unmodified @index can be accessed via face_get_index().</note>
  *
  * <note>Note: The high 16-bits of @index, if non-zero, are used by
- * hb_font_create() to load named-instances in variable fonts.  See
- * hb_font_create() for details.</note>
+ * font_create() to load named-instances in variable fonts.  See
+ * font_create() for details.</note>
  *
  * Return value: (transfer full): The new face object
  *
  * Since: 0.9.2
  **/
-hb_face_t *
-hb_face_create (hb_blob_t    *blob,
+face_t *
+face_create (blob_t    *blob,
 		unsigned int  index)
 {
-  hb_face_t *face;
+  face_t *face;
 
   if (unlikely (!blob))
-    blob = hb_blob_get_empty ();
+    blob = blob_get_empty ();
 
-  blob = hb_sanitize_context_t ().sanitize_blob<OT::OpenTypeFontFile> (hb_blob_reference (blob));
+  blob = sanitize_context_t ().sanitize_blob<OT::OpenTypeFontFile> (blob_reference (blob));
 
-  hb_face_for_data_closure_t *closure = _hb_face_for_data_closure_create (blob, index);
+  face_for_data_closure_t *closure = _face_for_data_closure_create (blob, index);
 
   if (unlikely (!closure))
   {
-    hb_blob_destroy (blob);
-    return hb_face_get_empty ();
+    blob_destroy (blob);
+    return face_get_empty ();
   }
 
-  face = hb_face_create_for_tables (_hb_face_for_data_reference_table,
+  face = face_create_for_tables (_face_for_data_reference_table,
 				    closure,
-				    _hb_face_for_data_closure_destroy);
+				    _face_for_data_closure_destroy);
 
   face->index = index;
 
@@ -247,7 +247,7 @@ hb_face_create (hb_blob_t    *blob,
 }
 
 /**
- * hb_face_get_empty:
+ * face_get_empty:
  *
  * Fetches the singleton empty face object.
  *
@@ -255,15 +255,15 @@ hb_face_create (hb_blob_t    *blob,
  *
  * Since: 0.9.2
  **/
-hb_face_t *
-hb_face_get_empty ()
+face_t *
+face_get_empty ()
 {
-  return const_cast<hb_face_t *> (&Null (hb_face_t));
+  return const_cast<face_t *> (&Null (face_t));
 }
 
 
 /**
- * hb_face_reference: (skip)
+ * face_reference: (skip)
  * @face: A face object
  *
  * Increases the reference count on a face object.
@@ -272,14 +272,14 @@ hb_face_get_empty ()
  *
  * Since: 0.9.2
  **/
-hb_face_t *
-hb_face_reference (hb_face_t *face)
+face_t *
+face_reference (face_t *face)
 {
-  return hb_object_reference (face);
+  return object_reference (face);
 }
 
 /**
- * hb_face_destroy: (skip)
+ * face_destroy: (skip)
  * @face: A face object
  *
  * Decreases the reference count on a face object. When the
@@ -289,16 +289,16 @@ hb_face_reference (hb_face_t *face)
  * Since: 0.9.2
  **/
 void
-hb_face_destroy (hb_face_t *face)
+face_destroy (face_t *face)
 {
-  if (!hb_object_destroy (face)) return;
+  if (!object_destroy (face)) return;
 
 #ifndef HB_NO_SHAPER
-  for (hb_face_t::plan_node_t *node = face->shape_plans; node; )
+  for (face_t::plan_node_t *node = face->shape_plans; node; )
   {
-    hb_face_t::plan_node_t *next = node->next;
-    hb_shape_plan_destroy (node->shape_plan);
-    hb_free (node);
+    face_t::plan_node_t *next = node->next;
+    shape_plan_destroy (node->shape_plan);
+    free (node);
     node = next;
   }
 #endif
@@ -309,11 +309,11 @@ hb_face_destroy (hb_face_t *face)
   if (face->destroy)
     face->destroy (face->user_data);
 
-  hb_free (face);
+  free (face);
 }
 
 /**
- * hb_face_set_user_data: (skip)
+ * face_set_user_data: (skip)
  * @face: A face object
  * @key: The user-data key to set
  * @data: A pointer to the user data
@@ -326,18 +326,18 @@ hb_face_destroy (hb_face_t *face)
  *
  * Since: 0.9.2
  **/
-hb_bool_t
-hb_face_set_user_data (hb_face_t          *face,
-		       hb_user_data_key_t *key,
+bool_t
+face_set_user_data (face_t          *face,
+		       user_data_key_t *key,
 		       void *              data,
-		       hb_destroy_func_t   destroy,
-		       hb_bool_t           replace)
+		       destroy_func_t   destroy,
+		       bool_t           replace)
 {
-  return hb_object_set_user_data (face, key, data, destroy, replace);
+  return object_set_user_data (face, key, data, destroy, replace);
 }
 
 /**
- * hb_face_get_user_data: (skip)
+ * face_get_user_data: (skip)
  * @face: A face object
  * @key: The user-data key to query
  *
@@ -349,14 +349,14 @@ hb_face_set_user_data (hb_face_t          *face,
  * Since: 0.9.2
  **/
 void *
-hb_face_get_user_data (const hb_face_t    *face,
-		       hb_user_data_key_t *key)
+face_get_user_data (const face_t    *face,
+		       user_data_key_t *key)
 {
-  return hb_object_get_user_data (face, key);
+  return object_get_user_data (face, key);
 }
 
 /**
- * hb_face_make_immutable:
+ * face_make_immutable:
  * @face: A face object
  *
  * Makes the given face object immutable.
@@ -364,16 +364,16 @@ hb_face_get_user_data (const hb_face_t    *face,
  * Since: 0.9.2
  **/
 void
-hb_face_make_immutable (hb_face_t *face)
+face_make_immutable (face_t *face)
 {
-  if (hb_object_is_immutable (face))
+  if (object_is_immutable (face))
     return;
 
-  hb_object_make_immutable (face);
+  object_make_immutable (face);
 }
 
 /**
- * hb_face_is_immutable:
+ * face_is_immutable:
  * @face: A face object
  *
  * Tests whether the given face object is immutable.
@@ -382,17 +382,17 @@ hb_face_make_immutable (hb_face_t *face)
  *
  * Since: 0.9.2
  **/
-hb_bool_t
-hb_face_is_immutable (const hb_face_t *face)
+bool_t
+face_is_immutable (const face_t *face)
 {
-  return hb_object_is_immutable (face);
+  return object_is_immutable (face);
 }
 
 
 /**
- * hb_face_reference_table:
+ * face_reference_table:
  * @face: A face object
- * @tag: The #hb_tag_t of the table to query
+ * @tag: The #tag_t of the table to query
  *
  * Fetches a reference to the specified table within
  * the specified face.
@@ -401,18 +401,18 @@ hb_face_is_immutable (const hb_face_t *face)
  *
  * Since: 0.9.2
  **/
-hb_blob_t *
-hb_face_reference_table (const hb_face_t *face,
-			 hb_tag_t tag)
+blob_t *
+face_reference_table (const face_t *face,
+			 tag_t tag)
 {
   if (unlikely (tag == HB_TAG_NONE))
-    return hb_blob_get_empty ();
+    return blob_get_empty ();
 
   return face->reference_table (tag);
 }
 
 /**
- * hb_face_reference_blob:
+ * face_reference_blob:
  * @face: A face object
  *
  * Fetches a pointer to the binary blob that contains the
@@ -423,14 +423,14 @@ hb_face_reference_table (const hb_face_t *face,
  *
  * Since: 0.9.2
  **/
-hb_blob_t *
-hb_face_reference_blob (hb_face_t *face)
+blob_t *
+face_reference_blob (face_t *face)
 {
   return face->reference_table (HB_TAG_NONE);
 }
 
 /**
- * hb_face_set_index:
+ * face_set_index:
  * @face: A face object
  * @index: The index to assign
  *
@@ -438,22 +438,22 @@ hb_face_reference_blob (hb_face_t *face)
  * face is immutable.
  *
  * <note>Note: changing the index has no effect on the face itself
- * This only changes the value returned by hb_face_get_index().</note>
+ * This only changes the value returned by face_get_index().</note>
  *
  * Since: 0.9.2
  **/
 void
-hb_face_set_index (hb_face_t    *face,
+face_set_index (face_t    *face,
 		   unsigned int  index)
 {
-  if (hb_object_is_immutable (face))
+  if (object_is_immutable (face))
     return;
 
   face->index = index;
 }
 
 /**
- * hb_face_get_index:
+ * face_get_index:
  * @face: A face object
  *
  * Fetches the face-index corresponding to the given face.
@@ -465,13 +465,13 @@ hb_face_set_index (hb_face_t    *face,
  * Since: 0.9.2
  **/
 unsigned int
-hb_face_get_index (const hb_face_t *face)
+face_get_index (const face_t *face)
 {
   return face->index;
 }
 
 /**
- * hb_face_set_upem:
+ * face_set_upem:
  * @face: A face object
  * @upem: The units-per-em value to assign
  *
@@ -482,17 +482,17 @@ hb_face_get_index (const hb_face_t *face)
  * Since: 0.9.2
  **/
 void
-hb_face_set_upem (hb_face_t    *face,
+face_set_upem (face_t    *face,
 		  unsigned int  upem)
 {
-  if (hb_object_is_immutable (face))
+  if (object_is_immutable (face))
     return;
 
   face->upem = upem;
 }
 
 /**
- * hb_face_get_upem:
+ * face_get_upem:
  * @face: A face object
  *
  * Fetches the units-per-em (UPEM) value of the specified face object.
@@ -505,13 +505,13 @@ hb_face_set_upem (hb_face_t    *face,
  * Since: 0.9.2
  **/
 unsigned int
-hb_face_get_upem (const hb_face_t *face)
+face_get_upem (const face_t *face)
 {
   return face->get_upem ();
 }
 
 /**
- * hb_face_set_glyph_count:
+ * face_set_glyph_count:
  * @face: A face object
  * @glyph_count: The glyph-count value to assign
  *
@@ -522,17 +522,17 @@ hb_face_get_upem (const hb_face_t *face)
  * Since: 0.9.7
  **/
 void
-hb_face_set_glyph_count (hb_face_t    *face,
+face_set_glyph_count (face_t    *face,
 			 unsigned int  glyph_count)
 {
-  if (hb_object_is_immutable (face))
+  if (object_is_immutable (face))
     return;
 
   face->num_glyphs = glyph_count;
 }
 
 /**
- * hb_face_get_glyph_count:
+ * face_get_glyph_count:
  * @face: A face object
  *
  * Fetches the glyph-count value of the specified face object.
@@ -542,13 +542,13 @@ hb_face_set_glyph_count (hb_face_t    *face,
  * Since: 0.9.7
  **/
 unsigned int
-hb_face_get_glyph_count (const hb_face_t *face)
+face_get_glyph_count (const face_t *face)
 {
   return face->get_num_glyphs ();
 }
 
 /**
- * hb_face_get_table_tags:
+ * face_get_table_tags:
  * @face: A face object
  * @start_offset: The index of first table tag to retrieve
  * @table_count: (inout): Input = the maximum number of table tags to return;
@@ -563,19 +563,19 @@ hb_face_get_glyph_count (const hb_face_t *face)
  * Since: 1.6.0
  **/
 unsigned int
-hb_face_get_table_tags (const hb_face_t *face,
+face_get_table_tags (const face_t *face,
 			unsigned int  start_offset,
 			unsigned int *table_count, /* IN/OUT */
-			hb_tag_t     *table_tags /* OUT */)
+			tag_t     *table_tags /* OUT */)
 {
-  if (face->destroy != (hb_destroy_func_t) _hb_face_for_data_closure_destroy)
+  if (face->destroy != (destroy_func_t) _face_for_data_closure_destroy)
   {
     if (table_count)
       *table_count = 0;
     return 0;
   }
 
-  hb_face_for_data_closure_t *data = (hb_face_for_data_closure_t *) face->user_data;
+  face_for_data_closure_t *data = (face_for_data_closure_t *) face->user_data;
 
   const OT::OpenTypeFontFile &ot_file = *data->blob->as<OT::OpenTypeFontFile> ();
   const OT::OpenTypeFontFace &ot_face = ot_file.get_face (data->index);
@@ -591,23 +591,23 @@ hb_face_get_table_tags (const hb_face_t *face,
 
 #ifndef HB_NO_FACE_COLLECT_UNICODES
 /**
- * hb_face_collect_unicodes:
+ * face_collect_unicodes:
  * @face: A face object
  * @out: (out): The set to add Unicode characters to
  *
  * Collects all of the Unicode characters covered by @face and adds
- * them to the #hb_set_t set @out.
+ * them to the #set_t set @out.
  *
  * Since: 1.9.0
  */
 void
-hb_face_collect_unicodes (hb_face_t *face,
-			  hb_set_t  *out)
+face_collect_unicodes (face_t *face,
+			  set_t  *out)
 {
   face->table.cmap->collect_unicodes (out, face->get_num_glyphs ());
 }
 /**
- * hb_face_collect_nominal_glyph_mapping:
+ * face_collect_nominal_glyph_mapping:
  * @face: A face object
  * @mapping: (out): The map to add Unicode-to-glyph mapping to
  * @unicodes: (nullable) (out): The set to add Unicode characters to, or `NULL`
@@ -618,46 +618,46 @@ hb_face_collect_unicodes (hb_face_t *face,
  * Since: 7.0.0
  */
 void
-hb_face_collect_nominal_glyph_mapping (hb_face_t *face,
-				       hb_map_t  *mapping,
-				       hb_set_t  *unicodes)
+face_collect_nominal_glyph_mapping (face_t *face,
+				       map_t  *mapping,
+				       set_t  *unicodes)
 {
-  hb_set_t stack_unicodes;
+  set_t stack_unicodes;
   if (!unicodes)
     unicodes = &stack_unicodes;
   face->table.cmap->collect_mapping (unicodes, mapping, face->get_num_glyphs ());
 }
 /**
- * hb_face_collect_variation_selectors:
+ * face_collect_variation_selectors:
  * @face: A face object
  * @out: (out): The set to add Variation Selector characters to
  *
  * Collects all Unicode "Variation Selector" characters covered by @face and adds
- * them to the #hb_set_t set @out.
+ * them to the #set_t set @out.
  *
  * Since: 1.9.0
  */
 void
-hb_face_collect_variation_selectors (hb_face_t *face,
-				     hb_set_t  *out)
+face_collect_variation_selectors (face_t *face,
+				     set_t  *out)
 {
   face->table.cmap->collect_variation_selectors (out);
 }
 /**
- * hb_face_collect_variation_unicodes:
+ * face_collect_variation_unicodes:
  * @face: A face object
  * @variation_selector: The Variation Selector to query
  * @out: (out): The set to add Unicode characters to
  *
  * Collects all Unicode characters for @variation_selector covered by @face and adds
- * them to the #hb_set_t set @out.
+ * them to the #set_t set @out.
  *
  * Since: 1.9.0
  */
 void
-hb_face_collect_variation_unicodes (hb_face_t *face,
-				    hb_codepoint_t variation_selector,
-				    hb_set_t  *out)
+face_collect_variation_unicodes (face_t *face,
+				    codepoint_t variation_selector,
+				    set_t  *out)
 {
   face->table.cmap->collect_variation_unicodes (variation_selector, out);
 }

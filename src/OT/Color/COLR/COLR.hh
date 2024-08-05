@@ -41,7 +41,7 @@
 #define HB_OT_TAG_COLR HB_TAG('C','O','L','R')
 
 namespace OT {
-struct hb_paint_context_t;
+struct paint_context_t;
 }
 
 namespace OT {
@@ -50,36 +50,36 @@ struct COLR;
 
 struct Paint;
 
-struct hb_paint_context_t :
-       hb_dispatch_context_t<hb_paint_context_t>
+struct paint_context_t :
+       dispatch_context_t<paint_context_t>
 {
   const char *get_name () { return "PAINT"; }
   template <typename T>
-  return_t dispatch (const T &obj) { obj.paint_glyph (this); return hb_empty_t (); }
-  static return_t default_return_value () { return hb_empty_t (); }
+  return_t dispatch (const T &obj) { obj.paint_glyph (this); return empty_t (); }
+  static return_t default_return_value () { return empty_t (); }
 
   const COLR* get_colr_table () const
   { return reinterpret_cast<const COLR *> (base); }
 
 public:
   const void *base;
-  hb_paint_funcs_t *funcs;
+  paint_funcs_t *funcs;
   void *data;
-  hb_font_t *font;
+  font_t *font;
   unsigned int palette_index;
-  hb_color_t foreground;
+  color_t foreground;
   ItemVarStoreInstancer &instancer;
-  hb_map_t current_glyphs;
-  hb_map_t current_layers;
+  map_t current_glyphs;
+  map_t current_layers;
   int depth_left = HB_MAX_NESTING_LEVEL;
   int edge_count = HB_MAX_GRAPH_EDGE_COUNT;
 
-  hb_paint_context_t (const void *base_,
-		      hb_paint_funcs_t *funcs_,
+  paint_context_t (const void *base_,
+		      paint_funcs_t *funcs_,
 		      void *data_,
-                      hb_font_t *font_,
+                      font_t *font_,
                       unsigned int palette_,
-                      hb_color_t foreground_,
+                      color_t foreground_,
 		      ItemVarStoreInstancer &instancer_) :
     base (base_),
     funcs (funcs_),
@@ -90,9 +90,9 @@ public:
     instancer (instancer_)
   { }
 
-  hb_color_t get_color (unsigned int color_index, float alpha, hb_bool_t *is_foreground)
+  color_t get_color (unsigned int color_index, float alpha, bool_t *is_foreground)
   {
-    hb_color_t color = foreground;
+    color_t color = foreground;
 
     *is_foreground = true;
 
@@ -101,45 +101,45 @@ public:
       if (!funcs->custom_palette_color (data, color_index, &color))
       {
 	unsigned int clen = 1;
-	hb_face_t *face = hb_font_get_face (font);
+	face_t *face = font_get_face (font);
 
-	hb_ot_color_palette_get_colors (face, palette_index, color_index, &clen, &color);
+	ot_color_palette_get_colors (face, palette_index, color_index, &clen, &color);
       }
 
       *is_foreground = false;
     }
 
-    return HB_COLOR (hb_color_get_blue (color),
-                     hb_color_get_green (color),
-                     hb_color_get_red (color),
-                     hb_color_get_alpha (color) * alpha);
+    return HB_COLOR (color_get_blue (color),
+                     color_get_green (color),
+                     color_get_red (color),
+                     color_get_alpha (color) * alpha);
   }
 
   inline void recurse (const Paint &paint);
 };
 
-struct hb_colrv1_closure_context_t :
-       hb_dispatch_context_t<hb_colrv1_closure_context_t>
+struct colrv1_closure_context_t :
+       dispatch_context_t<colrv1_closure_context_t>
 {
   template <typename T>
   return_t dispatch (const T &obj)
   {
     if (unlikely (nesting_level_left == 0))
-      return hb_empty_t ();
+      return empty_t ();
 
     if (paint_visited (&obj))
-      return hb_empty_t ();
+      return empty_t ();
 
     nesting_level_left--;
     obj.closurev1 (this);
     nesting_level_left++;
-    return hb_empty_t ();
+    return empty_t ();
   }
-  static return_t default_return_value () { return hb_empty_t (); }
+  static return_t default_return_value () { return empty_t (); }
 
   bool paint_visited (const void *paint)
   {
-    hb_codepoint_t delta = (hb_codepoint_t) ((uintptr_t) paint - (uintptr_t) base);
+    codepoint_t delta = (codepoint_t) ((uintptr_t) paint - (uintptr_t) base);
     if (visited_paint.in_error() || visited_paint.has (delta))
       return true;
 
@@ -167,19 +167,19 @@ struct hb_colrv1_closure_context_t :
 
   public:
   const void *base;
-  hb_set_t visited_paint;
-  hb_set_t *glyphs;
-  hb_set_t *layer_indices;
-  hb_set_t *palette_indices;
-  hb_set_t *variation_indices;
+  set_t visited_paint;
+  set_t *glyphs;
+  set_t *layer_indices;
+  set_t *palette_indices;
+  set_t *variation_indices;
   unsigned num_var_idxes;
   unsigned nesting_level_left;
 
-  hb_colrv1_closure_context_t (const void *base_,
-                               hb_set_t *glyphs_,
-                               hb_set_t *layer_indices_,
-                               hb_set_t *palette_indices_,
-                               hb_set_t *variation_indices_,
+  colrv1_closure_context_t (const void *base_,
+                               set_t *glyphs_,
+                               set_t *layer_indices_,
+                               set_t *palette_indices_,
+                               set_t *variation_indices_,
                                unsigned num_var_idxes_ = 1,
                                unsigned nesting_level_left_ = HB_MAX_NESTING_LEVEL) :
                           base (base_),
@@ -194,9 +194,9 @@ struct hb_colrv1_closure_context_t :
 
 struct LayerRecord
 {
-  operator hb_ot_color_layer_t () const { return {glyphId, colorIdx}; }
+  operator ot_color_layer_t () const { return {glyphId, colorIdx}; }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
@@ -220,10 +220,10 @@ struct LayerRecord
 
 struct BaseGlyphRecord
 {
-  int cmp (hb_codepoint_t g) const
+  int cmp (codepoint_t g) const
   { return g < glyphId ? -1 : g > glyphId ? 1 : 0; }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
@@ -247,13 +247,13 @@ struct Variable
 {
   static constexpr bool is_variable = true;
 
-  Variable<T>* copy (hb_serialize_context_t *c) const
+  Variable<T>* copy (serialize_context_t *c) const
   {
     TRACE_SERIALIZE (this);
     return_trace (c->embed (this));
   }
 
-  void closurev1 (hb_colrv1_closure_context_t* c) const
+  void closurev1 (colrv1_closure_context_t* c) const
   {
     c->num_var_idxes = 0;
     // update c->num_var_idxes during value closure
@@ -261,7 +261,7 @@ struct Variable
     c->add_var_idxes (varIdxBase, c->num_var_idxes);
   }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer) const
   {
     TRACE_SUBSET (this);
@@ -273,36 +273,36 @@ struct Variable
     new_varidx = varIdxBase;
     if (varIdxBase != VarIdx::NO_VARIATION)
     {
-      hb_pair_t<unsigned, int> *new_varidx_delta;
+      pair_t<unsigned, int> *new_varidx_delta;
       if (!c->plan->colrv1_variation_idx_delta_map.has (varIdxBase, &new_varidx_delta))
         return_trace (false);
 
-      new_varidx = hb_first (*new_varidx_delta);
+      new_varidx = first (*new_varidx_delta);
     }
 
     return_trace (c->serializer->embed (new_varidx));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && value.sanitize (c));
   }
 
-  void paint_glyph (hb_paint_context_t *c) const
+  void paint_glyph (paint_context_t *c) const
   {
     TRACE_PAINT (this);
     value.paint_glyph (c, varIdxBase);
   }
 
-  void get_color_stop (hb_paint_context_t *c,
-                       hb_color_stop_t *stop,
+  void get_color_stop (paint_context_t *c,
+                       color_stop_t *stop,
 		       const ItemVarStoreInstancer &instancer) const
   {
     value.get_color_stop (c, stop, varIdxBase, instancer);
   }
 
-  hb_paint_extend_t get_extend () const
+  paint_extend_t get_extend () const
   {
     return value.get_extend ();
   }
@@ -322,42 +322,42 @@ struct NoVariable
 
   static constexpr uint32_t varIdxBase = VarIdx::NO_VARIATION;
 
-  NoVariable<T>* copy (hb_serialize_context_t *c) const
+  NoVariable<T>* copy (serialize_context_t *c) const
   {
     TRACE_SERIALIZE (this);
     return_trace (c->embed (this));
   }
 
-  void closurev1 (hb_colrv1_closure_context_t* c) const
+  void closurev1 (colrv1_closure_context_t* c) const
   { value.closurev1 (c); }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer) const
   {
     TRACE_SUBSET (this);
     return_trace (value.subset (c, instancer, varIdxBase));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && value.sanitize (c));
   }
 
-  void paint_glyph (hb_paint_context_t *c) const
+  void paint_glyph (paint_context_t *c) const
   {
     TRACE_PAINT (this);
     value.paint_glyph (c, varIdxBase);
   }
 
-  void get_color_stop (hb_paint_context_t *c,
-                       hb_color_stop_t *stop,
+  void get_color_stop (paint_context_t *c,
+                       color_stop_t *stop,
 		       const ItemVarStoreInstancer &instancer) const
   {
     value.get_color_stop (c, stop, VarIdx::NO_VARIATION, instancer);
   }
 
-  hb_paint_extend_t get_extend () const
+  paint_extend_t get_extend () const
   {
     return value.get_extend ();
   }
@@ -371,13 +371,13 @@ struct NoVariable
 
 struct ColorStop
 {
-  void closurev1 (hb_colrv1_closure_context_t* c) const
+  void closurev1 (colrv1_closure_context_t* c) const
   {
     c->add_palette_index (paletteIndex);
     c->num_var_idxes = 2;
   }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -395,14 +395,14 @@ struct ColorStop
                                                HB_SERIALIZE_ERROR_INT_OVERFLOW));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
   }
 
-  void get_color_stop (hb_paint_context_t *c,
-                       hb_color_stop_t *out,
+  void get_color_stop (paint_context_t *c,
+                       color_stop_t *out,
 		       uint32_t varIdx,
 		       const ItemVarStoreInstancer &instancer) const
   {
@@ -433,13 +433,13 @@ struct Extend : HBUINT8
 template <template<typename> class Var>
 struct ColorLine
 {
-  void closurev1 (hb_colrv1_closure_context_t* c) const
+  void closurev1 (colrv1_closure_context_t* c) const
   {
     for (const auto &stop : stops.iter ())
       stop.closurev1 (c);
   }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer) const
   {
     TRACE_SUBSET (this);
@@ -456,7 +456,7 @@ struct ColorLine
     return_trace (true);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
@@ -465,10 +465,10 @@ struct ColorLine
 
   /* get up to count stops from start */
   unsigned int
-  get_color_stops (hb_paint_context_t *c,
+  get_color_stops (paint_context_t *c,
                    unsigned int start,
 		   unsigned int *count,
-		   hb_color_stop_t *color_stops,
+		   color_stop_t *color_stops,
 		   const ItemVarStoreInstancer &instancer) const
   {
     unsigned int len = stops.len;
@@ -484,24 +484,24 @@ struct ColorLine
     return len;
   }
 
-  HB_INTERNAL static unsigned int static_get_color_stops (hb_color_line_t *color_line,
+  HB_INTERNAL static unsigned int static_get_color_stops (color_line_t *color_line,
 							  void *color_line_data,
 							  unsigned int start,
 							  unsigned int *count,
-							  hb_color_stop_t *color_stops,
+							  color_stop_t *color_stops,
 							  void *user_data)
   {
     const ColorLine *thiz = (const ColorLine *) color_line_data;
-    hb_paint_context_t *c = (hb_paint_context_t *) user_data;
+    paint_context_t *c = (paint_context_t *) user_data;
     return thiz->get_color_stops (c, start, count, color_stops, c->instancer);
   }
 
-  hb_paint_extend_t get_extend () const
+  paint_extend_t get_extend () const
   {
-    return (hb_paint_extend_t) (unsigned int) extend;
+    return (paint_extend_t) (unsigned int) extend;
   }
 
-  HB_INTERNAL static hb_paint_extend_t static_get_extend (hb_color_line_t *color_line,
+  HB_INTERNAL static paint_extend_t static_get_extend (color_line_t *color_line,
 							  void *color_line_data,
 							  void *user_data)
   {
@@ -566,16 +566,16 @@ struct CompositeMode : HBUINT8
 
 struct Affine2x3
 {
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
   }
 
-  void closurev1 (hb_colrv1_closure_context_t* c) const
+  void closurev1 (colrv1_closure_context_t* c) const
   { c->num_var_idxes = 6; }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -594,7 +594,7 @@ struct Affine2x3
     return_trace (true);
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
     c->funcs->push_transform (c->data,
@@ -618,9 +618,9 @@ struct Affine2x3
 
 struct PaintColrLayers
 {
-  void closurev1 (hb_colrv1_closure_context_t* c) const;
+  void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer HB_UNUSED) const
   {
     TRACE_SUBSET (this);
@@ -632,13 +632,13 @@ struct PaintColrLayers
     return_trace (true);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
   }
 
-  inline void paint_glyph (hb_paint_context_t *c) const;
+  inline void paint_glyph (paint_context_t *c) const;
 
   HBUINT8	format; /* format = 1 */
   HBUINT8	numLayers;
@@ -649,13 +649,13 @@ struct PaintColrLayers
 
 struct PaintSolid
 {
-  void closurev1 (hb_colrv1_closure_context_t* c) const
+  void closurev1 (colrv1_closure_context_t* c) const
   {
     c->add_palette_index (paletteIndex);
     c->num_var_idxes = 1;
   }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -673,17 +673,17 @@ struct PaintSolid
                                                HB_SERIALIZE_ERROR_INT_OVERFLOW));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
-    hb_bool_t is_foreground;
-    hb_color_t color;
+    bool_t is_foreground;
+    color_t color;
 
     color = c->get_color (paletteIndex,
                           alpha.to_float (c->instancer (varIdxBase, 0)),
@@ -701,13 +701,13 @@ struct PaintSolid
 template <template<typename> class Var>
 struct PaintLinearGradient
 {
-  void closurev1 (hb_colrv1_closure_context_t* c) const
+  void closurev1 (colrv1_closure_context_t* c) const
   {
     (this+colorLine).closurev1 (c);
     c->num_var_idxes = 6;
   }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -731,16 +731,16 @@ struct PaintLinearGradient
     return_trace (out->colorLine.serialize_subset (c, colorLine, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && colorLine.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
-    hb_color_line_t cl = {
+    color_line_t cl = {
       (void *) &(this+colorLine),
       (this+colorLine).static_get_color_stops, c,
       (this+colorLine).static_get_extend, nullptr
@@ -771,13 +771,13 @@ struct PaintLinearGradient
 template <template<typename> class Var>
 struct PaintRadialGradient
 {
-  void closurev1 (hb_colrv1_closure_context_t* c) const
+  void closurev1 (colrv1_closure_context_t* c) const
   {
     (this+colorLine).closurev1 (c);
     c->num_var_idxes = 6;
   }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -801,16 +801,16 @@ struct PaintRadialGradient
     return_trace (out->colorLine.serialize_subset (c, colorLine, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && colorLine.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
-    hb_color_line_t cl = {
+    color_line_t cl = {
       (void *) &(this+colorLine),
       (this+colorLine).static_get_color_stops, c,
       (this+colorLine).static_get_extend, nullptr
@@ -841,13 +841,13 @@ struct PaintRadialGradient
 template <template<typename> class Var>
 struct PaintSweepGradient
 {
-  void closurev1 (hb_colrv1_closure_context_t* c) const
+  void closurev1 (colrv1_closure_context_t* c) const
   {
     (this+colorLine).closurev1 (c);
     c->num_var_idxes = 4;
   }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -869,16 +869,16 @@ struct PaintSweepGradient
     return_trace (out->colorLine.serialize_subset (c, colorLine, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && colorLine.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
-    hb_color_line_t cl = {
+    color_line_t cl = {
       (void *) &(this+colorLine),
       (this+colorLine).static_get_color_stops, c,
       (this+colorLine).static_get_extend, nullptr
@@ -905,9 +905,9 @@ struct PaintSweepGradient
 // Paint a non-COLR glyph, filled as indicated by paint.
 struct PaintGlyph
 {
-  void closurev1 (hb_colrv1_closure_context_t* c) const;
+  void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer) const
   {
     TRACE_SUBSET (this);
@@ -921,13 +921,13 @@ struct PaintGlyph
     return_trace (out->paint.serialize_subset (c, paint, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && paint.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c) const
+  void paint_glyph (paint_context_t *c) const
   {
     TRACE_PAINT (this);
     c->funcs->push_inverse_root_transform (c->data, c->font);
@@ -948,9 +948,9 @@ struct PaintGlyph
 
 struct PaintColrGlyph
 {
-  void closurev1 (hb_colrv1_closure_context_t* c) const;
+  void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer HB_UNUSED) const
   {
     TRACE_SUBSET (this);
@@ -961,13 +961,13 @@ struct PaintColrGlyph
                                                HB_SERIALIZE_ERROR_INT_OVERFLOW));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
   }
 
-  inline void paint_glyph (hb_paint_context_t *c) const;
+  inline void paint_glyph (paint_context_t *c) const;
 
   HBUINT8	format; /* format = 11 */
   HBUINT16	gid;
@@ -978,9 +978,9 @@ struct PaintColrGlyph
 template <template<typename> class Var>
 struct PaintTransform
 {
-  HB_INTERNAL void closurev1 (hb_colrv1_closure_context_t* c) const;
+  HB_INTERNAL void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer) const
   {
     TRACE_SUBSET (this);
@@ -992,7 +992,7 @@ struct PaintTransform
     return_trace (out->src.serialize_subset (c, src, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
@@ -1000,7 +1000,7 @@ struct PaintTransform
                   transform.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c) const
+  void paint_glyph (paint_context_t *c) const
   {
     TRACE_PAINT (this);
     (this+transform).paint_glyph (c);
@@ -1017,9 +1017,9 @@ struct PaintTransform
 
 struct PaintTranslate
 {
-  HB_INTERNAL void closurev1 (hb_colrv1_closure_context_t* c) const;
+  HB_INTERNAL void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -1039,13 +1039,13 @@ struct PaintTranslate
     return_trace (out->src.serialize_subset (c, src, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && src.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
     float ddx = dx + c->instancer (varIdxBase, 0);
@@ -1066,9 +1066,9 @@ struct PaintTranslate
 
 struct PaintScale
 {
-  HB_INTERNAL void closurev1 (hb_colrv1_closure_context_t* c) const;
+  HB_INTERNAL void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -1088,13 +1088,13 @@ struct PaintScale
     return_trace (out->src.serialize_subset (c, src, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && src.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
     float sx = scaleX.to_float (c->instancer (varIdxBase, 0));
@@ -1115,9 +1115,9 @@ struct PaintScale
 
 struct PaintScaleAroundCenter
 {
-  HB_INTERNAL void closurev1 (hb_colrv1_closure_context_t* c) const;
+  HB_INTERNAL void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -1139,13 +1139,13 @@ struct PaintScaleAroundCenter
     return_trace (out->src.serialize_subset (c, src, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && src.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
     float sx = scaleX.to_float (c->instancer (varIdxBase, 0));
@@ -1174,9 +1174,9 @@ struct PaintScaleAroundCenter
 
 struct PaintScaleUniform
 {
-  HB_INTERNAL void closurev1 (hb_colrv1_closure_context_t* c) const;
+  HB_INTERNAL void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -1193,13 +1193,13 @@ struct PaintScaleUniform
     return_trace (out->src.serialize_subset (c, src, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && src.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
     float s = scale.to_float (c->instancer (varIdxBase, 0));
@@ -1218,9 +1218,9 @@ struct PaintScaleUniform
 
 struct PaintScaleUniformAroundCenter
 {
-  HB_INTERNAL void closurev1 (hb_colrv1_closure_context_t* c) const;
+  HB_INTERNAL void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -1241,13 +1241,13 @@ struct PaintScaleUniformAroundCenter
     return_trace (out->src.serialize_subset (c, src, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && src.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
     float s = scale.to_float (c->instancer (varIdxBase, 0));
@@ -1274,9 +1274,9 @@ struct PaintScaleUniformAroundCenter
 
 struct PaintRotate
 {
-  HB_INTERNAL void closurev1 (hb_colrv1_closure_context_t* c) const;
+  HB_INTERNAL void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -1293,13 +1293,13 @@ struct PaintRotate
     return_trace (out->src.serialize_subset (c, src, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && src.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
     float a = angle.to_float (c->instancer (varIdxBase, 0));
@@ -1318,9 +1318,9 @@ struct PaintRotate
 
 struct PaintRotateAroundCenter
 {
-  HB_INTERNAL void closurev1 (hb_colrv1_closure_context_t* c) const;
+  HB_INTERNAL void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -1341,13 +1341,13 @@ struct PaintRotateAroundCenter
     return_trace (out->src.serialize_subset (c, src, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && src.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
     float a = angle.to_float (c->instancer (varIdxBase, 0));
@@ -1374,9 +1374,9 @@ struct PaintRotateAroundCenter
 
 struct PaintSkew
 {
-  HB_INTERNAL void closurev1 (hb_colrv1_closure_context_t* c) const;
+  HB_INTERNAL void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -1396,13 +1396,13 @@ struct PaintSkew
     return_trace (out->src.serialize_subset (c, src, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && src.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
     float sx = xSkewAngle.to_float(c->instancer (varIdxBase, 0));
@@ -1423,9 +1423,9 @@ struct PaintSkew
 
 struct PaintSkewAroundCenter
 {
-  HB_INTERNAL void closurev1 (hb_colrv1_closure_context_t* c) const;
+  HB_INTERNAL void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -1447,13 +1447,13 @@ struct PaintSkewAroundCenter
     return_trace (out->src.serialize_subset (c, src, this, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && src.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c, uint32_t varIdxBase) const
+  void paint_glyph (paint_context_t *c, uint32_t varIdxBase) const
   {
     TRACE_PAINT (this);
     float sx = xSkewAngle.to_float(c->instancer (varIdxBase, 0));
@@ -1482,9 +1482,9 @@ struct PaintSkewAroundCenter
 
 struct PaintComposite
 {
-  void closurev1 (hb_colrv1_closure_context_t* c) const;
+  void closurev1 (colrv1_closure_context_t* c) const;
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer) const
   {
     TRACE_SUBSET (this);
@@ -1497,7 +1497,7 @@ struct PaintComposite
     return_trace (ret);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
@@ -1506,13 +1506,13 @@ struct PaintComposite
                   backdrop.sanitize (c, this));
   }
 
-  void paint_glyph (hb_paint_context_t *c) const
+  void paint_glyph (paint_context_t *c) const
   {
     TRACE_PAINT (this);
     c->recurse (this+backdrop);
     c->funcs->push_group (c->data);
     c->recurse (this+src);
-    c->funcs->pop_group (c->data, (hb_paint_composite_mode_t) (int) mode);
+    c->funcs->pop_group (c->data, (paint_composite_mode_t) (int) mode);
   }
 
   HBUINT8		format; /* format = 32 */
@@ -1530,7 +1530,7 @@ struct ClipBoxData
 
 struct ClipBoxFormat1
 {
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
@@ -1544,7 +1544,7 @@ struct ClipBoxFormat1
     clip_box.yMax = yMax;
   }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer,
                uint32_t varIdxBase) const
   {
@@ -1590,13 +1590,13 @@ struct ClipBoxFormat2 : Variable<ClipBoxFormat1>
     }
   }
 
-  void closurev1 (hb_colrv1_closure_context_t* c) const
+  void closurev1 (colrv1_closure_context_t* c) const
   { c->variation_indices->add_range (varIdxBase, varIdxBase + 3); }
 };
 
 struct ClipBox
 {
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer) const
   {
     TRACE_SUBSET (this);
@@ -1607,7 +1607,7 @@ struct ClipBox
     }
   }
 
-  void closurev1 (hb_colrv1_closure_context_t* c) const
+  void closurev1 (colrv1_closure_context_t* c) const
   {
     switch (u.format) {
     case 2: u.format2.closurev1 (c);
@@ -1627,7 +1627,7 @@ struct ClipBox
     }
   }
 
-  bool get_extents (hb_glyph_extents_t *extents,
+  bool get_extents (glyph_extents_t *extents,
                     const ItemVarStoreInstancer &instancer) const
   {
     ClipBoxData clip_box;
@@ -1659,16 +1659,16 @@ struct ClipBox
 
 struct ClipRecord
 {
-  int cmp (hb_codepoint_t g) const
+  int cmp (codepoint_t g) const
   { return g < startGlyphID ? -1 : g <= endGlyphID ? 0 : +1; }
 
-  void closurev1 (hb_colrv1_closure_context_t* c, const void *base) const
+  void closurev1 (colrv1_closure_context_t* c, const void *base) const
   {
     if (!c->glyphs->intersects (startGlyphID, endGlyphID)) return;
     (base+clipBox).closurev1 (c);
   }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const void *base,
                const ItemVarStoreInstancer &instancer) const
   {
@@ -1679,13 +1679,13 @@ struct ClipRecord
     return_trace (out->clipBox.serialize_subset (c, clipBox, base, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c, const void *base) const
+  bool sanitize (sanitize_context_t *c, const void *base) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && clipBox.sanitize (c, base));
   }
 
-  bool get_extents (hb_glyph_extents_t *extents,
+  bool get_extents (glyph_extents_t *extents,
 		    const void *base,
 		    const ItemVarStoreInstancer &instancer) const
   {
@@ -1703,10 +1703,10 @@ DECLARE_NULL_NAMESPACE_BYTES (OT, ClipRecord);
 
 struct ClipList
 {
-  unsigned serialize_clip_records (hb_subset_context_t *c,
+  unsigned serialize_clip_records (subset_context_t *c,
                                    const ItemVarStoreInstancer &instancer,
-                                   const hb_set_t& gids,
-                                   const hb_map_t& gid_offset_map) const
+                                   const set_t& gids,
+                                   const map_t& gid_offset_map) const
   {
     TRACE_SERIALIZE (this);
     if (gids.is_empty () ||
@@ -1715,12 +1715,12 @@ struct ClipList
 
     unsigned count  = 0;
 
-    hb_codepoint_t start_gid= gids.get_min ();
-    hb_codepoint_t prev_gid = start_gid;
+    codepoint_t start_gid= gids.get_min ();
+    codepoint_t prev_gid = start_gid;
 
     unsigned offset = gid_offset_map.get (start_gid);
     unsigned prev_offset = offset;
-    for (const hb_codepoint_t _ : gids.iter ())
+    for (const codepoint_t _ : gids.iter ())
     {
       if (_ == start_gid) continue;
 
@@ -1756,7 +1756,7 @@ struct ClipList
     return_trace (count);
   }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer) const
   {
     TRACE_SUBSET (this);
@@ -1764,11 +1764,11 @@ struct ClipList
     if (unlikely (!c->serializer->extend_min (out))) return_trace (false);
     if (!c->serializer->check_assign (out->format, format, HB_SERIALIZE_ERROR_INT_OVERFLOW)) return_trace (false);
 
-    const hb_set_t& glyphset = c->plan->_glyphset_colred;
-    const hb_map_t &glyph_map = *c->plan->glyph_map;
+    const set_t& glyphset = c->plan->_glyphset_colred;
+    const map_t &glyph_map = *c->plan->glyph_map;
 
-    hb_map_t new_gid_offset_map;
-    hb_set_t new_gids;
+    map_t new_gid_offset_map;
+    set_t new_gids;
     for (const ClipRecord& record : clips.iter ())
     {
       unsigned start_gid = record.startGlyphID;
@@ -1787,7 +1787,7 @@ struct ClipList
     return_trace (c->serializer->check_assign (out->clips.len, count, HB_SERIALIZE_ERROR_INT_OVERFLOW));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     // TODO Make a formatted struct!
@@ -1795,8 +1795,8 @@ struct ClipList
   }
 
   bool
-  get_extents (hb_codepoint_t gid,
-	       hb_glyph_extents_t *extents,
+  get_extents (codepoint_t gid,
+	       glyph_extents_t *extents,
 	       const ItemVarStoreInstancer &instancer) const
   {
     auto *rec = clips.as_array ().bsearch (gid);
@@ -1818,7 +1818,7 @@ struct Paint
 {
 
   template <typename ...Ts>
-  bool sanitize (hb_sanitize_context_t *c, Ts&&... ds) const
+  bool sanitize (sanitize_context_t *c, Ts&&... ds) const
   {
     TRACE_SANITIZE (this);
 
@@ -1912,11 +1912,11 @@ struct Paint
 
 struct BaseGlyphPaintRecord
 {
-  int cmp (hb_codepoint_t g) const
+  int cmp (codepoint_t g) const
   { return g < glyphId ? -1 : g > glyphId ? 1 : 0; }
 
-  bool serialize (hb_serialize_context_t *s, const hb_map_t* glyph_map,
-                  const void* src_base, hb_subset_context_t *c,
+  bool serialize (serialize_context_t *s, const map_t* glyph_map,
+                  const void* src_base, subset_context_t *c,
                   const ItemVarStoreInstancer &instancer) const
   {
     TRACE_SERIALIZE (this);
@@ -1929,7 +1929,7 @@ struct BaseGlyphPaintRecord
     return_trace (out->paint.serialize_subset (c, paint, src_base, instancer));
   }
 
-  bool sanitize (hb_sanitize_context_t *c, const void *base) const
+  bool sanitize (sanitize_context_t *c, const void *base) const
   {
     TRACE_SANITIZE (this);
     return_trace (likely (c->check_struct (this) && paint.sanitize (c, base)));
@@ -1945,13 +1945,13 @@ struct BaseGlyphPaintRecord
 
 struct BaseGlyphList : SortedArray32Of<BaseGlyphPaintRecord>
 {
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer) const
   {
     TRACE_SUBSET (this);
     auto *out = c->serializer->start_embed (this);
     if (unlikely (!c->serializer->extend_min (out)))  return_trace (false);
-    const hb_set_t* glyphset = &c->plan->_glyphset_colred;
+    const set_t* glyphset = &c->plan->_glyphset_colred;
 
     for (const auto& _ : as_array ())
     {
@@ -1965,7 +1965,7 @@ struct BaseGlyphList : SortedArray32Of<BaseGlyphPaintRecord>
     return_trace (out->len != 0);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (SortedArray32Of<BaseGlyphPaintRecord>::sanitize (c, this));
@@ -1977,7 +1977,7 @@ struct LayerList : Array32OfOffset32To<Paint>
   const Paint& get_paint (unsigned i) const
   { return this+(*this)[i]; }
 
-  bool subset (hb_subset_context_t *c,
+  bool subset (subset_context_t *c,
                const ItemVarStoreInstancer &instancer) const
   {
     TRACE_SUBSET (this);
@@ -1985,8 +1985,8 @@ struct LayerList : Array32OfOffset32To<Paint>
     if (unlikely (!c->serializer->extend_min (out)))  return_trace (false);
 
     bool ret = false;
-    for (const auto& _ : + hb_enumerate (*this)
-                         | hb_filter (c->plan->colrv1_layers, hb_first))
+    for (const auto& _ : + enumerate (*this)
+                         | filter (c->plan->colrv1_layers, first))
 
     {
       auto *o = out->serialize_append (c->serializer);
@@ -1996,7 +1996,7 @@ struct LayerList : Array32OfOffset32To<Paint>
     return_trace (ret);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (Array32OfOffset32To<Paint>::sanitize (c, this));
@@ -2007,9 +2007,9 @@ struct delta_set_index_map_subset_plan_t
 {
   unsigned get_inner_bit_count () const { return inner_bit_count; }
   unsigned get_width ()           const { return ((outer_bit_count + inner_bit_count + 7) / 8); }
-  hb_array_t<const uint32_t> get_output_map () const { return output_map.as_array (); }
+  array_t<const uint32_t> get_output_map () const { return output_map.as_array (); }
 
-  delta_set_index_map_subset_plan_t (const hb_map_t &new_deltaset_idx_varidx_map)
+  delta_set_index_map_subset_plan_t (const map_t &new_deltaset_idx_varidx_map)
   {
     map_count = 0;
     outer_bit_count = 0;
@@ -2041,7 +2041,7 @@ struct delta_set_index_map_subset_plan_t
     map_count = last_idx + 1;
   }
 
-  bool remap (const hb_map_t &new_deltaset_idx_varidx_map)
+  bool remap (const map_t &new_deltaset_idx_varidx_map)
   {
     /* recalculate bit_count */
     outer_bit_count = 1;
@@ -2056,12 +2056,12 @@ struct delta_set_index_map_subset_plan_t
       output_map.arrayZ[idx] = *var_idx;
 
       unsigned outer = (*var_idx) >> 16;
-      unsigned bit_count = (outer == 0) ? 1 : hb_bit_storage (outer);
-      outer_bit_count = hb_max (bit_count, outer_bit_count);
+      unsigned bit_count = (outer == 0) ? 1 : bit_storage (outer);
+      outer_bit_count = max (bit_count, outer_bit_count);
       
       unsigned inner = (*var_idx) & 0xFFFF;
-      bit_count = (inner == 0) ? 1 : hb_bit_storage (inner);
-      inner_bit_count = hb_max (bit_count, inner_bit_count);
+      bit_count = (inner == 0) ? 1 : bit_storage (inner);
+      inner_bit_count = max (bit_count, inner_bit_count);
     }
     return true;
   }
@@ -2070,37 +2070,37 @@ struct delta_set_index_map_subset_plan_t
   unsigned map_count;
   unsigned outer_bit_count;
   unsigned inner_bit_count;
-  hb_vector_t<uint32_t> output_map;
+  vector_t<uint32_t> output_map;
 };
 
 struct COLR
 {
-  static constexpr hb_tag_t tableTag = HB_OT_TAG_COLR;
+  static constexpr tag_t tableTag = HB_OT_TAG_COLR;
 
   bool has_v0_data () const { return numBaseGlyphs; }
   bool has_v1_data () const
   {
     if (version != 1)
       return false;
-    hb_barrier ();
+    barrier ();
 
     return (this+baseGlyphList).len > 0;
   }
 
-  unsigned int get_glyph_layers (hb_codepoint_t       glyph,
+  unsigned int get_glyph_layers (codepoint_t       glyph,
 				 unsigned int         start_offset,
 				 unsigned int        *count, /* IN/OUT.  May be NULL. */
-				 hb_ot_color_layer_t *layers /* OUT.     May be NULL. */) const
+				 ot_color_layer_t *layers /* OUT.     May be NULL. */) const
   {
     const BaseGlyphRecord &record = (this+baseGlyphsZ).bsearch (numBaseGlyphs, glyph);
 
-    hb_array_t<const LayerRecord> all_layers = (this+layersZ).as_array (numLayers);
-    hb_array_t<const LayerRecord> glyph_layers = all_layers.sub_array (record.firstLayerIdx,
+    array_t<const LayerRecord> all_layers = (this+layersZ).as_array (numLayers);
+    array_t<const LayerRecord> glyph_layers = all_layers.sub_array (record.firstLayerIdx,
 								       record.numLayers);
     if (count)
     {
       + glyph_layers.sub_array (start_offset, count)
-      | hb_sink (hb_array (layers, *count))
+      | sink (array (layers, *count))
       ;
     }
     return glyph_layers.length;
@@ -2108,25 +2108,25 @@ struct COLR
 
   struct accelerator_t
   {
-    accelerator_t (hb_face_t *face)
-    { colr = hb_sanitize_context_t ().reference_table<COLR> (face); }
+    accelerator_t (face_t *face)
+    { colr = sanitize_context_t ().reference_table<COLR> (face); }
     ~accelerator_t () { this->colr.destroy (); }
 
     bool is_valid () { return colr.get_blob ()->length; }
 
-    void closure_glyphs (hb_codepoint_t glyph,
-			 hb_set_t *related_ids /* OUT */) const
+    void closure_glyphs (codepoint_t glyph,
+			 set_t *related_ids /* OUT */) const
     { colr->closure_glyphs (glyph, related_ids); }
 
-    void closure_V0palette_indices (const hb_set_t *glyphs,
-				    hb_set_t *palettes /* OUT */) const
+    void closure_V0palette_indices (const set_t *glyphs,
+				    set_t *palettes /* OUT */) const
     { colr->closure_V0palette_indices (glyphs, palettes); }
 
-    void closure_forV1 (hb_set_t *glyphset,
-                        hb_set_t *layer_indices,
-                        hb_set_t *palette_indices,
-                        hb_set_t *variation_indices,
-                        hb_set_t *delta_set_indices) const
+    void closure_forV1 (set_t *glyphset,
+                        set_t *layer_indices,
+                        set_t *palette_indices,
+                        set_t *variation_indices,
+                        set_t *delta_set_indices) const
     { colr->closure_forV1 (glyphset, layer_indices, palette_indices, variation_indices, delta_set_indices); }
 
     bool has_var_store () const
@@ -2142,11 +2142,11 @@ struct COLR
     { return colr->get_delta_set_index_map (); }
 
     private:
-    hb_blob_ptr_t<COLR> colr;
+    blob_ptr_t<COLR> colr;
   };
 
-  void closure_glyphs (hb_codepoint_t glyph,
-		       hb_set_t *related_ids /* OUT */) const
+  void closure_glyphs (codepoint_t glyph,
+		       set_t *related_ids /* OUT */) const
   {
     const BaseGlyphRecord *record = get_base_glyph_record (glyph);
     if (!record) return;
@@ -2157,35 +2157,35 @@ struct COLR
     related_ids->add_array (&glyph_layers[0].glyphId, glyph_layers.length, LayerRecord::min_size);
   }
 
-  void closure_V0palette_indices (const hb_set_t *glyphs,
-				  hb_set_t *palettes /* OUT */) const
+  void closure_V0palette_indices (const set_t *glyphs,
+				  set_t *palettes /* OUT */) const
   {
     if (!numBaseGlyphs || !numLayers) return;
-    hb_array_t<const BaseGlyphRecord> baseGlyphs = (this+baseGlyphsZ).as_array (numBaseGlyphs);
-    hb_array_t<const LayerRecord> all_layers = (this+layersZ).as_array (numLayers);
+    array_t<const BaseGlyphRecord> baseGlyphs = (this+baseGlyphsZ).as_array (numBaseGlyphs);
+    array_t<const LayerRecord> all_layers = (this+layersZ).as_array (numLayers);
 
     for (const BaseGlyphRecord record : baseGlyphs)
     {
       if (!glyphs->has (record.glyphId)) continue;
-      hb_array_t<const LayerRecord> glyph_layers = all_layers.sub_array (record.firstLayerIdx,
+      array_t<const LayerRecord> glyph_layers = all_layers.sub_array (record.firstLayerIdx,
                                                                    record.numLayers);
       for (const LayerRecord layer : glyph_layers)
         palettes->add (layer.colorIdx);
     }
   }
 
-  void closure_forV1 (hb_set_t *glyphset,
-                      hb_set_t *layer_indices,
-                      hb_set_t *palette_indices,
-                      hb_set_t *variation_indices,
-                      hb_set_t *delta_set_indices) const
+  void closure_forV1 (set_t *glyphset,
+                      set_t *layer_indices,
+                      set_t *palette_indices,
+                      set_t *variation_indices,
+                      set_t *delta_set_indices) const
   {
     if (version != 1) return;
-    hb_barrier ();
+    barrier ();
 
-    hb_set_t visited_glyphs;
+    set_t visited_glyphs;
 
-    hb_colrv1_closure_context_t c (this, &visited_glyphs, layer_indices, palette_indices, variation_indices);
+    colrv1_closure_context_t c (this, &visited_glyphs, layer_indices, palette_indices, variation_indices);
     const BaseGlyphList &baseglyph_paintrecords = this+baseGlyphList;
 
     for (const BaseGlyphPaintRecord &baseglyph_paintrecord: baseglyph_paintrecords.iter ())
@@ -2196,7 +2196,7 @@ struct COLR
       const Paint &paint = &baseglyph_paintrecords+baseglyph_paintrecord.paint;
       paint.dispatch (&c);
     }
-    hb_set_union (glyphset, &visited_glyphs);
+    set_union (glyphset, &visited_glyphs);
 
     const ClipList &cliplist = this+clipList;
     c.glyphs = glyphset;
@@ -2233,15 +2233,15 @@ struct COLR
   const ItemVariationStore &get_var_store () const
   { return (version == 0 || varStore == 0) ? Null (ItemVariationStore) : this+varStore; }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
-		  hb_barrier () &&
+		  barrier () &&
                   (this+baseGlyphsZ).sanitize (c, numBaseGlyphs) &&
                   (this+layersZ).sanitize (c, numLayers) &&
                   (version == 0 ||
-		   (hb_barrier () &&
+		   (barrier () &&
 		    version == 1 &&
 		    baseGlyphList.sanitize (c, this) &&
 		    layerList.sanitize (c, this) &&
@@ -2251,9 +2251,9 @@ struct COLR
   }
 
   template<typename BaseIterator, typename LayerIterator,
-	   hb_requires (hb_is_iterator (BaseIterator)),
-	   hb_requires (hb_is_iterator (LayerIterator))>
-  bool serialize_V0 (hb_serialize_context_t *c,
+	   requires (is_iterator (BaseIterator)),
+	   requires (is_iterator (LayerIterator))>
+  bool serialize_V0 (serialize_context_t *c,
 		     unsigned version,
 		     BaseIterator base_it,
 		     LayerIterator layer_it)
@@ -2273,7 +2273,7 @@ struct COLR
     }
 
     c->push ();
-    for (const hb_item_type<BaseIterator> _ : + base_it.iter ())
+    for (const item_type<BaseIterator> _ : + base_it.iter ())
     {
       auto* record = c->embed (_);
       if (unlikely (!record)) return_trace (false);
@@ -2283,7 +2283,7 @@ struct COLR
     c->add_link (baseGlyphsZ, c->pop_pack ());
 
     c->push ();
-    for (const hb_item_type<LayerIterator>& _ : + layer_it.iter ())
+    for (const item_type<LayerIterator>& _ : + layer_it.iter ())
       _.as_array ().copy (c);
 
     c->add_link (layersZ, c->pop_pack ());
@@ -2291,24 +2291,24 @@ struct COLR
     return_trace (true);
   }
 
-  const BaseGlyphRecord* get_base_glyph_record (hb_codepoint_t gid) const
+  const BaseGlyphRecord* get_base_glyph_record (codepoint_t gid) const
   {
     const BaseGlyphRecord* record = &(this+baseGlyphsZ).bsearch (numBaseGlyphs, (unsigned int) gid);
     if (record == &Null (BaseGlyphRecord) ||
-        (record && (hb_codepoint_t) record->glyphId != gid))
+        (record && (codepoint_t) record->glyphId != gid))
       record = nullptr;
     return record;
   }
 
-  const BaseGlyphPaintRecord* get_base_glyph_paintrecord (hb_codepoint_t gid) const
+  const BaseGlyphPaintRecord* get_base_glyph_paintrecord (codepoint_t gid) const
   {
     const BaseGlyphPaintRecord* record = &(this+baseGlyphList).bsearch ((unsigned) gid);
-    if ((record && (hb_codepoint_t) record->glyphId != gid))
+    if ((record && (codepoint_t) record->glyphId != gid))
       record = nullptr;
     return record;
   }
 
-  bool downgrade_to_V0 (const hb_set_t &glyphset) const
+  bool downgrade_to_V0 (const set_t &glyphset) const
   {
     //no more COLRv1 glyphs, downgrade to version 0
     for (const BaseGlyphPaintRecord& _ : get_baseglyphList ())
@@ -2318,7 +2318,7 @@ struct COLR
     return true;
   }
 
-  bool subset_varstore (hb_subset_context_t *c,
+  bool subset_varstore (subset_context_t *c,
                         COLR* out /* OUT */) const
   {
     TRACE_SUBSET (this);
@@ -2350,7 +2350,7 @@ struct COLR
        * subset plan */
       if (optimize)
       {
-        const hb_map_t &varidx_map = item_vars.get_varidx_map ();
+        const map_t &varidx_map = item_vars.get_varidx_map ();
         for (auto _ : c->plan->colrv1_new_deltaset_idx_varidx_map.iter_ref ())
         {
           uint32_t varidx = _.second;
@@ -2373,7 +2373,7 @@ struct COLR
     return_trace (true);
   }
 
-  bool subset_delta_set_index_map (hb_subset_context_t *c,
+  bool subset_delta_set_index_map (subset_context_t *c,
                                    COLR* out /* OUT */) const
   {
     TRACE_SUBSET (this);
@@ -2381,7 +2381,7 @@ struct COLR
         !c->plan->colrv1_new_deltaset_idx_varidx_map)
       return_trace (true);
 
-    const hb_map_t &deltaset_idx_varidx_map = c->plan->colrv1_new_deltaset_idx_varidx_map;
+    const map_t &deltaset_idx_varidx_map = c->plan->colrv1_new_deltaset_idx_varidx_map;
     delta_set_index_map_subset_plan_t index_map_plan (deltaset_idx_varidx_map);
 
     if (unlikely (!index_map_plan.remap (deltaset_idx_varidx_map)))
@@ -2390,66 +2390,66 @@ struct COLR
     return_trace (out->varIdxMap.serialize_serialize (c->serializer, index_map_plan));
   }
 
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
-    const hb_map_t &reverse_glyph_map = *c->plan->reverse_glyph_map;
-    const hb_set_t& glyphset = c->plan->_glyphset_colred;
+    const map_t &reverse_glyph_map = *c->plan->reverse_glyph_map;
+    const set_t& glyphset = c->plan->_glyphset_colred;
 
     auto base_it =
-    + hb_range (c->plan->num_output_glyphs ())
-    | hb_filter ([&](hb_codepoint_t new_gid)
+    + range (c->plan->num_output_glyphs ())
+    | filter ([&](codepoint_t new_gid)
 		 {
-		    hb_codepoint_t old_gid = reverse_glyph_map.get (new_gid);
+		    codepoint_t old_gid = reverse_glyph_map.get (new_gid);
 		    if (glyphset.has (old_gid)) return true;
 		    return false;
 		 })
-    | hb_map_retains_sorting ([&](hb_codepoint_t new_gid)
+    | map_retains_sorting ([&](codepoint_t new_gid)
 			      {
-				hb_codepoint_t old_gid = reverse_glyph_map.get (new_gid);
+				codepoint_t old_gid = reverse_glyph_map.get (new_gid);
 
 				const BaseGlyphRecord* old_record = get_base_glyph_record (old_gid);
 				if (unlikely (!old_record))
-				  return hb_pair_t<bool, BaseGlyphRecord> (false, Null (BaseGlyphRecord));
+				  return pair_t<bool, BaseGlyphRecord> (false, Null (BaseGlyphRecord));
 				BaseGlyphRecord new_record = {};
 				new_record.glyphId = new_gid;
 				new_record.numLayers = old_record->numLayers;
-				return hb_pair_t<bool, BaseGlyphRecord> (true, new_record);
+				return pair_t<bool, BaseGlyphRecord> (true, new_record);
 			      })
-    | hb_filter (hb_first)
-    | hb_map_retains_sorting (hb_second)
+    | filter (first)
+    | map_retains_sorting (second)
     ;
 
     auto layer_it =
-    + hb_range (c->plan->num_output_glyphs ())
-    | hb_map (reverse_glyph_map)
-    | hb_filter (glyphset)
-    | hb_map_retains_sorting ([&](hb_codepoint_t old_gid)
+    + range (c->plan->num_output_glyphs ())
+    | map (reverse_glyph_map)
+    | filter (glyphset)
+    | map_retains_sorting ([&](codepoint_t old_gid)
 			      {
 				const BaseGlyphRecord* old_record = get_base_glyph_record (old_gid);
-				hb_vector_t<LayerRecord> out_layers;
+				vector_t<LayerRecord> out_layers;
 
 				if (unlikely (!old_record ||
 					      old_record->firstLayerIdx >= numLayers ||
 					      old_record->firstLayerIdx + old_record->numLayers > numLayers))
-				  return hb_pair_t<bool, hb_vector_t<LayerRecord>> (false, out_layers);
+				  return pair_t<bool, vector_t<LayerRecord>> (false, out_layers);
 
 				auto layers = (this+layersZ).as_array (numLayers).sub_array (old_record->firstLayerIdx,
 											     old_record->numLayers);
 				out_layers.resize (layers.length);
 				for (unsigned int i = 0; i < layers.length; i++) {
 				  out_layers[i] = layers[i];
-				  hb_codepoint_t new_gid = 0;
+				  codepoint_t new_gid = 0;
 				  if (unlikely (!c->plan->new_gid_for_old_gid (out_layers[i].glyphId, &new_gid)))
-				    return hb_pair_t<bool, hb_vector_t<LayerRecord>> (false, out_layers);
+				    return pair_t<bool, vector_t<LayerRecord>> (false, out_layers);
 				  out_layers[i].glyphId = new_gid;
 				  out_layers[i].colorIdx = c->plan->colr_palettes.get (layers[i].colorIdx);
 				}
 
-				return hb_pair_t<bool, hb_vector_t<LayerRecord>> (true, out_layers);
+				return pair_t<bool, vector_t<LayerRecord>> (true, out_layers);
 			      })
-    | hb_filter (hb_first)
-    | hb_map_retains_sorting (hb_second)
+    | filter (first)
+    | map_retains_sorting (second)
     ;
 
     if (version == 0 && (!base_it || !layer_it))
@@ -2482,7 +2482,7 @@ struct COLR
     return_trace (subset_delta_set_index_map (c, colr_prime));
   }
 
-  const Paint *get_base_glyph_paint (hb_codepoint_t glyph) const
+  const Paint *get_base_glyph_paint (codepoint_t glyph) const
   {
     const BaseGlyphList &baseglyph_paintrecords = this+baseGlyphList;
     const BaseGlyphPaintRecord* record = get_base_glyph_paintrecord (glyph);
@@ -2497,14 +2497,14 @@ struct COLR
 
 #ifndef HB_NO_PAINT
   bool
-  get_extents (hb_font_t *font, hb_codepoint_t glyph, hb_glyph_extents_t *extents) const
+  get_extents (font_t *font, codepoint_t glyph, glyph_extents_t *extents) const
   {
     if (version != 1)
       return false;
 
     ItemVarStoreInstancer instancer (&(this+varStore),
 				 &(this+varIdxMap),
-				 hb_array (font->coords, font->num_coords));
+				 array (font->coords, font->num_coords));
 
     if (get_clip (glyph, extents, instancer))
     {
@@ -2512,11 +2512,11 @@ struct COLR
       return true;
     }
 
-    auto *extents_funcs = hb_paint_extents_get_funcs ();
-    hb_paint_extents_context_t extents_data;
+    auto *extents_funcs = paint_extents_get_funcs ();
+    paint_extents_context_t extents_data;
     bool ret = paint_glyph (font, glyph, extents_funcs, &extents_data, 0, HB_COLOR(0,0,0,0));
 
-    hb_extents_t e = extents_data.get_extents ();
+    extents_t e = extents_data.get_extents ();
     if (e.is_void ())
     {
       extents->x_bearing = 0;
@@ -2537,11 +2537,11 @@ struct COLR
 #endif
 
   bool
-  has_paint_for_glyph (hb_codepoint_t glyph) const
+  has_paint_for_glyph (codepoint_t glyph) const
   {
     if (version == 1)
     {
-      hb_barrier ();
+      barrier ();
 
       const Paint *paint = get_base_glyph_paint (glyph);
 
@@ -2551,8 +2551,8 @@ struct COLR
     return false;
   }
 
-  bool get_clip (hb_codepoint_t glyph,
-		 hb_glyph_extents_t *extents,
+  bool get_clip (codepoint_t glyph,
+		 glyph_extents_t *extents,
 		 const ItemVarStoreInstancer instancer) const
   {
     return (this+clipList).get_extents (glyph,
@@ -2562,17 +2562,17 @@ struct COLR
 
 #ifndef HB_NO_PAINT
   bool
-  paint_glyph (hb_font_t *font, hb_codepoint_t glyph, hb_paint_funcs_t *funcs, void *data, unsigned int palette_index, hb_color_t foreground, bool clip = true) const
+  paint_glyph (font_t *font, codepoint_t glyph, paint_funcs_t *funcs, void *data, unsigned int palette_index, color_t foreground, bool clip = true) const
   {
     ItemVarStoreInstancer instancer (&(this+varStore),
 	                         &(this+varIdxMap),
-	                         hb_array (font->coords, font->num_coords));
-    hb_paint_context_t c (this, funcs, data, font, palette_index, foreground, instancer);
+	                         array (font->coords, font->num_coords));
+    paint_context_t c (this, funcs, data, font, palette_index, foreground, instancer);
     c.current_glyphs.add (glyph);
 
     if (version == 1)
     {
-      hb_barrier ();
+      barrier ();
 
       const Paint *paint = get_base_glyph_paint (glyph);
       if (paint)
@@ -2582,7 +2582,7 @@ struct COLR
 	bool is_bounded = true;
 	if (clip)
 	{
-	  hb_glyph_extents_t extents;
+	  glyph_extents_t extents;
 	  if (get_clip (glyph, &extents, instancer))
 	  {
 	    font->scale_glyph_extents (&extents);
@@ -2594,15 +2594,15 @@ struct COLR
 	  }
 	  else
 	  {
-	    auto *extents_funcs = hb_paint_extents_get_funcs ();
-	    hb_paint_extents_context_t extents_data;
+	    auto *extents_funcs = paint_extents_get_funcs ();
+	    paint_extents_context_t extents_data;
 
 	    paint_glyph (font, glyph,
 			 extents_funcs, &extents_data,
 			 palette_index, foreground,
 			 false);
 
-	    hb_extents_t extents = extents_data.get_extents ();
+	    extents_t extents = extents_data.get_extents ();
 	    is_bounded = extents_data.is_bounded ();
 
 	    c.funcs->push_clip_rectangle (c.data,
@@ -2628,14 +2628,14 @@ struct COLR
     }
 
     const BaseGlyphRecord *record = get_base_glyph_record (glyph);
-    if (record && ((hb_codepoint_t) record->glyphId == glyph))
+    if (record && ((codepoint_t) record->glyphId == glyph))
     {
       // COLRv0 glyph
       for (const auto &r : (this+layersZ).as_array (numLayers)
 			   .sub_array (record->firstLayerIdx, record->numLayers))
       {
-        hb_bool_t is_foreground;
-        hb_color_t color = c.get_color (r.colorIdx, 1., &is_foreground);
+        bool_t is_foreground;
+        color_t color = c.get_color (r.colorIdx, 1., &is_foreground);
         c.funcs->push_clip_glyph (c.data, r.glyphId, c.font);
         c.funcs->color (c.data, is_foreground, color);
         c.funcs->pop_clip (c.data);
@@ -2667,11 +2667,11 @@ struct COLR
 };
 
 struct COLR_accelerator_t : COLR::accelerator_t {
-  COLR_accelerator_t (hb_face_t *face) : COLR::accelerator_t (face) {}
+  COLR_accelerator_t (face_t *face) : COLR::accelerator_t (face) {}
 };
 
 void
-hb_paint_context_t::recurse (const Paint &paint)
+paint_context_t::recurse (const Paint &paint)
 {
   if (unlikely (depth_left <= 0 || edge_count <= 0)) return;
   depth_left--;
@@ -2680,7 +2680,7 @@ hb_paint_context_t::recurse (const Paint &paint)
   depth_left++;
 }
 
-void PaintColrLayers::paint_glyph (hb_paint_context_t *c) const
+void PaintColrLayers::paint_glyph (paint_context_t *c) const
 {
   TRACE_PAINT (this);
   const LayerList &paint_offset_lists = c->get_colr_table ()->get_layerList ();
@@ -2700,7 +2700,7 @@ void PaintColrLayers::paint_glyph (hb_paint_context_t *c) const
   }
 }
 
-void PaintColrGlyph::paint_glyph (hb_paint_context_t *c) const
+void PaintColrGlyph::paint_glyph (paint_context_t *c) const
 {
   TRACE_PAINT (this);
 
@@ -2721,7 +2721,7 @@ void PaintColrGlyph::paint_glyph (hb_paint_context_t *c) const
   const COLR *colr_table = c->get_colr_table ();
   const Paint *paint = colr_table->get_base_glyph_paint (gid);
 
-  hb_glyph_extents_t extents = {0};
+  glyph_extents_t extents = {0};
   bool has_clip_box = colr_table->get_clip (gid, &extents, c->instancer);
 
   if (has_clip_box)

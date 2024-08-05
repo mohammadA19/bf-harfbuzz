@@ -41,76 +41,76 @@
  */
 
 static void
-hb_paint_extents_push_transform (hb_paint_funcs_t *funcs HB_UNUSED,
+paint_extents_push_transform (paint_funcs_t *funcs HB_UNUSED,
 				 void *paint_data,
 				 float xx, float yx,
 				 float xy, float yy,
 				 float dx, float dy,
 				 void *user_data HB_UNUSED)
 {
-  hb_paint_extents_context_t *c = (hb_paint_extents_context_t *) paint_data;
+  paint_extents_context_t *c = (paint_extents_context_t *) paint_data;
 
-  c->push_transform (hb_transform_t {xx, yx, xy, yy, dx, dy});
+  c->push_transform (transform_t {xx, yx, xy, yy, dx, dy});
 }
 
 static void
-hb_paint_extents_pop_transform (hb_paint_funcs_t *funcs HB_UNUSED,
+paint_extents_pop_transform (paint_funcs_t *funcs HB_UNUSED,
 			        void *paint_data,
 				void *user_data HB_UNUSED)
 {
-  hb_paint_extents_context_t *c = (hb_paint_extents_context_t *) paint_data;
+  paint_extents_context_t *c = (paint_extents_context_t *) paint_data;
 
   c->pop_transform ();
 }
 
 static void
-hb_draw_extents_move_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
+draw_extents_move_to (draw_funcs_t *dfuncs HB_UNUSED,
 			 void *data,
-			 hb_draw_state_t *st,
+			 draw_state_t *st,
 			 float to_x, float to_y,
 			 void *user_data HB_UNUSED)
 {
-  hb_extents_t *extents = (hb_extents_t *) data;
+  extents_t *extents = (extents_t *) data;
 
   extents->add_point (to_x, to_y);
 }
 
 static void
-hb_draw_extents_line_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
+draw_extents_line_to (draw_funcs_t *dfuncs HB_UNUSED,
 			 void *data,
-			 hb_draw_state_t *st,
+			 draw_state_t *st,
 			 float to_x, float to_y,
 			 void *user_data HB_UNUSED)
 {
-  hb_extents_t *extents = (hb_extents_t *) data;
+  extents_t *extents = (extents_t *) data;
 
   extents->add_point (to_x, to_y);
 }
 
 static void
-hb_draw_extents_quadratic_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
+draw_extents_quadratic_to (draw_funcs_t *dfuncs HB_UNUSED,
 			      void *data,
-			      hb_draw_state_t *st,
+			      draw_state_t *st,
 			      float control_x, float control_y,
 			      float to_x, float to_y,
 			      void *user_data HB_UNUSED)
 {
-  hb_extents_t *extents = (hb_extents_t *) data;
+  extents_t *extents = (extents_t *) data;
 
   extents->add_point (control_x, control_y);
   extents->add_point (to_x, to_y);
 }
 
 static void
-hb_draw_extents_cubic_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
+draw_extents_cubic_to (draw_funcs_t *dfuncs HB_UNUSED,
 			  void *data,
-			  hb_draw_state_t *st,
+			  draw_state_t *st,
 			  float control1_x, float control1_y,
 			  float control2_x, float control2_y,
 			  float to_x, float to_y,
 			  void *user_data HB_UNUSED)
 {
-  hb_extents_t *extents = (hb_extents_t *) data;
+  extents_t *extents = (extents_t *) data;
 
   extents->add_point (control1_x, control1_y);
   extents->add_point (control2_x, control2_y);
@@ -119,20 +119,20 @@ hb_draw_extents_cubic_to (hb_draw_funcs_t *dfuncs HB_UNUSED,
 
 static inline void free_static_draw_extents_funcs ();
 
-static struct hb_draw_extents_funcs_lazy_loader_t : hb_draw_funcs_lazy_loader_t<hb_draw_extents_funcs_lazy_loader_t>
+static struct draw_extents_funcs_lazy_loader_t : draw_funcs_lazy_loader_t<draw_extents_funcs_lazy_loader_t>
 {
-  static hb_draw_funcs_t *create ()
+  static draw_funcs_t *create ()
   {
-    hb_draw_funcs_t *funcs = hb_draw_funcs_create ();
+    draw_funcs_t *funcs = draw_funcs_create ();
 
-    hb_draw_funcs_set_move_to_func (funcs, hb_draw_extents_move_to, nullptr, nullptr);
-    hb_draw_funcs_set_line_to_func (funcs, hb_draw_extents_line_to, nullptr, nullptr);
-    hb_draw_funcs_set_quadratic_to_func (funcs, hb_draw_extents_quadratic_to, nullptr, nullptr);
-    hb_draw_funcs_set_cubic_to_func (funcs, hb_draw_extents_cubic_to, nullptr, nullptr);
+    draw_funcs_set_move_to_func (funcs, draw_extents_move_to, nullptr, nullptr);
+    draw_funcs_set_line_to_func (funcs, draw_extents_line_to, nullptr, nullptr);
+    draw_funcs_set_quadratic_to_func (funcs, draw_extents_quadratic_to, nullptr, nullptr);
+    draw_funcs_set_cubic_to_func (funcs, draw_extents_cubic_to, nullptr, nullptr);
 
-    hb_draw_funcs_make_immutable (funcs);
+    draw_funcs_make_immutable (funcs);
 
-    hb_atexit (free_static_draw_extents_funcs);
+    atexit (free_static_draw_extents_funcs);
 
     return funcs;
   }
@@ -144,84 +144,84 @@ void free_static_draw_extents_funcs ()
   static_draw_extents_funcs.free_instance ();
 }
 
-static hb_draw_funcs_t *
-hb_draw_extents_get_funcs ()
+static draw_funcs_t *
+draw_extents_get_funcs ()
 {
   return static_draw_extents_funcs.get_unconst ();
 }
 
 static void
-hb_paint_extents_push_clip_glyph (hb_paint_funcs_t *funcs HB_UNUSED,
+paint_extents_push_clip_glyph (paint_funcs_t *funcs HB_UNUSED,
 				  void *paint_data,
-				  hb_codepoint_t glyph,
-				  hb_font_t *font,
+				  codepoint_t glyph,
+				  font_t *font,
 				  void *user_data HB_UNUSED)
 {
-  hb_paint_extents_context_t *c = (hb_paint_extents_context_t *) paint_data;
+  paint_extents_context_t *c = (paint_extents_context_t *) paint_data;
 
-  hb_extents_t extents;
-  hb_draw_funcs_t *draw_extent_funcs = hb_draw_extents_get_funcs ();
-  hb_font_draw_glyph (font, glyph, draw_extent_funcs, &extents);
+  extents_t extents;
+  draw_funcs_t *draw_extent_funcs = draw_extents_get_funcs ();
+  font_draw_glyph (font, glyph, draw_extent_funcs, &extents);
   c->push_clip (extents);
 }
 
 static void
-hb_paint_extents_push_clip_rectangle (hb_paint_funcs_t *funcs HB_UNUSED,
+paint_extents_push_clip_rectangle (paint_funcs_t *funcs HB_UNUSED,
 				      void *paint_data,
 				      float xmin, float ymin, float xmax, float ymax,
 				      void *user_data)
 {
-  hb_paint_extents_context_t *c = (hb_paint_extents_context_t *) paint_data;
+  paint_extents_context_t *c = (paint_extents_context_t *) paint_data;
 
-  hb_extents_t extents = {xmin, ymin, xmax, ymax};
+  extents_t extents = {xmin, ymin, xmax, ymax};
   c->push_clip (extents);
 }
 
 static void
-hb_paint_extents_pop_clip (hb_paint_funcs_t *funcs HB_UNUSED,
+paint_extents_pop_clip (paint_funcs_t *funcs HB_UNUSED,
 			   void *paint_data,
 			   void *user_data HB_UNUSED)
 {
-  hb_paint_extents_context_t *c = (hb_paint_extents_context_t *) paint_data;
+  paint_extents_context_t *c = (paint_extents_context_t *) paint_data;
 
   c->pop_clip ();
 }
 
 static void
-hb_paint_extents_push_group (hb_paint_funcs_t *funcs HB_UNUSED,
+paint_extents_push_group (paint_funcs_t *funcs HB_UNUSED,
 			     void *paint_data,
 			     void *user_data HB_UNUSED)
 {
-  hb_paint_extents_context_t *c = (hb_paint_extents_context_t *) paint_data;
+  paint_extents_context_t *c = (paint_extents_context_t *) paint_data;
 
   c->push_group ();
 }
 
 static void
-hb_paint_extents_pop_group (hb_paint_funcs_t *funcs HB_UNUSED,
+paint_extents_pop_group (paint_funcs_t *funcs HB_UNUSED,
 			    void *paint_data,
-			    hb_paint_composite_mode_t mode,
+			    paint_composite_mode_t mode,
 			    void *user_data HB_UNUSED)
 {
-  hb_paint_extents_context_t *c = (hb_paint_extents_context_t *) paint_data;
+  paint_extents_context_t *c = (paint_extents_context_t *) paint_data;
 
   c->pop_group (mode);
 }
 
-static hb_bool_t
-hb_paint_extents_paint_image (hb_paint_funcs_t *funcs HB_UNUSED,
+static bool_t
+paint_extents_paint_image (paint_funcs_t *funcs HB_UNUSED,
 			      void *paint_data,
-			      hb_blob_t *blob HB_UNUSED,
+			      blob_t *blob HB_UNUSED,
 			      unsigned int width HB_UNUSED,
 			      unsigned int height HB_UNUSED,
-			      hb_tag_t format HB_UNUSED,
+			      tag_t format HB_UNUSED,
 			      float slant HB_UNUSED,
-			      hb_glyph_extents_t *glyph_extents,
+			      glyph_extents_t *glyph_extents,
 			      void *user_data HB_UNUSED)
 {
-  hb_paint_extents_context_t *c = (hb_paint_extents_context_t *) paint_data;
+  paint_extents_context_t *c = (paint_extents_context_t *) paint_data;
 
-  hb_extents_t extents = {(float) glyph_extents->x_bearing,
+  extents_t extents = {(float) glyph_extents->x_bearing,
 			  (float) glyph_extents->y_bearing + glyph_extents->height,
 			  (float) glyph_extents->x_bearing + glyph_extents->width,
 			  (float) glyph_extents->y_bearing};
@@ -233,82 +233,82 @@ hb_paint_extents_paint_image (hb_paint_funcs_t *funcs HB_UNUSED,
 }
 
 static void
-hb_paint_extents_paint_color (hb_paint_funcs_t *funcs HB_UNUSED,
+paint_extents_paint_color (paint_funcs_t *funcs HB_UNUSED,
 			      void *paint_data,
-			      hb_bool_t use_foreground HB_UNUSED,
-			      hb_color_t color HB_UNUSED,
+			      bool_t use_foreground HB_UNUSED,
+			      color_t color HB_UNUSED,
 			      void *user_data HB_UNUSED)
 {
-  hb_paint_extents_context_t *c = (hb_paint_extents_context_t *) paint_data;
+  paint_extents_context_t *c = (paint_extents_context_t *) paint_data;
 
   c->paint ();
 }
 
 static void
-hb_paint_extents_paint_linear_gradient (hb_paint_funcs_t *funcs HB_UNUSED,
+paint_extents_paint_linear_gradient (paint_funcs_t *funcs HB_UNUSED,
 				        void *paint_data,
-				        hb_color_line_t *color_line HB_UNUSED,
+				        color_line_t *color_line HB_UNUSED,
 				        float x0 HB_UNUSED, float y0 HB_UNUSED,
 				        float x1 HB_UNUSED, float y1 HB_UNUSED,
 				        float x2 HB_UNUSED, float y2 HB_UNUSED,
 				        void *user_data HB_UNUSED)
 {
-  hb_paint_extents_context_t *c = (hb_paint_extents_context_t *) paint_data;
+  paint_extents_context_t *c = (paint_extents_context_t *) paint_data;
 
   c->paint ();
 }
 
 static void
-hb_paint_extents_paint_radial_gradient (hb_paint_funcs_t *funcs HB_UNUSED,
+paint_extents_paint_radial_gradient (paint_funcs_t *funcs HB_UNUSED,
 				        void *paint_data,
-				        hb_color_line_t *color_line HB_UNUSED,
+				        color_line_t *color_line HB_UNUSED,
 				        float x0 HB_UNUSED, float y0 HB_UNUSED, float r0 HB_UNUSED,
 				        float x1 HB_UNUSED, float y1 HB_UNUSED, float r1 HB_UNUSED,
 				        void *user_data HB_UNUSED)
 {
-  hb_paint_extents_context_t *c = (hb_paint_extents_context_t *) paint_data;
+  paint_extents_context_t *c = (paint_extents_context_t *) paint_data;
 
   c->paint ();
 }
 
 static void
-hb_paint_extents_paint_sweep_gradient (hb_paint_funcs_t *funcs HB_UNUSED,
+paint_extents_paint_sweep_gradient (paint_funcs_t *funcs HB_UNUSED,
 				       void *paint_data,
-				       hb_color_line_t *color_line HB_UNUSED,
+				       color_line_t *color_line HB_UNUSED,
 				       float cx HB_UNUSED, float cy HB_UNUSED,
 				       float start_angle HB_UNUSED,
 				       float end_angle HB_UNUSED,
 				       void *user_data HB_UNUSED)
 {
-  hb_paint_extents_context_t *c = (hb_paint_extents_context_t *) paint_data;
+  paint_extents_context_t *c = (paint_extents_context_t *) paint_data;
 
   c->paint ();
 }
 
 static inline void free_static_paint_extents_funcs ();
 
-static struct hb_paint_extents_funcs_lazy_loader_t : hb_paint_funcs_lazy_loader_t<hb_paint_extents_funcs_lazy_loader_t>
+static struct paint_extents_funcs_lazy_loader_t : paint_funcs_lazy_loader_t<paint_extents_funcs_lazy_loader_t>
 {
-  static hb_paint_funcs_t *create ()
+  static paint_funcs_t *create ()
   {
-    hb_paint_funcs_t *funcs = hb_paint_funcs_create ();
+    paint_funcs_t *funcs = paint_funcs_create ();
 
-    hb_paint_funcs_set_push_transform_func (funcs, hb_paint_extents_push_transform, nullptr, nullptr);
-    hb_paint_funcs_set_pop_transform_func (funcs, hb_paint_extents_pop_transform, nullptr, nullptr);
-    hb_paint_funcs_set_push_clip_glyph_func (funcs, hb_paint_extents_push_clip_glyph, nullptr, nullptr);
-    hb_paint_funcs_set_push_clip_rectangle_func (funcs, hb_paint_extents_push_clip_rectangle, nullptr, nullptr);
-    hb_paint_funcs_set_pop_clip_func (funcs, hb_paint_extents_pop_clip, nullptr, nullptr);
-    hb_paint_funcs_set_push_group_func (funcs, hb_paint_extents_push_group, nullptr, nullptr);
-    hb_paint_funcs_set_pop_group_func (funcs, hb_paint_extents_pop_group, nullptr, nullptr);
-    hb_paint_funcs_set_color_func (funcs, hb_paint_extents_paint_color, nullptr, nullptr);
-    hb_paint_funcs_set_image_func (funcs, hb_paint_extents_paint_image, nullptr, nullptr);
-    hb_paint_funcs_set_linear_gradient_func (funcs, hb_paint_extents_paint_linear_gradient, nullptr, nullptr);
-    hb_paint_funcs_set_radial_gradient_func (funcs, hb_paint_extents_paint_radial_gradient, nullptr, nullptr);
-    hb_paint_funcs_set_sweep_gradient_func (funcs, hb_paint_extents_paint_sweep_gradient, nullptr, nullptr);
+    paint_funcs_set_push_transform_func (funcs, paint_extents_push_transform, nullptr, nullptr);
+    paint_funcs_set_pop_transform_func (funcs, paint_extents_pop_transform, nullptr, nullptr);
+    paint_funcs_set_push_clip_glyph_func (funcs, paint_extents_push_clip_glyph, nullptr, nullptr);
+    paint_funcs_set_push_clip_rectangle_func (funcs, paint_extents_push_clip_rectangle, nullptr, nullptr);
+    paint_funcs_set_pop_clip_func (funcs, paint_extents_pop_clip, nullptr, nullptr);
+    paint_funcs_set_push_group_func (funcs, paint_extents_push_group, nullptr, nullptr);
+    paint_funcs_set_pop_group_func (funcs, paint_extents_pop_group, nullptr, nullptr);
+    paint_funcs_set_color_func (funcs, paint_extents_paint_color, nullptr, nullptr);
+    paint_funcs_set_image_func (funcs, paint_extents_paint_image, nullptr, nullptr);
+    paint_funcs_set_linear_gradient_func (funcs, paint_extents_paint_linear_gradient, nullptr, nullptr);
+    paint_funcs_set_radial_gradient_func (funcs, paint_extents_paint_radial_gradient, nullptr, nullptr);
+    paint_funcs_set_sweep_gradient_func (funcs, paint_extents_paint_sweep_gradient, nullptr, nullptr);
 
-    hb_paint_funcs_make_immutable (funcs);
+    paint_funcs_make_immutable (funcs);
 
-    hb_atexit (free_static_paint_extents_funcs);
+    atexit (free_static_paint_extents_funcs);
 
     return funcs;
   }
@@ -320,8 +320,8 @@ void free_static_paint_extents_funcs ()
   static_paint_extents_funcs.free_instance ();
 }
 
-hb_paint_funcs_t *
-hb_paint_extents_get_funcs ()
+paint_funcs_t *
+paint_extents_get_funcs ()
 {
   return static_paint_extents_funcs.get_unconst ();
 }

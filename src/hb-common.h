@@ -86,58 +86,58 @@ typedef unsigned __int64 uint64_t;
 HB_BEGIN_DECLS
 
 /**
- * hb_bool_t:
+ * bool_t:
  * 
  * Data type for booleans.
  *
  **/
-typedef int hb_bool_t;
+typedef int bool_t;
 
 /**
- * hb_codepoint_t:
+ * codepoint_t:
  * 
  * Data type for holding Unicode codepoints. Also
  * used to hold glyph IDs.
  *
  **/
-typedef uint32_t hb_codepoint_t;
+typedef uint32_t codepoint_t;
 
 /**
  * HB_CODEPOINT_INVALID:
  *
- * Unused #hb_codepoint_t value.
+ * Unused #codepoint_t value.
  *
  * Since: 8.0.0
  */
-#define HB_CODEPOINT_INVALID ((hb_codepoint_t) -1)
+#define HB_CODEPOINT_INVALID ((codepoint_t) -1)
 
 /**
- * hb_position_t:
+ * position_t:
  * 
  * Data type for holding a single coordinate value.
  * Contour points and other multi-dimensional data are
- * stored as tuples of #hb_position_t's.
+ * stored as tuples of #position_t's.
  *
  **/
-typedef int32_t hb_position_t;
+typedef int32_t position_t;
 /**
- * hb_mask_t:
+ * mask_t:
  * 
  * Data type for bitmasks.
  *
  **/
-typedef uint32_t hb_mask_t;
+typedef uint32_t mask_t;
 
-typedef union _hb_var_int_t {
+typedef union _var_int_t {
   uint32_t u32;
   int32_t i32;
   uint16_t u16[2];
   int16_t i16[2];
   uint8_t u8[4];
   int8_t i8[4];
-} hb_var_int_t;
+} var_int_t;
 
-typedef union _hb_var_num_t {
+typedef union _var_num_t {
   float f;
   uint32_t u32;
   int32_t i32;
@@ -145,13 +145,13 @@ typedef union _hb_var_num_t {
   int16_t i16[2];
   uint8_t u8[4];
   int8_t i8[4];
-} hb_var_num_t;
+} var_num_t;
 
 
-/* hb_tag_t */
+/* tag_t */
 
 /**
- * hb_tag_t:
+ * tag_t:
  *
  * Data type for tag identifiers. Tags are four
  * byte integers, each byte representing a character.
@@ -161,7 +161,7 @@ typedef union _hb_var_num_t {
  * human-readable names.
  *
  **/
-typedef uint32_t hb_tag_t;
+typedef uint32_t tag_t;
 
 /**
  * HB_TAG:
@@ -170,16 +170,16 @@ typedef uint32_t hb_tag_t;
  * @c3: 3rd character of the tag
  * @c4: 4th character of the tag
  *
- * Constructs an #hb_tag_t from four character literals.
+ * Constructs an #tag_t from four character literals.
  *
  **/
-#define HB_TAG(c1,c2,c3,c4) ((hb_tag_t)((((uint32_t)(c1)&0xFF)<<24)|(((uint32_t)(c2)&0xFF)<<16)|(((uint32_t)(c3)&0xFF)<<8)|((uint32_t)(c4)&0xFF)))
+#define HB_TAG(c1,c2,c3,c4) ((tag_t)((((uint32_t)(c1)&0xFF)<<24)|(((uint32_t)(c2)&0xFF)<<16)|(((uint32_t)(c3)&0xFF)<<8)|((uint32_t)(c4)&0xFF)))
 
 /**
  * HB_UNTAG:
- * @tag: an #hb_tag_t
+ * @tag: an #tag_t
  *
- * Extracts four character literals from an #hb_tag_t.
+ * Extracts four character literals from an #tag_t.
  *
  * Since: 0.6.0
  *
@@ -189,13 +189,13 @@ typedef uint32_t hb_tag_t;
 /**
  * HB_TAG_NONE:
  *
- * Unset #hb_tag_t.
+ * Unset #tag_t.
  */
 #define HB_TAG_NONE HB_TAG(0,0,0,0)
 /**
  * HB_TAG_MAX:
  *
- * Maximum possible unsigned #hb_tag_t.
+ * Maximum possible unsigned #tag_t.
  *
  * Since: 0.9.26
  */
@@ -203,23 +203,23 @@ typedef uint32_t hb_tag_t;
 /**
  * HB_TAG_MAX_SIGNED:
  *
- * Maximum possible signed #hb_tag_t.
+ * Maximum possible signed #tag_t.
  *
  * Since: 0.9.33
  */
 #define HB_TAG_MAX_SIGNED HB_TAG(0x7f,0xff,0xff,0xff)
 
 /* len=-1 means str is NUL-terminated. */
-HB_EXTERN hb_tag_t
-hb_tag_from_string (const char *str, int len);
+HB_EXTERN tag_t
+tag_from_string (const char *str, int len);
 
 /* buf should have 4 bytes. */
 HB_EXTERN void
-hb_tag_to_string (hb_tag_t tag, char *buf);
+tag_to_string (tag_t tag, char *buf);
 
 
 /**
- * hb_direction_t:
+ * direction_t:
  * @HB_DIRECTION_INVALID: Initial, unset direction.
  * @HB_DIRECTION_LTR: Text is set horizontally from left to right.
  * @HB_DIRECTION_RTL: Text is set horizontally from right to left.
@@ -239,18 +239,18 @@ typedef enum {
   HB_DIRECTION_RTL,
   HB_DIRECTION_TTB,
   HB_DIRECTION_BTT
-} hb_direction_t;
+} direction_t;
 
 /* len=-1 means str is NUL-terminated */
-HB_EXTERN hb_direction_t
-hb_direction_from_string (const char *str, int len);
+HB_EXTERN direction_t
+direction_from_string (const char *str, int len);
 
 HB_EXTERN const char *
-hb_direction_to_string (hb_direction_t direction);
+direction_to_string (direction_t direction);
 
 /**
  * HB_DIRECTION_IS_VALID:
- * @dir: #hb_direction_t to test
+ * @dir: #direction_t to test
  *
  * Tests whether a text direction is valid.
  *
@@ -259,7 +259,7 @@ hb_direction_to_string (hb_direction_t direction);
 /* Direction must be valid for the following */
 /**
  * HB_DIRECTION_IS_HORIZONTAL:
- * @dir: #hb_direction_t to test
+ * @dir: #direction_t to test
  *
  * Tests whether a text direction is horizontal. Requires
  * that the direction be valid.
@@ -268,7 +268,7 @@ hb_direction_to_string (hb_direction_t direction);
 #define HB_DIRECTION_IS_HORIZONTAL(dir)	((((unsigned int) (dir)) & ~1U) == 4)
 /**
  * HB_DIRECTION_IS_VERTICAL:
- * @dir: #hb_direction_t to test
+ * @dir: #direction_t to test
  *
  * Tests whether a text direction is vertical. Requires
  * that the direction be valid.
@@ -277,7 +277,7 @@ hb_direction_to_string (hb_direction_t direction);
 #define HB_DIRECTION_IS_VERTICAL(dir)	((((unsigned int) (dir)) & ~1U) == 6)
 /**
  * HB_DIRECTION_IS_FORWARD:
- * @dir: #hb_direction_t to test
+ * @dir: #direction_t to test
  *
  * Tests whether a text direction moves forward (from left to right, or from
  * top to bottom). Requires that the direction be valid.
@@ -286,7 +286,7 @@ hb_direction_to_string (hb_direction_t direction);
 #define HB_DIRECTION_IS_FORWARD(dir)	((((unsigned int) (dir)) & ~2U) == 4)
 /**
  * HB_DIRECTION_IS_BACKWARD:
- * @dir: #hb_direction_t to test
+ * @dir: #direction_t to test
  *
  * Tests whether a text direction moves backward (from right to left, or from
  * bottom to top). Requires that the direction be valid.
@@ -295,50 +295,50 @@ hb_direction_to_string (hb_direction_t direction);
 #define HB_DIRECTION_IS_BACKWARD(dir)	((((unsigned int) (dir)) & ~2U) == 5)
 /**
  * HB_DIRECTION_REVERSE:
- * @dir: #hb_direction_t to reverse
+ * @dir: #direction_t to reverse
  *
  * Reverses a text direction. Requires that the direction
  * be valid.
  *
  **/
-#define HB_DIRECTION_REVERSE(dir)	((hb_direction_t) (((unsigned int) (dir)) ^ 1))
+#define HB_DIRECTION_REVERSE(dir)	((direction_t) (((unsigned int) (dir)) ^ 1))
 
 
-/* hb_language_t */
+/* language_t */
 
 /**
- * hb_language_t:
+ * language_t:
  *
- * Data type for languages. Each #hb_language_t corresponds to a BCP 47
+ * Data type for languages. Each #language_t corresponds to a BCP 47
  * language tag.
  *
  */
-typedef const struct hb_language_impl_t *hb_language_t;
+typedef const struct language_impl_t *language_t;
 
-HB_EXTERN hb_language_t
-hb_language_from_string (const char *str, int len);
+HB_EXTERN language_t
+language_from_string (const char *str, int len);
 
 HB_EXTERN const char *
-hb_language_to_string (hb_language_t language);
+language_to_string (language_t language);
 
 /**
  * HB_LANGUAGE_INVALID:
  *
- * An unset #hb_language_t.
+ * An unset #language_t.
  *
  * Since: 0.6.0
  */
-#define HB_LANGUAGE_INVALID ((hb_language_t) 0)
+#define HB_LANGUAGE_INVALID ((language_t) 0)
 
-HB_EXTERN hb_language_t
-hb_language_get_default (void);
+HB_EXTERN language_t
+language_get_default (void);
 
-HB_EXTERN hb_bool_t
-hb_language_matches (hb_language_t language,
-		     hb_language_t specific);
+HB_EXTERN bool_t
+language_matches (language_t language,
+		     language_t specific);
 
 /**
- * hb_script_t:
+ * script_t:
  * @HB_SCRIPT_COMMON: `Zyyy`
  * @HB_SCRIPT_INHERITED: `Zinh`
  * @HB_SCRIPT_UNKNOWN: `Zzzz`
@@ -506,7 +506,7 @@ hb_language_matches (hb_language_t language,
  * @HB_SCRIPT_NAG_MUNDARI: `Nagm`, Since: 5.2.0
  * @HB_SCRIPT_INVALID: No script set
  *
- * Data type for scripts. Each #hb_script_t's value is an #hb_tag_t corresponding
+ * Data type for scripts. Each #script_t's value is an #tag_t corresponding
  * to the four-letter values defined by [ISO 15924](https://unicode.org/iso15924/).
  *
  * See also the Script (sc) property of the Unicode Character Database.
@@ -736,7 +736,7 @@ typedef enum
 
   /*< private >*/
 
-  /* Dummy values to ensure any hb_tag_t value can be passed/stored as hb_script_t
+  /* Dummy values to ensure any tag_t value can be passed/stored as script_t
    * without risking undefined behavior.  We have two, for historical reasons.
    * HB_TAG_MAX used to be unsigned, but that was invalid Ansi C, so was changed
    * to _HB_SCRIPT_MAX_VALUE to be equal to HB_TAG_MAX_SIGNED as well.
@@ -748,45 +748,45 @@ typedef enum
   _HB_SCRIPT_MAX_VALUE				= HB_TAG_MAX_SIGNED, /*< skip >*/
   _HB_SCRIPT_MAX_VALUE_SIGNED			= HB_TAG_MAX_SIGNED /*< skip >*/
 
-} hb_script_t;
+} script_t;
 
 
 /* Script functions */
 
-HB_EXTERN hb_script_t
-hb_script_from_iso15924_tag (hb_tag_t tag);
+HB_EXTERN script_t
+script_from_iso15924_tag (tag_t tag);
 
-HB_EXTERN hb_script_t
-hb_script_from_string (const char *str, int len);
+HB_EXTERN script_t
+script_from_string (const char *str, int len);
 
-HB_EXTERN hb_tag_t
-hb_script_to_iso15924_tag (hb_script_t script);
+HB_EXTERN tag_t
+script_to_iso15924_tag (script_t script);
 
-HB_EXTERN hb_direction_t
-hb_script_get_horizontal_direction (hb_script_t script);
+HB_EXTERN direction_t
+script_get_horizontal_direction (script_t script);
 
 
 /* User data */
 
 /**
- * hb_user_data_key_t:
+ * user_data_key_t:
  *
  * Data structure for holding user-data keys.
  *
  **/
-typedef struct hb_user_data_key_t {
+typedef struct user_data_key_t {
   /*< private >*/
   char unused;
-} hb_user_data_key_t;
+} user_data_key_t;
 
 /**
- * hb_destroy_func_t:
+ * destroy_func_t:
  * @user_data: the data to be destroyed
  *
  * A virtual method for destroy user-data callbacks.
  *
  */
-typedef void (*hb_destroy_func_t) (void *user_data);
+typedef void (*destroy_func_t) (void *user_data);
 
 
 /* Font features and variations. */
@@ -794,7 +794,7 @@ typedef void (*hb_destroy_func_t) (void *user_data);
 /**
  * HB_FEATURE_GLOBAL_START:
  *
- * Special setting for #hb_feature_t.start to apply the feature from the start
+ * Special setting for #feature_t.start to apply the feature from the start
  * of the buffer.
  *
  * Since: 2.0.0
@@ -804,7 +804,7 @@ typedef void (*hb_destroy_func_t) (void *user_data);
 /**
  * HB_FEATURE_GLOBAL_END:
  *
- * Special setting for #hb_feature_t.end to apply the feature from to the end
+ * Special setting for #feature_t.end to apply the feature from to the end
  * of the buffer.
  *
  * Since: 2.0.0
@@ -812,38 +812,38 @@ typedef void (*hb_destroy_func_t) (void *user_data);
 #define HB_FEATURE_GLOBAL_END	((unsigned int) -1)
 
 /**
- * hb_feature_t:
- * @tag: The #hb_tag_t tag of the feature
+ * feature_t:
+ * @tag: The #tag_t tag of the feature
  * @value: The value of the feature. 0 disables the feature, non-zero (usually
  * 1) enables the feature.  For features implemented as lookup type 3 (like
  * 'salt') the @value is a one based index into the alternates.
  * @start: the cluster to start applying this feature setting (inclusive).
  * @end: the cluster to end applying this feature setting (exclusive).
  *
- * The #hb_feature_t is the structure that holds information about requested
+ * The #feature_t is the structure that holds information about requested
  * feature application. The feature will be applied with the given value to all
  * glyphs which are in clusters between @start (inclusive) and @end (exclusive).
  * Setting start to #HB_FEATURE_GLOBAL_START and end to #HB_FEATURE_GLOBAL_END
  * specifies that the feature always applies to the entire buffer.
  */
-typedef struct hb_feature_t {
-  hb_tag_t      tag;
+typedef struct feature_t {
+  tag_t      tag;
   uint32_t      value;
   unsigned int  start;
   unsigned int  end;
-} hb_feature_t;
+} feature_t;
 
-HB_EXTERN hb_bool_t
-hb_feature_from_string (const char *str, int len,
-			hb_feature_t *feature);
+HB_EXTERN bool_t
+feature_from_string (const char *str, int len,
+			feature_t *feature);
 
 HB_EXTERN void
-hb_feature_to_string (hb_feature_t *feature,
+feature_to_string (feature_t *feature,
 		      char *buf, unsigned int size);
 
 /**
- * hb_variation_t:
- * @tag: The #hb_tag_t tag of the variation-axis name
+ * variation_t:
+ * @tag: The #tag_t tag of the variation-axis name
  * @value: The value of the variation axis
  *
  * Data type for holding variation data. Registered OpenType
@@ -852,28 +852,28 @@ hb_feature_to_string (hb_feature_t *feature,
  * 
  * Since: 1.4.2
  */
-typedef struct hb_variation_t {
-  hb_tag_t tag;
+typedef struct variation_t {
+  tag_t tag;
   float    value;
-} hb_variation_t;
+} variation_t;
 
-HB_EXTERN hb_bool_t
-hb_variation_from_string (const char *str, int len,
-			  hb_variation_t *variation);
+HB_EXTERN bool_t
+variation_from_string (const char *str, int len,
+			  variation_t *variation);
 
 HB_EXTERN void
-hb_variation_to_string (hb_variation_t *variation,
+variation_to_string (variation_t *variation,
 			char *buf, unsigned int size);
 
 /**
- * hb_color_t:
+ * color_t:
  *
  * Data type for holding color values. Colors are eight bits per
  * channel RGB plus alpha transparency.
  *
  * Since: 2.1.0
  */
-typedef uint32_t hb_color_t;
+typedef uint32_t color_t;
 
 /**
  * HB_COLOR:
@@ -882,30 +882,30 @@ typedef uint32_t hb_color_t;
  * @r: red channel value
  * @a: alpha channel value
  *
- * Constructs an #hb_color_t from four integers.
+ * Constructs an #color_t from four integers.
  *
  * Since: 2.1.0
  */
-#define HB_COLOR(b,g,r,a) ((hb_color_t) HB_TAG ((b),(g),(r),(a)))
+#define HB_COLOR(b,g,r,a) ((color_t) HB_TAG ((b),(g),(r),(a)))
 
 HB_EXTERN uint8_t
-hb_color_get_alpha (hb_color_t color);
-#define hb_color_get_alpha(color)	((color) & 0xFF)
+color_get_alpha (color_t color);
+#define color_get_alpha(color)	((color) & 0xFF)
 
 HB_EXTERN uint8_t
-hb_color_get_red (hb_color_t color);
-#define hb_color_get_red(color)		(((color) >> 8) & 0xFF)
+color_get_red (color_t color);
+#define color_get_red(color)		(((color) >> 8) & 0xFF)
 
 HB_EXTERN uint8_t
-hb_color_get_green (hb_color_t color);
-#define hb_color_get_green(color)	(((color) >> 16) & 0xFF)
+color_get_green (color_t color);
+#define color_get_green(color)	(((color) >> 16) & 0xFF)
 
 HB_EXTERN uint8_t
-hb_color_get_blue (hb_color_t color);
-#define hb_color_get_blue(color)	(((color) >> 24) & 0xFF)
+color_get_blue (color_t color);
+#define color_get_blue(color)	(((color) >> 24) & 0xFF)
 
 /**
- * hb_glyph_extents_t:
+ * glyph_extents_t:
  * @x_bearing: Distance from the x-origin to the left extremum of the glyph.
  * @y_bearing: Distance from the top extremum of the glyph to the y-origin.
  * @width: Distance from the left extremum of the glyph to the right extremum.
@@ -915,20 +915,20 @@ hb_color_get_blue (hb_color_t color);
  *
  * Note that @height is negative, in coordinate systems that grow up.
  **/
-typedef struct hb_glyph_extents_t {
-  hb_position_t x_bearing;
-  hb_position_t y_bearing;
-  hb_position_t width;
-  hb_position_t height;
-} hb_glyph_extents_t;
+typedef struct glyph_extents_t {
+  position_t x_bearing;
+  position_t y_bearing;
+  position_t width;
+  position_t height;
+} glyph_extents_t;
 
 /**
- * hb_font_t:
+ * font_t:
  *
  * Data type for holding fonts.
  *
  */
-typedef struct hb_font_t hb_font_t;
+typedef struct font_t font_t;
 
 HB_END_DECLS
 

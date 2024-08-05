@@ -55,8 +55,8 @@ release_table_data (void *user_data)
   CFRelease(cf_data);
 }
 
-static hb_blob_t *
-_hb_cg_reference_table (hb_face_t *face HB_UNUSED, hb_tag_t tag, void *user_data)
+static blob_t *
+_cg_reference_table (face_t *face HB_UNUSED, tag_t tag, void *user_data)
 {
   CGFontRef cg_font = reinterpret_cast<CGFontRef> (user_data);
   CFDataRef cf_data = CGFontCopyTableForTag (cg_font, tag);
@@ -71,13 +71,13 @@ _hb_cg_reference_table (hb_face_t *face HB_UNUSED, hb_tag_t tag, void *user_data
     return nullptr;
   }
 
-  return hb_blob_create (data, length, HB_MEMORY_MODE_READONLY,
+  return blob_create (data, length, HB_MEMORY_MODE_READONLY,
 			 reinterpret_cast<void *> (const_cast<__CFData *> (cf_data)),
 			 release_table_data);
 }
 
 static void
-_hb_cg_font_release (void *data)
+_cg_font_release (void *data)
 {
   CGFontRelease ((CGFontRef) data);
 }
@@ -109,25 +109,25 @@ get_last_resort_font_desc ()
 static void
 release_data (void *info, const void *data, size_t size)
 {
-  assert (hb_blob_get_length ((hb_blob_t *) info) == size &&
-	  hb_blob_get_data ((hb_blob_t *) info, nullptr) == data);
+  assert (blob_get_length ((blob_t *) info) == size &&
+	  blob_get_data ((blob_t *) info, nullptr) == data);
 
-  hb_blob_destroy ((hb_blob_t *) info);
+  blob_destroy ((blob_t *) info);
 }
 
 static CGFontRef
-create_cg_font (hb_face_t *face)
+create_cg_font (face_t *face)
 {
   CGFontRef cg_font = nullptr;
-  if (face->destroy == _hb_cg_font_release)
+  if (face->destroy == _cg_font_release)
   {
     cg_font = CGFontRetain ((CGFontRef) face->user_data);
   }
   else
   {
-    hb_blob_t *blob = hb_face_reference_blob (face);
+    blob_t *blob = face_reference_blob (face);
     unsigned int blob_length;
-    const char *blob_data = hb_blob_get_data (blob, &blob_length);
+    const char *blob_data = blob_get_data (blob, &blob_length);
     if (unlikely (!blob_length))
       DEBUG_MSG (CORETEXT, face, "Face has empty blob");
 
@@ -260,8 +260,8 @@ create_ct_font (CGFontRef cg_font, CGFloat font_size)
   return ct_font;
 }
 
-hb_coretext_face_data_t *
-_hb_coretext_shaper_face_data_create (hb_face_t *face)
+coretext_face_data_t *
+_coretext_shaper_face_data_create (face_t *face)
 {
   CGFontRef cg_font = create_cg_font (face);
 
@@ -271,37 +271,37 @@ _hb_coretext_shaper_face_data_create (hb_face_t *face)
     return nullptr;
   }
 
-  return (hb_coretext_face_data_t *) cg_font;
+  return (coretext_face_data_t *) cg_font;
 }
 
 void
-_hb_coretext_shaper_face_data_destroy (hb_coretext_face_data_t *data)
+_coretext_shaper_face_data_destroy (coretext_face_data_t *data)
 {
   CFRelease ((CGFontRef) data);
 }
 
 /**
- * hb_coretext_face_create:
+ * coretext_face_create:
  * @cg_font: The CGFontRef to work upon
  *
- * Creates an #hb_face_t face object from the specified
+ * Creates an #face_t face object from the specified
  * CGFontRef.
  *
- * Return value: the new #hb_face_t face object
+ * Return value: the new #face_t face object
  *
  * Since: 0.9.10
  */
-hb_face_t *
-hb_coretext_face_create (CGFontRef cg_font)
+face_t *
+coretext_face_create (CGFontRef cg_font)
 {
-  return hb_face_create_for_tables (_hb_cg_reference_table, CGFontRetain (cg_font), _hb_cg_font_release);
+  return face_create_for_tables (_cg_reference_table, CGFontRetain (cg_font), _cg_font_release);
 }
 
 /**
- * hb_coretext_face_get_cg_font:
- * @face: The #hb_face_t to work upon
+ * coretext_face_get_cg_font:
+ * @face: The #face_t to work upon
  *
- * Fetches the CGFontRef associated with an #hb_face_t
+ * Fetches the CGFontRef associated with an #face_t
  * face object
  *
  * Return value: the CGFontRef found
@@ -309,17 +309,17 @@ hb_coretext_face_create (CGFontRef cg_font)
  * Since: 0.9.10
  */
 CGFontRef
-hb_coretext_face_get_cg_font (hb_face_t *face)
+coretext_face_get_cg_font (face_t *face)
 {
   return (CGFontRef) (const void *) face->data.coretext;
 }
 
 
-hb_coretext_font_data_t *
-_hb_coretext_shaper_font_data_create (hb_font_t *font)
+coretext_font_data_t *
+_coretext_shaper_font_data_create (font_t *font)
 {
-  hb_face_t *face = font->face;
-  const hb_coretext_face_data_t *face_data = face->data.coretext;
+  face_t *face = font->face;
+  const coretext_face_data_t *face_data = face->data.coretext;
   if (unlikely (!face_data)) return nullptr;
   CGFontRef cg_font = (CGFontRef) (const void *) face->data.coretext;
 
@@ -344,10 +344,10 @@ _hb_coretext_shaper_font_data_create (hb_font_t *font)
     {
       if (font->coords[i] == 0.) continue;
 
-      hb_ot_var_axis_info_t info;
+      ot_var_axis_info_t info;
       unsigned int c = 1;
-      hb_ot_var_get_axis_infos (font->face, i, &c, &info);
-      float v = hb_clamp (font->design_coords[i], info.min_value, info.max_value);
+      ot_var_get_axis_infos (font->face, i, &c, &info);
+      float v = clamp (font->design_coords[i], info.min_value, info.max_value);
 
       CFNumberRef tag_number = CFNumberCreate (kCFAllocatorDefault, kCFNumberIntType, &info.tag);
       CFNumberRef value_number = CFNumberCreate (kCFAllocatorDefault, kCFNumberFloatType, &v);
@@ -373,59 +373,59 @@ _hb_coretext_shaper_font_data_create (hb_font_t *font)
     ct_font = new_ct_font;
   }
 
-  return (hb_coretext_font_data_t *) ct_font;
+  return (coretext_font_data_t *) ct_font;
 }
 
 void
-_hb_coretext_shaper_font_data_destroy (hb_coretext_font_data_t *data)
+_coretext_shaper_font_data_destroy (coretext_font_data_t *data)
 {
   CFRelease ((CTFontRef) data);
 }
 
 /**
- * hb_coretext_font_create:
+ * coretext_font_create:
  * @ct_font: The CTFontRef to work upon
  *
- * Creates an #hb_font_t font object from the specified
+ * Creates an #font_t font object from the specified
  * CTFontRef.
  *
- * Return value: the new #hb_font_t font object
+ * Return value: the new #font_t font object
  *
  * Since: 1.7.2
  **/
-hb_font_t *
-hb_coretext_font_create (CTFontRef ct_font)
+font_t *
+coretext_font_create (CTFontRef ct_font)
 {
   CGFontRef cg_font = CTFontCopyGraphicsFont (ct_font, nullptr);
-  hb_face_t *face = hb_coretext_face_create (cg_font);
+  face_t *face = coretext_face_create (cg_font);
   CFRelease (cg_font);
-  hb_font_t *font = hb_font_create (face);
-  hb_face_destroy (face);
+  font_t *font = font_create (face);
+  face_destroy (face);
 
-  if (unlikely (hb_object_is_immutable (font)))
+  if (unlikely (object_is_immutable (font)))
     return font;
 
-  hb_font_set_ptem (font, CTFontGetSize (ct_font));
+  font_set_ptem (font, CTFontGetSize (ct_font));
 
   /* Let there be dragons here... */
-  font->data.coretext.cmpexch (nullptr, (hb_coretext_font_data_t *) CFRetain (ct_font));
+  font->data.coretext.cmpexch (nullptr, (coretext_font_data_t *) CFRetain (ct_font));
 
   return font;
 }
 
 /**
- * hb_coretext_font_get_ct_font:
- * @font: #hb_font_t to work upon
+ * coretext_font_get_ct_font:
+ * @font: #font_t to work upon
  *
  * Fetches the CTFontRef associated with the specified
- * #hb_font_t font object.
+ * #font_t font object.
  *
  * Return value: the CTFontRef found
  *
  * Since: 0.9.10
  */
 CTFontRef
-hb_coretext_font_get_ct_font (hb_font_t *font)
+coretext_font_get_ct_font (font_t *font)
 {
   CTFontRef ct_font = (CTFontRef) (const void *) font->data.coretext;
   return ct_font ? (CTFontRef) ct_font : nullptr;
@@ -479,14 +479,14 @@ struct range_record_t {
 };
 
 
-hb_bool_t
-_hb_coretext_shape (hb_shape_plan_t    *shape_plan,
-		    hb_font_t          *font,
-		    hb_buffer_t        *buffer,
-		    const hb_feature_t *features,
+bool_t
+_coretext_shape (shape_plan_t    *shape_plan,
+		    font_t          *font,
+		    buffer_t        *buffer,
+		    const feature_t *features,
 		    unsigned int        num_features)
 {
-  hb_face_t *face = font->face;
+  face_t *face = font->face;
   CGFontRef cg_font = (CGFontRef) (const void *) face->data.coretext;
   CTFontRef ct_font = (CTFontRef) (const void *) font->data.coretext;
 
@@ -495,7 +495,7 @@ _hb_coretext_shape (hb_shape_plan_t    *shape_plan,
   CGFloat y_mult = (CGFloat) font->y_scale / ct_font_size;
 
   /* Attach marks to their bases, to match the 'ot' shaper.
-   * Adapted from a very old version of hb-ot-shape:hb_form_clusters().
+   * Adapted from a very old version of hb-ot-shape:form_clusters().
    * Note that this only makes us be closer to the 'ot' shaper,
    * but by no means the same.  For example, if there's
    * B1 M1 B2 M2, and B1-B2 form a ligature, M2's cluster will
@@ -503,15 +503,15 @@ _hb_coretext_shape (hb_shape_plan_t    *shape_plan,
    * cluster... */
   if (buffer->cluster_level == HB_BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES)
   {
-    hb_unicode_funcs_t *unicode = buffer->unicode;
+    unicode_funcs_t *unicode = buffer->unicode;
     unsigned int count = buffer->len;
-    hb_glyph_info_t *info = buffer->info;
+    glyph_info_t *info = buffer->info;
     for (unsigned int i = 1; i < count; i++)
       if (HB_UNICODE_GENERAL_CATEGORY_IS_MARK (unicode->general_category (info[i].codepoint)))
 	buffer->merge_clusters (i - 1, i + 1);
   }
 
-  hb_vector_t<range_record_t> range_records;
+  vector_t<range_record_t> range_records;
 
   /*
    * Set up features.
@@ -520,13 +520,13 @@ _hb_coretext_shape (hb_shape_plan_t    *shape_plan,
   if (num_features)
   {
     /* Sort features by start/end events. */
-    hb_vector_t<feature_event_t> feature_events;
+    vector_t<feature_event_t> feature_events;
     for (unsigned int i = 0; i < num_features; i++)
     {
       active_feature_t feature;
 
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 101000
-      const hb_aat_feature_mapping_t * mapping = hb_aat_layout_find_feature_mapping (features[i].tag);
+      const aat_feature_mapping_t * mapping = aat_layout_find_feature_mapping (features[i].tag);
       if (!mapping)
 	continue;
 
@@ -565,7 +565,7 @@ _hb_coretext_shape (hb_shape_plan_t    *shape_plan,
     }
 
     /* Scan events and save features for each range. */
-    hb_vector_t<active_feature_t> active_features;
+    vector_t<active_feature_t> active_features;
     unsigned int last_index = 0;
     for (unsigned int i = 0; i < feature_events.length; i++)
     {
@@ -656,7 +656,7 @@ _hb_coretext_shape (hb_shape_plan_t    *shape_plan,
   }
 
   unsigned int scratch_size;
-  hb_buffer_t::scratch_buffer_t *scratch = buffer->get_scratch_buffer (&scratch_size);
+  buffer_t::scratch_buffer_t *scratch = buffer->get_scratch_buffer (&scratch_size);
 
 #define ALLOCATE_ARRAY(Type, name, len, on_no_room) \
   Type *name = (Type *) scratch; \
@@ -674,7 +674,7 @@ _hb_coretext_shape (hb_shape_plan_t    *shape_plan,
   ALLOCATE_ARRAY (UniChar, pchars, buffer->len * 2, ((void)nullptr) /*nothing*/);
   unsigned int chars_len = 0;
   for (unsigned int i = 0; i < buffer->len; i++) {
-    hb_codepoint_t c = buffer->info[i].codepoint;
+    codepoint_t c = buffer->info[i].codepoint;
     if (likely (c <= 0xFFFFu))
       pchars[chars_len++] = c;
     else if (unlikely (c > 0x10FFFFu))
@@ -689,10 +689,10 @@ _hb_coretext_shape (hb_shape_plan_t    *shape_plan,
   chars_len = 0;
   for (unsigned int i = 0; i < buffer->len; i++)
   {
-    hb_codepoint_t c = buffer->info[i].codepoint;
+    codepoint_t c = buffer->info[i].codepoint;
     unsigned int cluster = buffer->info[i].cluster;
     log_clusters[chars_len++] = cluster;
-    if (hb_in_range (c, 0x10000u, 0x10FFFFu))
+    if (in_range (c, 0x10000u, 0x10FFFFu))
       log_clusters[chars_len++] = cluster; /* Surrogates. */
   }
 
@@ -723,7 +723,7 @@ resize_and_retry:
     /* Get previous start-of-scratch-area, that we use later for readjusting
      * our existing scratch arrays. */
     unsigned int old_scratch_used;
-    hb_buffer_t::scratch_buffer_t *old_scratch;
+    buffer_t::scratch_buffer_t *old_scratch;
     old_scratch = buffer->get_scratch_buffer (&old_scratch_used);
     old_scratch_used = scratch - old_scratch;
 
@@ -767,7 +767,7 @@ resize_and_retry:
 #  define kCTLanguageAttributeName CFSTR ("NSLanguage")
 #endif
 	CFStringRef lang = CFStringCreateWithCStringNoCopy (kCFAllocatorDefault,
-							    hb_language_to_string (buffer->props.language),
+							    language_to_string (buffer->props.language),
 							    kCFStringEncodingUTF8,
 							    kCFAllocatorNull);
 	if (unlikely (!lang))
@@ -818,12 +818,12 @@ resize_and_retry:
 	CFNumberRef zero = CFNumberCreate (kCFAllocatorDefault, kCFNumberIntType, &zeroint);
 	for (unsigned int i = 0; i < num_features; i++)
 	{
-	  const hb_feature_t &feature = features[i];
+	  const feature_t &feature = features[i];
 	  if (feature.tag == HB_TAG('k','e','r','n') &&
 	      feature.start < chars_len && feature.start < feature.end)
 	  {
 	    CFRange feature_range = CFRangeMake (feature.start,
-						 hb_min (feature.end, chars_len) - feature.start);
+						 min (feature.end, chars_len) - feature.start);
 	    if (feature.value)
 	      CFAttributedStringRemoveAttribute (attr_string, feature_range, kCTKernAttributeName);
 	    else
@@ -923,7 +923,7 @@ resize_and_retry:
 	 * backend.
 	 *
 	 * However, even that wouldn't work if we were passed in the CGFont to
-	 * construct a hb_face to begin with.
+	 * construct a face to begin with.
 	 *
 	 * See: https://github.com/harfbuzz/harfbuzz/pull/36
 	 *
@@ -962,14 +962,14 @@ resize_and_retry:
 		     range.location, range.location + range.length);
 	  if (!buffer->ensure_inplace (buffer->len + range.length))
 	    goto resize_and_retry;
-	  hb_glyph_info_t *info = buffer->info + buffer->len;
+	  glyph_info_t *info = buffer->info + buffer->len;
 
-	  hb_codepoint_t notdef = 0;
-	  hb_direction_t dir = buffer->props.direction;
-	  hb_position_t x_advance, y_advance, x_offset, y_offset;
-	  hb_font_get_glyph_advance_for_direction (font, notdef, dir, &x_advance, &y_advance);
-	  hb_font_get_glyph_origin_for_direction (font, notdef, dir, &x_offset, &y_offset);
-	  hb_position_t advance = x_advance + y_advance;
+	  codepoint_t notdef = 0;
+	  direction_t dir = buffer->props.direction;
+	  position_t x_advance, y_advance, x_offset, y_offset;
+	  font_get_glyph_advance_for_direction (font, notdef, dir, &x_advance, &y_advance);
+	  font_get_glyph_origin_for_direction (font, notdef, dir, &x_offset, &y_offset);
+	  position_t advance = x_advance + y_advance;
 	  x_offset = -x_offset;
 	  y_offset = -y_offset;
 
@@ -977,10 +977,10 @@ resize_and_retry:
 	  for (CFIndex j = range.location; j < range.location + range.length; j++)
 	  {
 	      UniChar ch = CFStringGetCharacterAtIndex (string_ref, j);
-	      if (hb_in_range<UniChar> (ch, 0xDC00u, 0xDFFFu) && range.location < j)
+	      if (in_range<UniChar> (ch, 0xDC00u, 0xDFFFu) && range.location < j)
 	      {
 		ch = CFStringGetCharacterAtIndex (string_ref, j - 1);
-		if (hb_in_range<UniChar> (ch, 0xD800u, 0xDBFFu))
+		if (in_range<UniChar> (ch, 0xD800u, 0xDBFFu))
 		  /* This is the second of a surrogate pair.  Don't need .notdef
 		   * for this one. */
 		  continue;
@@ -1012,7 +1012,7 @@ resize_and_retry:
       if (!buffer->ensure_inplace (buffer->len + num_glyphs))
 	goto resize_and_retry;
 
-      hb_glyph_info_t *run_info = buffer->info + buffer->len;
+      glyph_info_t *run_info = buffer->info + buffer->len;
 
       /* Testing used to indicate that CTRunGetGlyphsPtr, etc (almost?) always
        * succeed, and so copying data to our own buffer will be rare.  Reports
@@ -1024,7 +1024,7 @@ resize_and_retry:
 
 #define SCRATCH_SAVE() \
   unsigned int scratch_size_saved = scratch_size; \
-  hb_buffer_t::scratch_buffer_t *scratch_saved = scratch
+  buffer_t::scratch_buffer_t *scratch_saved = scratch
 
 #define SCRATCH_RESTORE() \
   scratch_size = scratch_size_saved; \
@@ -1044,7 +1044,7 @@ resize_and_retry:
 	  CTRunGetStringIndices (run, range_all, index_buf);
 	  string_indices = index_buf;
 	}
-	hb_glyph_info_t *info = run_info;
+	glyph_info_t *info = run_info;
 	for (unsigned int j = 0; j < num_glyphs; j++)
 	{
 	  info->codepoint = glyphs[j];
@@ -1066,10 +1066,10 @@ resize_and_retry:
 	  CTRunGetPositions (run, range_all, position_buf);
 	  positions = position_buf;
 	}
-	hb_glyph_info_t *info = run_info;
+	glyph_info_t *info = run_info;
 	if (HB_DIRECTION_IS_HORIZONTAL (buffer->props.direction))
 	{
-	  hb_position_t x_offset = round ((positions[0].x - advances_so_far) * x_mult);
+	  position_t x_offset = round ((positions[0].x - advances_so_far) * x_mult);
 	  for (unsigned int j = 0; j < num_glyphs; j++)
 	  {
 	    CGFloat advance;
@@ -1086,7 +1086,7 @@ resize_and_retry:
 	}
 	else
 	{
-	  hb_position_t y_offset = round ((positions[0].y - advances_so_far) * y_mult);
+	  position_t y_offset = round ((positions[0].y - advances_so_far) * y_mult);
 	  for (unsigned int j = 0; j < num_glyphs; j++)
 	  {
 	    CGFloat advance;
@@ -1115,8 +1115,8 @@ resize_and_retry:
     buffer->clear_positions ();
 
     unsigned int count = buffer->len;
-    hb_glyph_info_t *info = buffer->info;
-    hb_glyph_position_t *pos = buffer->pos;
+    glyph_info_t *info = buffer->info;
+    glyph_position_t *pos = buffer->pos;
     if (HB_DIRECTION_IS_HORIZONTAL (buffer->props.direction))
       for (unsigned int i = 0; i < count; i++)
       {
@@ -1149,13 +1149,13 @@ resize_and_retry:
     if (count > 1 && (status_or & kCTRunStatusNonMonotonic) &&
 	buffer->cluster_level != HB_BUFFER_CLUSTER_LEVEL_CHARACTERS)
     {
-      hb_glyph_info_t *info = buffer->info;
+      glyph_info_t *info = buffer->info;
       if (HB_DIRECTION_IS_FORWARD (buffer->props.direction))
       {
 	unsigned int cluster = info[count - 1].cluster;
 	for (unsigned int i = count - 1; i > 0; i--)
 	{
-	  cluster = hb_min (cluster, info[i - 1].cluster);
+	  cluster = min (cluster, info[i - 1].cluster);
 	  info[i - 1].cluster = cluster;
 	}
       }
@@ -1164,7 +1164,7 @@ resize_and_retry:
 	unsigned int cluster = info[0].cluster;
 	for (unsigned int i = 1; i < count; i++)
 	{
-	  cluster = hb_min (cluster, info[i].cluster);
+	  cluster = min (cluster, info[i].cluster);
 	  info[i].cluster = cluster;
 	}
       }

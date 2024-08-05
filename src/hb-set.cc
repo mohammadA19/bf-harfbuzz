@@ -40,42 +40,42 @@
 
 
 /**
- * hb_set_create:
+ * set_create:
  *
  * Creates a new, initially empty set.
  *
- * Return value: (transfer full): The new #hb_set_t
+ * Return value: (transfer full): The new #set_t
  *
  * Since: 0.9.2
  **/
-hb_set_t *
-hb_set_create ()
+set_t *
+set_create ()
 {
-  hb_set_t *set;
+  set_t *set;
 
-  if (!(set = hb_object_create<hb_set_t> ()))
-    return hb_set_get_empty ();
+  if (!(set = object_create<set_t> ()))
+    return set_get_empty ();
 
   return set;
 }
 
 /**
- * hb_set_get_empty:
+ * set_get_empty:
  *
- * Fetches the singleton empty #hb_set_t.
+ * Fetches the singleton empty #set_t.
  *
- * Return value: (transfer full): The empty #hb_set_t
+ * Return value: (transfer full): The empty #set_t
  *
  * Since: 0.9.2
  **/
-hb_set_t *
-hb_set_get_empty ()
+set_t *
+set_get_empty ()
 {
-  return const_cast<hb_set_t *> (&Null (hb_set_t));
+  return const_cast<set_t *> (&Null (set_t));
 }
 
 /**
- * hb_set_reference: (skip)
+ * set_reference: (skip)
  * @set: A set
  *
  * Increases the reference count on a set.
@@ -84,14 +84,14 @@ hb_set_get_empty ()
  *
  * Since: 0.9.2
  **/
-hb_set_t *
-hb_set_reference (hb_set_t *set)
+set_t *
+set_reference (set_t *set)
 {
-  return hb_object_reference (set);
+  return object_reference (set);
 }
 
 /**
- * hb_set_destroy: (skip)
+ * set_destroy: (skip)
  * @set: A set
  *
  * Decreases the reference count on a set. When
@@ -101,15 +101,15 @@ hb_set_reference (hb_set_t *set)
  * Since: 0.9.2
  **/
 void
-hb_set_destroy (hb_set_t *set)
+set_destroy (set_t *set)
 {
-  if (!hb_object_destroy (set)) return;
+  if (!object_destroy (set)) return;
 
-  hb_free (set);
+  free (set);
 }
 
 /**
- * hb_set_set_user_data: (skip)
+ * set_set_user_data: (skip)
  * @set: A set
  * @key: The user-data key to set
  * @data: A pointer to the user data to set
@@ -122,18 +122,18 @@ hb_set_destroy (hb_set_t *set)
  *
  * Since: 0.9.2
  **/
-hb_bool_t
-hb_set_set_user_data (hb_set_t           *set,
-		      hb_user_data_key_t *key,
+bool_t
+set_set_user_data (set_t           *set,
+		      user_data_key_t *key,
 		      void *              data,
-		      hb_destroy_func_t   destroy,
-		      hb_bool_t           replace)
+		      destroy_func_t   destroy,
+		      bool_t           replace)
 {
-  return hb_object_set_user_data (set, key, data, destroy, replace);
+  return object_set_user_data (set, key, data, destroy, replace);
 }
 
 /**
- * hb_set_get_user_data: (skip)
+ * set_get_user_data: (skip)
  * @set: A set
  * @key: The user-data key to query
  *
@@ -145,15 +145,15 @@ hb_set_set_user_data (hb_set_t           *set,
  * Since: 0.9.2
  **/
 void *
-hb_set_get_user_data (const hb_set_t     *set,
-		      hb_user_data_key_t *key)
+set_get_user_data (const set_t     *set,
+		      user_data_key_t *key)
 {
-  return hb_object_get_user_data (set, key);
+  return object_get_user_data (set, key);
 }
 
 
 /**
- * hb_set_allocation_successful:
+ * set_allocation_successful:
  * @set: A set
  *
  * Tests whether memory allocation for a set was successful.
@@ -162,14 +162,14 @@ hb_set_get_user_data (const hb_set_t     *set,
  *
  * Since: 0.9.2
  **/
-hb_bool_t
-hb_set_allocation_successful (const hb_set_t  *set)
+bool_t
+set_allocation_successful (const set_t  *set)
 {
   return !set->in_error ();
 }
 
 /**
- * hb_set_copy:
+ * set_copy:
  * @set: A set
  *
  * Allocate a copy of @set.
@@ -178,19 +178,19 @@ hb_set_allocation_successful (const hb_set_t  *set)
  *
  * Since: 2.8.2
  **/
-hb_set_t *
-hb_set_copy (const hb_set_t *set)
+set_t *
+set_copy (const set_t *set)
 {
-  hb_set_t *copy = hb_set_create ();
+  set_t *copy = set_create ();
   if (unlikely (copy->in_error ()))
-    return hb_set_get_empty ();
+    return set_get_empty ();
 
   copy->set (*set);
   return copy;
 }
 
 /**
- * hb_set_clear:
+ * set_clear:
  * @set: A set
  *
  * Clears out the contents of a set.
@@ -198,14 +198,14 @@ hb_set_copy (const hb_set_t *set)
  * Since: 0.9.2
  **/
 void
-hb_set_clear (hb_set_t *set)
+set_clear (set_t *set)
 {
   /* Immutable-safe. */
   set->clear ();
 }
 
 /**
- * hb_set_is_empty:
+ * set_is_empty:
  * @set: a set.
  *
  * Tests whether a set is empty (contains no elements).
@@ -214,14 +214,14 @@ hb_set_clear (hb_set_t *set)
  *
  * Since: 0.9.7
  **/
-hb_bool_t
-hb_set_is_empty (const hb_set_t *set)
+bool_t
+set_is_empty (const set_t *set)
 {
   return set->is_empty ();
 }
 
 /**
- * hb_set_has:
+ * set_has:
  * @set: A set
  * @codepoint: The element to query
  *
@@ -231,15 +231,15 @@ hb_set_is_empty (const hb_set_t *set)
  *
  * Since: 0.9.2
  **/
-hb_bool_t
-hb_set_has (const hb_set_t *set,
-	    hb_codepoint_t  codepoint)
+bool_t
+set_has (const set_t *set,
+	    codepoint_t  codepoint)
 {
   return set->has (codepoint);
 }
 
 /**
- * hb_set_add:
+ * set_add:
  * @set: A set
  * @codepoint: The element to add to @set
  *
@@ -248,15 +248,15 @@ hb_set_has (const hb_set_t *set,
  * Since: 0.9.2
  **/
 void
-hb_set_add (hb_set_t       *set,
-	    hb_codepoint_t  codepoint)
+set_add (set_t       *set,
+	    codepoint_t  codepoint)
 {
   /* Immutable-safe. */
   set->add (codepoint);
 }
 
 /**
- * hb_set_add_sorted_array:
+ * set_add_sorted_array:
  * @set: A set
  * @sorted_codepoints: (array length=num_codepoints): Array of codepoints to add
  * @num_codepoints: Length of @sorted_codepoints
@@ -268,18 +268,18 @@ hb_set_add (hb_set_t       *set,
  * Since: 4.1.0
  */
 HB_EXTERN void
-hb_set_add_sorted_array (hb_set_t             *set,
-		         const hb_codepoint_t *sorted_codepoints,
+set_add_sorted_array (set_t             *set,
+		         const codepoint_t *sorted_codepoints,
 		         unsigned int          num_codepoints)
 {
   /* Immutable-safe. */
   set->add_sorted_array (sorted_codepoints,
 		         num_codepoints,
-		         sizeof(hb_codepoint_t));
+		         sizeof(codepoint_t));
 }
 
 /**
- * hb_set_add_range:
+ * set_add_range:
  * @set: A set
  * @first: The first element to add to @set
  * @last: The final element to add to @set
@@ -290,16 +290,16 @@ hb_set_add_sorted_array (hb_set_t             *set,
  * Since: 0.9.7
  **/
 void
-hb_set_add_range (hb_set_t       *set,
-		  hb_codepoint_t  first,
-		  hb_codepoint_t  last)
+set_add_range (set_t       *set,
+		  codepoint_t  first,
+		  codepoint_t  last)
 {
   /* Immutable-safe. */
   set->add_range (first, last);
 }
 
 /**
- * hb_set_del:
+ * set_del:
  * @set: A set
  * @codepoint: Removes @codepoint from @set
  *
@@ -308,15 +308,15 @@ hb_set_add_range (hb_set_t       *set,
  * Since: 0.9.2
  **/
 void
-hb_set_del (hb_set_t       *set,
-	    hb_codepoint_t  codepoint)
+set_del (set_t       *set,
+	    codepoint_t  codepoint)
 {
   /* Immutable-safe. */
   set->del (codepoint);
 }
 
 /**
- * hb_set_del_range:
+ * set_del_range:
  * @set: A set
  * @first: The first element to remove from @set
  * @last: The final element to remove from @set
@@ -330,16 +330,16 @@ hb_set_del (hb_set_t       *set,
  * Since: 0.9.7
  **/
 void
-hb_set_del_range (hb_set_t       *set,
-		  hb_codepoint_t  first,
-		  hb_codepoint_t  last)
+set_del_range (set_t       *set,
+		  codepoint_t  first,
+		  codepoint_t  last)
 {
   /* Immutable-safe. */
   set->del_range (first, last);
 }
 
 /**
- * hb_set_is_equal:
+ * set_is_equal:
  * @set: A set
  * @other: Another set
  *
@@ -350,15 +350,15 @@ hb_set_del_range (hb_set_t       *set,
  *
  * Since: 0.9.7
  **/
-hb_bool_t
-hb_set_is_equal (const hb_set_t *set,
-		 const hb_set_t *other)
+bool_t
+set_is_equal (const set_t *set,
+		 const set_t *other)
 {
   return set->is_equal (*other);
 }
 
 /**
- * hb_set_hash:
+ * set_hash:
  * @set: A set
  *
  * Creates a hash representing @set.
@@ -369,13 +369,13 @@ hb_set_is_equal (const hb_set_t *set,
  * Since: 4.4.0
  **/
 HB_EXTERN unsigned int
-hb_set_hash (const hb_set_t *set)
+set_hash (const set_t *set)
 {
   return set->hash ();
 }
 
 /**
- * hb_set_is_subset:
+ * set_is_subset:
  * @set: A set
  * @larger_set: Another set
  *
@@ -385,15 +385,15 @@ hb_set_hash (const hb_set_t *set)
  *
  * Since: 1.8.1
  **/
-hb_bool_t
-hb_set_is_subset (const hb_set_t *set,
-		  const hb_set_t *larger_set)
+bool_t
+set_is_subset (const set_t *set,
+		  const set_t *larger_set)
 {
   return set->is_subset (*larger_set);
 }
 
 /**
- * hb_set_set:
+ * set_set:
  * @set: A set
  * @other: Another set
  *
@@ -402,15 +402,15 @@ hb_set_is_subset (const hb_set_t *set,
  * Since: 0.9.2
  **/
 void
-hb_set_set (hb_set_t       *set,
-	    const hb_set_t *other)
+set_set (set_t       *set,
+	    const set_t *other)
 {
   /* Immutable-safe. */
   set->set (*other);
 }
 
 /**
- * hb_set_union:
+ * set_union:
  * @set: A set
  * @other: Another set
  *
@@ -419,15 +419,15 @@ hb_set_set (hb_set_t       *set,
  * Since: 0.9.2
  **/
 void
-hb_set_union (hb_set_t       *set,
-	      const hb_set_t *other)
+set_union (set_t       *set,
+	      const set_t *other)
 {
   /* Immutable-safe. */
   set->union_ (*other);
 }
 
 /**
- * hb_set_intersect:
+ * set_intersect:
  * @set: A set
  * @other: Another set
  *
@@ -436,15 +436,15 @@ hb_set_union (hb_set_t       *set,
  * Since: 0.9.2
  **/
 void
-hb_set_intersect (hb_set_t       *set,
-		  const hb_set_t *other)
+set_intersect (set_t       *set,
+		  const set_t *other)
 {
   /* Immutable-safe. */
   set->intersect (*other);
 }
 
 /**
- * hb_set_subtract:
+ * set_subtract:
  * @set: A set
  * @other: Another set
  *
@@ -453,15 +453,15 @@ hb_set_intersect (hb_set_t       *set,
  * Since: 0.9.2
  **/
 void
-hb_set_subtract (hb_set_t       *set,
-		 const hb_set_t *other)
+set_subtract (set_t       *set,
+		 const set_t *other)
 {
   /* Immutable-safe. */
   set->subtract (*other);
 }
 
 /**
- * hb_set_symmetric_difference:
+ * set_symmetric_difference:
  * @set: A set
  * @other: Another set
  *
@@ -471,15 +471,15 @@ hb_set_subtract (hb_set_t       *set,
  * Since: 0.9.2
  **/
 void
-hb_set_symmetric_difference (hb_set_t       *set,
-			     const hb_set_t *other)
+set_symmetric_difference (set_t       *set,
+			     const set_t *other)
 {
   /* Immutable-safe. */
   set->symmetric_difference (*other);
 }
 
 /**
- * hb_set_invert:
+ * set_invert:
  * @set: A set
  *
  * Inverts the contents of @set.
@@ -487,14 +487,14 @@ hb_set_symmetric_difference (hb_set_t       *set,
  * Since: 3.0.0
  **/
 void
-hb_set_invert (hb_set_t *set)
+set_invert (set_t *set)
 {
   /* Immutable-safe. */
   set->invert ();
 }
 
 /**
- * hb_set_is_inverted:
+ * set_is_inverted:
  * @set: A set
  *
  * Returns whether the set is inverted.
@@ -503,14 +503,14 @@ hb_set_invert (hb_set_t *set)
  *
  * Since: 7.0.0
  **/
-hb_bool_t
-hb_set_is_inverted (const hb_set_t *set)
+bool_t
+set_is_inverted (const set_t *set)
 {
   return set->is_inverted ();
 }
 
 /**
- * hb_set_get_population:
+ * set_get_population:
  * @set: A set
  *
  * Returns the number of elements in the set.
@@ -520,13 +520,13 @@ hb_set_is_inverted (const hb_set_t *set)
  * Since: 0.9.7
  **/
 unsigned int
-hb_set_get_population (const hb_set_t *set)
+set_get_population (const set_t *set)
 {
   return set->get_population ();
 }
 
 /**
- * hb_set_get_min:
+ * set_get_min:
  * @set: A set
  *
  * Finds the smallest element in the set.
@@ -535,14 +535,14 @@ hb_set_get_population (const hb_set_t *set)
  *
  * Since: 0.9.7
  **/
-hb_codepoint_t
-hb_set_get_min (const hb_set_t *set)
+codepoint_t
+set_get_min (const set_t *set)
 {
   return set->get_min ();
 }
 
 /**
- * hb_set_get_max:
+ * set_get_max:
  * @set: A set
  *
  * Finds the largest element in the set.
@@ -551,14 +551,14 @@ hb_set_get_min (const hb_set_t *set)
  *
  * Since: 0.9.7
  **/
-hb_codepoint_t
-hb_set_get_max (const hb_set_t *set)
+codepoint_t
+set_get_max (const set_t *set)
 {
   return set->get_max ();
 }
 
 /**
- * hb_set_next:
+ * set_next:
  * @set: A set
  * @codepoint: (inout): Input = Code point to query
  *             Output = Code point retrieved
@@ -571,15 +571,15 @@ hb_set_get_max (const hb_set_t *set)
  *
  * Since: 0.9.2
  **/
-hb_bool_t
-hb_set_next (const hb_set_t *set,
-	     hb_codepoint_t *codepoint)
+bool_t
+set_next (const set_t *set,
+	     codepoint_t *codepoint)
 {
   return set->next (codepoint);
 }
 
 /**
- * hb_set_previous:
+ * set_previous:
  * @set: A set
  * @codepoint: (inout): Input = Code point to query
  *             Output = Code point retrieved
@@ -592,15 +592,15 @@ hb_set_next (const hb_set_t *set,
  *
  * Since: 1.8.0
  **/
-hb_bool_t
-hb_set_previous (const hb_set_t *set,
-		 hb_codepoint_t *codepoint)
+bool_t
+set_previous (const set_t *set,
+		 codepoint_t *codepoint)
 {
   return set->previous (codepoint);
 }
 
 /**
- * hb_set_next_range:
+ * set_next_range:
  * @set: A set
  * @first: (out): The first code point in the range
  * @last: (inout): Input = The current last code point in the range
@@ -615,16 +615,16 @@ hb_set_previous (const hb_set_t *set,
  *
  * Since: 0.9.7
  **/
-hb_bool_t
-hb_set_next_range (const hb_set_t *set,
-		   hb_codepoint_t *first,
-		   hb_codepoint_t *last)
+bool_t
+set_next_range (const set_t *set,
+		   codepoint_t *first,
+		   codepoint_t *last)
 {
   return set->next_range (first, last);
 }
 
 /**
- * hb_set_previous_range:
+ * set_previous_range:
  * @set: A set
  * @first: (inout): Input = The current first code point in the range
  *         Output = The first code point in the range
@@ -639,16 +639,16 @@ hb_set_next_range (const hb_set_t *set,
  *
  * Since: 1.8.0
  **/
-hb_bool_t
-hb_set_previous_range (const hb_set_t *set,
-		       hb_codepoint_t *first,
-		       hb_codepoint_t *last)
+bool_t
+set_previous_range (const set_t *set,
+		       codepoint_t *first,
+		       codepoint_t *last)
 {
   return set->previous_range (first, last);
 }
 
 /**
- * hb_set_next_many:
+ * set_next_many:
  * @set: A set
  * @codepoint: Outputting codepoints starting after this one.
  *             Use #HB_SET_VALUE_INVALID to get started.
@@ -664,9 +664,9 @@ hb_set_previous_range (const hb_set_t *set,
  * Since: 4.2.0
  **/
 unsigned int
-hb_set_next_many (const hb_set_t *set,
-		  hb_codepoint_t  codepoint,
-		  hb_codepoint_t *out,
+set_next_many (const set_t *set,
+		  codepoint_t  codepoint,
+		  codepoint_t *out,
 		  unsigned int    size)
 {
   return set->next_many (codepoint, out, size);

@@ -92,7 +92,7 @@ HB_BEGIN_DECLS
 /**
  * HB_OT_MAX_TAGS_PER_SCRIPT:
  *
- * Maximum number of OpenType tags that can correspond to a give #hb_script_t.
+ * Maximum number of OpenType tags that can correspond to a give #script_t.
  *
  * Since: 2.0.0
  **/
@@ -100,42 +100,42 @@ HB_BEGIN_DECLS
 /**
  * HB_OT_MAX_TAGS_PER_LANGUAGE:
  *
- * Maximum number of OpenType tags that can correspond to a give #hb_language_t.
+ * Maximum number of OpenType tags that can correspond to a give #language_t.
  *
  * Since: 2.0.0
  **/
 #define HB_OT_MAX_TAGS_PER_LANGUAGE	3u
 
 HB_EXTERN void
-hb_ot_tags_from_script_and_language (hb_script_t   script,
-				     hb_language_t language,
+ot_tags_from_script_and_language (script_t   script,
+				     language_t language,
 				     unsigned int *script_count /* IN/OUT */,
-				     hb_tag_t     *script_tags /* OUT */,
+				     tag_t     *script_tags /* OUT */,
 				     unsigned int *language_count /* IN/OUT */,
-				     hb_tag_t     *language_tags /* OUT */);
+				     tag_t     *language_tags /* OUT */);
 
-HB_EXTERN hb_script_t
-hb_ot_tag_to_script (hb_tag_t tag);
+HB_EXTERN script_t
+ot_tag_to_script (tag_t tag);
 
-HB_EXTERN hb_language_t
-hb_ot_tag_to_language (hb_tag_t tag);
+HB_EXTERN language_t
+ot_tag_to_language (tag_t tag);
 
 HB_EXTERN void
-hb_ot_tags_to_script_and_language (hb_tag_t       script_tag,
-				   hb_tag_t       language_tag,
-				   hb_script_t   *script /* OUT */,
-				   hb_language_t *language /* OUT */);
+ot_tags_to_script_and_language (tag_t       script_tag,
+				   tag_t       language_tag,
+				   script_t   *script /* OUT */,
+				   language_t *language /* OUT */);
 
 
 /*
  * GDEF
  */
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_has_glyph_classes (hb_face_t *face);
+HB_EXTERN bool_t
+ot_layout_has_glyph_classes (face_t *face);
 
 /**
- * hb_ot_layout_glyph_class_t:
+ * ot_layout_glyph_class_t:
  * @HB_OT_LAYOUT_GLYPH_CLASS_UNCLASSIFIED: Glyphs not matching the other classifications
  * @HB_OT_LAYOUT_GLYPH_CLASS_BASE_GLYPH: Spacing, single characters, capable of accepting marks
  * @HB_OT_LAYOUT_GLYPH_CLASS_LIGATURE: Glyphs that represent ligation of multiple characters
@@ -151,34 +151,34 @@ typedef enum {
   HB_OT_LAYOUT_GLYPH_CLASS_LIGATURE	= 2,
   HB_OT_LAYOUT_GLYPH_CLASS_MARK		= 3,
   HB_OT_LAYOUT_GLYPH_CLASS_COMPONENT	= 4
-} hb_ot_layout_glyph_class_t;
+} ot_layout_glyph_class_t;
 
-HB_EXTERN hb_ot_layout_glyph_class_t
-hb_ot_layout_get_glyph_class (hb_face_t      *face,
-			      hb_codepoint_t  glyph);
+HB_EXTERN ot_layout_glyph_class_t
+ot_layout_get_glyph_class (face_t      *face,
+			      codepoint_t  glyph);
 
 HB_EXTERN void
-hb_ot_layout_get_glyphs_in_class (hb_face_t                  *face,
-				  hb_ot_layout_glyph_class_t  klass,
-				  hb_set_t                   *glyphs /* OUT */);
+ot_layout_get_glyphs_in_class (face_t                  *face,
+				  ot_layout_glyph_class_t  klass,
+				  set_t                   *glyphs /* OUT */);
 
 /* Not that useful.  Provides list of attach points for a glyph that a
  * client may want to cache */
 HB_EXTERN unsigned int
-hb_ot_layout_get_attach_points (hb_face_t      *face,
-				hb_codepoint_t  glyph,
+ot_layout_get_attach_points (face_t      *face,
+				codepoint_t  glyph,
 				unsigned int    start_offset,
 				unsigned int   *point_count /* IN/OUT */,
 				unsigned int   *point_array /* OUT */);
 
 /* Ligature caret positions */
 HB_EXTERN unsigned int
-hb_ot_layout_get_ligature_carets (hb_font_t      *font,
-				  hb_direction_t  direction,
-				  hb_codepoint_t  glyph,
+ot_layout_get_ligature_carets (font_t      *font,
+				  direction_t  direction,
+				  codepoint_t  glyph,
 				  unsigned int    start_offset,
 				  unsigned int   *caret_count /* IN/OUT */,
-				  hb_position_t  *caret_array /* OUT */);
+				  position_t  *caret_array /* OUT */);
 
 
 /*
@@ -211,76 +211,76 @@ hb_ot_layout_get_ligature_carets (hb_font_t      *font,
 #define HB_OT_LAYOUT_NO_VARIATIONS_INDEX	0xFFFFFFFFu
 
 HB_EXTERN unsigned int
-hb_ot_layout_table_get_script_tags (hb_face_t    *face,
-				    hb_tag_t      table_tag,
+ot_layout_table_get_script_tags (face_t    *face,
+				    tag_t      table_tag,
 				    unsigned int  start_offset,
 				    unsigned int *script_count /* IN/OUT */,
-				    hb_tag_t     *script_tags /* OUT */);
+				    tag_t     *script_tags /* OUT */);
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_table_find_script (hb_face_t    *face,
-				hb_tag_t      table_tag,
-				hb_tag_t      script_tag,
+HB_EXTERN bool_t
+ot_layout_table_find_script (face_t    *face,
+				tag_t      table_tag,
+				tag_t      script_tag,
 				unsigned int *script_index /* OUT */);
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_table_select_script (hb_face_t      *face,
-				  hb_tag_t        table_tag,
+HB_EXTERN bool_t
+ot_layout_table_select_script (face_t      *face,
+				  tag_t        table_tag,
 				  unsigned int    script_count,
-				  const hb_tag_t *script_tags,
+				  const tag_t *script_tags,
 				  unsigned int   *script_index /* OUT */,
-				  hb_tag_t       *chosen_script /* OUT */);
+				  tag_t       *chosen_script /* OUT */);
 
 HB_EXTERN unsigned int
-hb_ot_layout_table_get_feature_tags (hb_face_t    *face,
-				     hb_tag_t      table_tag,
+ot_layout_table_get_feature_tags (face_t    *face,
+				     tag_t      table_tag,
 				     unsigned int  start_offset,
 				     unsigned int *feature_count /* IN/OUT */,
-				     hb_tag_t     *feature_tags /* OUT */);
+				     tag_t     *feature_tags /* OUT */);
 
 HB_EXTERN unsigned int
-hb_ot_layout_script_get_language_tags (hb_face_t    *face,
-				       hb_tag_t      table_tag,
+ot_layout_script_get_language_tags (face_t    *face,
+				       tag_t      table_tag,
 				       unsigned int  script_index,
 				       unsigned int  start_offset,
 				       unsigned int *language_count /* IN/OUT */,
-				       hb_tag_t     *language_tags /* OUT */);
+				       tag_t     *language_tags /* OUT */);
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_script_select_language (hb_face_t      *face,
-				     hb_tag_t        table_tag,
+HB_EXTERN bool_t
+ot_layout_script_select_language (face_t      *face,
+				     tag_t        table_tag,
 				     unsigned int    script_index,
 				     unsigned int    language_count,
-				     const hb_tag_t *language_tags,
+				     const tag_t *language_tags,
 				     unsigned int   *language_index /* OUT */);
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_script_select_language2 (hb_face_t      *face,
-				     hb_tag_t        table_tag,
+HB_EXTERN bool_t
+ot_layout_script_select_language2 (face_t      *face,
+				     tag_t        table_tag,
 				     unsigned int    script_index,
 				     unsigned int    language_count,
-				     const hb_tag_t *language_tags,
+				     const tag_t *language_tags,
 				     unsigned int   *language_index /* OUT */,
-				     hb_tag_t       *chosen_language /* OUT */);
+				     tag_t       *chosen_language /* OUT */);
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_language_get_required_feature_index (hb_face_t    *face,
-						  hb_tag_t      table_tag,
+HB_EXTERN bool_t
+ot_layout_language_get_required_feature_index (face_t    *face,
+						  tag_t      table_tag,
 						  unsigned int  script_index,
 						  unsigned int  language_index,
 						  unsigned int *feature_index /* OUT */);
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_language_get_required_feature (hb_face_t    *face,
-					    hb_tag_t      table_tag,
+HB_EXTERN bool_t
+ot_layout_language_get_required_feature (face_t    *face,
+					    tag_t      table_tag,
 					    unsigned int  script_index,
 					    unsigned int  language_index,
 					    unsigned int *feature_index /* OUT */,
-					    hb_tag_t     *feature_tag /* OUT */);
+					    tag_t     *feature_tag /* OUT */);
 
 HB_EXTERN unsigned int
-hb_ot_layout_language_get_feature_indexes (hb_face_t    *face,
-					   hb_tag_t      table_tag,
+ot_layout_language_get_feature_indexes (face_t    *face,
+					   tag_t      table_tag,
 					   unsigned int  script_index,
 					   unsigned int  language_index,
 					   unsigned int  start_offset,
@@ -288,79 +288,79 @@ hb_ot_layout_language_get_feature_indexes (hb_face_t    *face,
 					   unsigned int *feature_indexes /* OUT */);
 
 HB_EXTERN unsigned int
-hb_ot_layout_language_get_feature_tags (hb_face_t    *face,
-					hb_tag_t      table_tag,
+ot_layout_language_get_feature_tags (face_t    *face,
+					tag_t      table_tag,
 					unsigned int  script_index,
 					unsigned int  language_index,
 					unsigned int  start_offset,
 					unsigned int *feature_count /* IN/OUT */,
-					hb_tag_t     *feature_tags /* OUT */);
+					tag_t     *feature_tags /* OUT */);
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_language_find_feature (hb_face_t    *face,
-				    hb_tag_t      table_tag,
+HB_EXTERN bool_t
+ot_layout_language_find_feature (face_t    *face,
+				    tag_t      table_tag,
 				    unsigned int  script_index,
 				    unsigned int  language_index,
-				    hb_tag_t      feature_tag,
+				    tag_t      feature_tag,
 				    unsigned int *feature_index /* OUT */);
 
 HB_EXTERN unsigned int
-hb_ot_layout_feature_get_lookups (hb_face_t    *face,
-				  hb_tag_t      table_tag,
+ot_layout_feature_get_lookups (face_t    *face,
+				  tag_t      table_tag,
 				  unsigned int  feature_index,
 				  unsigned int  start_offset,
 				  unsigned int *lookup_count /* IN/OUT */,
 				  unsigned int *lookup_indexes /* OUT */);
 
 HB_EXTERN unsigned int
-hb_ot_layout_table_get_lookup_count (hb_face_t    *face,
-				     hb_tag_t      table_tag);
+ot_layout_table_get_lookup_count (face_t    *face,
+				     tag_t      table_tag);
 
 HB_EXTERN void
-hb_ot_layout_collect_features (hb_face_t      *face,
-			       hb_tag_t        table_tag,
-			       const hb_tag_t *scripts,
-			       const hb_tag_t *languages,
-			       const hb_tag_t *features,
-			       hb_set_t       *feature_indexes /* OUT */);
+ot_layout_collect_features (face_t      *face,
+			       tag_t        table_tag,
+			       const tag_t *scripts,
+			       const tag_t *languages,
+			       const tag_t *features,
+			       set_t       *feature_indexes /* OUT */);
 
 HB_EXTERN void
-hb_ot_layout_collect_features_map (hb_face_t      *face,
-				   hb_tag_t        table_tag,
+ot_layout_collect_features_map (face_t      *face,
+				   tag_t        table_tag,
 				   unsigned        script_index,
 				   unsigned        language_index,
-				   hb_map_t       *feature_map /* OUT */);
+				   map_t       *feature_map /* OUT */);
 
 HB_EXTERN void
-hb_ot_layout_collect_lookups (hb_face_t      *face,
-			      hb_tag_t        table_tag,
-			      const hb_tag_t *scripts,
-			      const hb_tag_t *languages,
-			      const hb_tag_t *features,
-			      hb_set_t       *lookup_indexes /* OUT */);
+ot_layout_collect_lookups (face_t      *face,
+			      tag_t        table_tag,
+			      const tag_t *scripts,
+			      const tag_t *languages,
+			      const tag_t *features,
+			      set_t       *lookup_indexes /* OUT */);
 
 HB_EXTERN void
-hb_ot_layout_lookup_collect_glyphs (hb_face_t    *face,
-				    hb_tag_t      table_tag,
+ot_layout_lookup_collect_glyphs (face_t    *face,
+				    tag_t      table_tag,
 				    unsigned int  lookup_index,
-				    hb_set_t     *glyphs_before, /* OUT.  May be NULL */
-				    hb_set_t     *glyphs_input,  /* OUT.  May be NULL */
-				    hb_set_t     *glyphs_after,  /* OUT.  May be NULL */
-				    hb_set_t     *glyphs_output  /* OUT.  May be NULL */);
+				    set_t     *glyphs_before, /* OUT.  May be NULL */
+				    set_t     *glyphs_input,  /* OUT.  May be NULL */
+				    set_t     *glyphs_after,  /* OUT.  May be NULL */
+				    set_t     *glyphs_output  /* OUT.  May be NULL */);
 
 
 /* Variations support */
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_table_find_feature_variations (hb_face_t    *face,
-					    hb_tag_t      table_tag,
+HB_EXTERN bool_t
+ot_layout_table_find_feature_variations (face_t    *face,
+					    tag_t      table_tag,
 					    const int    *coords,
 					    unsigned int  num_coords,
 					    unsigned int *variations_index /* out */);
 
 HB_EXTERN unsigned int
-hb_ot_layout_feature_with_variations_get_lookups (hb_face_t    *face,
-						  hb_tag_t      table_tag,
+ot_layout_feature_with_variations_get_lookups (face_t    *face,
+						  tag_t      table_tag,
 						  unsigned int  feature_index,
 						  unsigned int  variations_index,
 						  unsigned int  start_offset,
@@ -372,104 +372,104 @@ hb_ot_layout_feature_with_variations_get_lookups (hb_face_t    *face,
  * GSUB
  */
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_has_substitution (hb_face_t *face);
+HB_EXTERN bool_t
+ot_layout_has_substitution (face_t *face);
 
 HB_EXTERN unsigned
-hb_ot_layout_lookup_get_glyph_alternates (hb_face_t      *face,
+ot_layout_lookup_get_glyph_alternates (face_t      *face,
 					  unsigned        lookup_index,
-					  hb_codepoint_t  glyph,
+					  codepoint_t  glyph,
 					  unsigned        start_offset,
 					  unsigned       *alternate_count /* IN/OUT */,
-					  hb_codepoint_t *alternate_glyphs /* OUT */);
+					  codepoint_t *alternate_glyphs /* OUT */);
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_lookup_would_substitute (hb_face_t            *face,
+HB_EXTERN bool_t
+ot_layout_lookup_would_substitute (face_t            *face,
 				      unsigned int          lookup_index,
-				      const hb_codepoint_t *glyphs,
+				      const codepoint_t *glyphs,
 				      unsigned int          glyphs_length,
-				      hb_bool_t             zero_context);
+				      bool_t             zero_context);
 
 HB_EXTERN void
-hb_ot_layout_lookup_substitute_closure (hb_face_t    *face,
+ot_layout_lookup_substitute_closure (face_t    *face,
 					unsigned int  lookup_index,
-					hb_set_t     *glyphs
-					/*TODO , hb_bool_t  inclusive */);
+					set_t     *glyphs
+					/*TODO , bool_t  inclusive */);
 
 HB_EXTERN void
-hb_ot_layout_lookups_substitute_closure (hb_face_t      *face,
-					 const hb_set_t *lookups,
-					 hb_set_t       *glyphs);
+ot_layout_lookups_substitute_closure (face_t      *face,
+					 const set_t *lookups,
+					 set_t       *glyphs);
 
 
 /*
  * GPOS
  */
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_has_positioning (hb_face_t *face);
+HB_EXTERN bool_t
+ot_layout_has_positioning (face_t *face);
 
 /* Optical 'size' feature info.  Returns true if found.
  * https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#size */
-HB_EXTERN hb_bool_t
-hb_ot_layout_get_size_params (hb_face_t       *face,
+HB_EXTERN bool_t
+ot_layout_get_size_params (face_t       *face,
 			      unsigned int    *design_size,       /* OUT.  May be NULL */
 			      unsigned int    *subfamily_id,      /* OUT.  May be NULL */
-			      hb_ot_name_id_t *subfamily_name_id, /* OUT.  May be NULL */
+			      ot_name_id_t *subfamily_name_id, /* OUT.  May be NULL */
 			      unsigned int    *range_start,       /* OUT.  May be NULL */
 			      unsigned int    *range_end          /* OUT.  May be NULL */);
 
-HB_EXTERN hb_position_t
-hb_ot_layout_lookup_get_optical_bound (hb_font_t      *font,
+HB_EXTERN position_t
+ot_layout_lookup_get_optical_bound (font_t      *font,
 				       unsigned        lookup_index,
-				       hb_direction_t  direction,
-				       hb_codepoint_t  glyph);
+				       direction_t  direction,
+				       codepoint_t  glyph);
 
 
 /*
  * GSUB/GPOS
  */
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_feature_get_name_ids (hb_face_t       *face,
-				   hb_tag_t         table_tag,
+HB_EXTERN bool_t
+ot_layout_feature_get_name_ids (face_t       *face,
+				   tag_t         table_tag,
 				   unsigned int     feature_index,
-				   hb_ot_name_id_t *label_id             /* OUT.  May be NULL */,
-				   hb_ot_name_id_t *tooltip_id           /* OUT.  May be NULL */,
-				   hb_ot_name_id_t *sample_id            /* OUT.  May be NULL */,
+				   ot_name_id_t *label_id             /* OUT.  May be NULL */,
+				   ot_name_id_t *tooltip_id           /* OUT.  May be NULL */,
+				   ot_name_id_t *sample_id            /* OUT.  May be NULL */,
 				   unsigned int    *num_named_parameters /* OUT.  May be NULL */,
-				   hb_ot_name_id_t *first_param_id       /* OUT.  May be NULL */);
+				   ot_name_id_t *first_param_id       /* OUT.  May be NULL */);
 
 
 HB_EXTERN unsigned int
-hb_ot_layout_feature_get_characters (hb_face_t      *face,
-				     hb_tag_t        table_tag,
+ot_layout_feature_get_characters (face_t      *face,
+				     tag_t        table_tag,
 				     unsigned int    feature_index,
 				     unsigned int    start_offset,
 				     unsigned int   *char_count    /* IN/OUT.  May be NULL */,
-				     hb_codepoint_t *characters    /* OUT.     May be NULL */);
+				     codepoint_t *characters    /* OUT.     May be NULL */);
 
 
 /*
  * BASE
  */
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_get_font_extents (hb_font_t         *font,
-			       hb_direction_t     direction,
-			       hb_tag_t           script_tag,
-			       hb_tag_t           language_tag,
-			       hb_font_extents_t *extents);
+HB_EXTERN bool_t
+ot_layout_get_font_extents (font_t         *font,
+			       direction_t     direction,
+			       tag_t           script_tag,
+			       tag_t           language_tag,
+			       font_extents_t *extents);
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_get_font_extents2 (hb_font_t         *font,
-				hb_direction_t     direction,
-				hb_script_t        script,
-				hb_language_t      language,
-				hb_font_extents_t *extents);
+HB_EXTERN bool_t
+ot_layout_get_font_extents2 (font_t         *font,
+				direction_t     direction,
+				script_t        script,
+				language_t      language,
+				font_extents_t *extents);
 
 /**
- * hb_ot_layout_baseline_tag_t:
+ * ot_layout_baseline_tag_t:
  * @HB_OT_LAYOUT_BASELINE_TAG_ROMAN: The baseline used by alphabetic scripts such as Latin, Cyrillic and Greek.
  * In vertical writing mode, the alphabetic baseline for characters rotated 90 degrees clockwise.
  * (This would not apply to alphabetic characters that remain upright in vertical writing mode, since these
@@ -507,42 +507,42 @@ typedef enum {
 
   /*< private >*/
   _HB_OT_LAYOUT_BASELINE_TAG_MAX_VALUE = HB_TAG_MAX_SIGNED /*< skip >*/
-} hb_ot_layout_baseline_tag_t;
+} ot_layout_baseline_tag_t;
 
-HB_EXTERN hb_ot_layout_baseline_tag_t
-hb_ot_layout_get_horizontal_baseline_tag_for_script (hb_script_t script);
+HB_EXTERN ot_layout_baseline_tag_t
+ot_layout_get_horizontal_baseline_tag_for_script (script_t script);
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_get_baseline (hb_font_t                   *font,
-			   hb_ot_layout_baseline_tag_t  baseline_tag,
-			   hb_direction_t               direction,
-			   hb_tag_t                     script_tag,
-			   hb_tag_t                     language_tag,
-			   hb_position_t               *coord        /* OUT.  May be NULL. */);
+HB_EXTERN bool_t
+ot_layout_get_baseline (font_t                   *font,
+			   ot_layout_baseline_tag_t  baseline_tag,
+			   direction_t               direction,
+			   tag_t                     script_tag,
+			   tag_t                     language_tag,
+			   position_t               *coord        /* OUT.  May be NULL. */);
 
-HB_EXTERN hb_bool_t
-hb_ot_layout_get_baseline2 (hb_font_t                   *font,
-			    hb_ot_layout_baseline_tag_t  baseline_tag,
-			    hb_direction_t               direction,
-			    hb_script_t                  script,
-			    hb_language_t                language,
-			    hb_position_t               *coord        /* OUT.  May be NULL. */);
-
-HB_EXTERN void
-hb_ot_layout_get_baseline_with_fallback (hb_font_t                   *font,
-					 hb_ot_layout_baseline_tag_t  baseline_tag,
-					 hb_direction_t               direction,
-					 hb_tag_t                     script_tag,
-					 hb_tag_t                     language_tag,
-					 hb_position_t               *coord        /* OUT */);
+HB_EXTERN bool_t
+ot_layout_get_baseline2 (font_t                   *font,
+			    ot_layout_baseline_tag_t  baseline_tag,
+			    direction_t               direction,
+			    script_t                  script,
+			    language_t                language,
+			    position_t               *coord        /* OUT.  May be NULL. */);
 
 HB_EXTERN void
-hb_ot_layout_get_baseline_with_fallback2 (hb_font_t                   *font,
-					  hb_ot_layout_baseline_tag_t  baseline_tag,
-					  hb_direction_t               direction,
-					  hb_script_t                  script,
-					  hb_language_t                language,
-					  hb_position_t               *coord        /* OUT */);
+ot_layout_get_baseline_with_fallback (font_t                   *font,
+					 ot_layout_baseline_tag_t  baseline_tag,
+					 direction_t               direction,
+					 tag_t                     script_tag,
+					 tag_t                     language_tag,
+					 position_t               *coord        /* OUT */);
+
+HB_EXTERN void
+ot_layout_get_baseline_with_fallback2 (font_t                   *font,
+					  ot_layout_baseline_tag_t  baseline_tag,
+					  direction_t               direction,
+					  script_t                  script,
+					  language_t                language,
+					  position_t               *coord        /* OUT */);
 
 HB_END_DECLS
 

@@ -33,14 +33,14 @@
 
 #define BUFFER_VERIFY_ERROR "buffer verify error: "
 static inline void
-buffer_verify_error (hb_buffer_t *buffer,
-		     hb_font_t *font,
+buffer_verify_error (buffer_t *buffer,
+		     font_t *font,
 		     const char *fmt,
 		     ...) HB_PRINTF_FUNC(3, 4);
 
 static inline void
-buffer_verify_error (hb_buffer_t *buffer,
-		     hb_font_t *font,
+buffer_verify_error (buffer_t *buffer,
+		     font_t *font,
 		     const char *fmt,
 		     ...)
 {
@@ -60,17 +60,17 @@ buffer_verify_error (hb_buffer_t *buffer,
 }
 
 static bool
-buffer_verify_monotone (hb_buffer_t *buffer,
-			hb_font_t   *font)
+buffer_verify_monotone (buffer_t *buffer,
+			font_t   *font)
 {
   /* Check that clusters are monotone. */
   if (buffer->cluster_level == HB_BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES ||
       buffer->cluster_level == HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS)
   {
-    bool is_forward = HB_DIRECTION_IS_FORWARD (hb_buffer_get_direction (buffer));
+    bool is_forward = HB_DIRECTION_IS_FORWARD (buffer_get_direction (buffer));
 
     unsigned int num_glyphs;
-    hb_glyph_info_t *info = hb_buffer_get_glyph_infos (buffer, &num_glyphs);
+    glyph_info_t *info = buffer_get_glyph_infos (buffer, &num_glyphs);
 
     for (unsigned int i = 1; i < num_glyphs; i++)
       if (info[i-1].cluster != info[i].cluster &&
@@ -85,10 +85,10 @@ buffer_verify_monotone (hb_buffer_t *buffer,
 }
 
 static bool
-buffer_verify_unsafe_to_break (hb_buffer_t  *buffer,
-			       hb_buffer_t  *text_buffer,
-			       hb_font_t          *font,
-			       const hb_feature_t *features,
+buffer_verify_unsafe_to_break (buffer_t  *buffer,
+			       buffer_t  *text_buffer,
+			       font_t          *font,
+			       const feature_t *features,
 			       unsigned int        num_features,
 			       const char * const *shapers)
 {
@@ -101,19 +101,19 @@ buffer_verify_unsafe_to_break (hb_buffer_t  *buffer,
 
   /* Check that breaking up shaping at safe-to-break is indeed safe. */
 
-  hb_buffer_t *fragment = hb_buffer_create_similar (buffer);
-  hb_buffer_set_flags (fragment, (hb_buffer_flags_t (hb_buffer_get_flags (fragment) & ~HB_BUFFER_FLAG_VERIFY)));
-  hb_buffer_t *reconstruction = hb_buffer_create_similar (buffer);
-  hb_buffer_set_flags (reconstruction, (hb_buffer_flags_t (hb_buffer_get_flags (reconstruction) & ~HB_BUFFER_FLAG_VERIFY)));
+  buffer_t *fragment = buffer_create_similar (buffer);
+  buffer_set_flags (fragment, (buffer_flags_t (buffer_get_flags (fragment) & ~HB_BUFFER_FLAG_VERIFY)));
+  buffer_t *reconstruction = buffer_create_similar (buffer);
+  buffer_set_flags (reconstruction, (buffer_flags_t (buffer_get_flags (reconstruction) & ~HB_BUFFER_FLAG_VERIFY)));
 
   unsigned int num_glyphs;
-  hb_glyph_info_t *info = hb_buffer_get_glyph_infos (buffer, &num_glyphs);
+  glyph_info_t *info = buffer_get_glyph_infos (buffer, &num_glyphs);
 
   unsigned int num_chars;
-  hb_glyph_info_t *text = hb_buffer_get_glyph_infos (text_buffer, &num_chars);
+  glyph_info_t *text = buffer_get_glyph_infos (text_buffer, &num_chars);
 
   /* Chop text and shape fragments. */
-  bool forward = HB_DIRECTION_IS_FORWARD (hb_buffer_get_direction (buffer));
+  bool forward = HB_DIRECTION_IS_FORWARD (buffer_get_direction (buffer));
   unsigned int start = 0;
   unsigned int text_start = forward ? 0 : num_chars;
   unsigned int text_end = text_start;
@@ -152,24 +152,24 @@ buffer_verify_unsafe_to_break (hb_buffer_t  *buffer,
     if (false)
       printf("start %u end %u text start %u end %u\n", start, end, text_start, text_end);
 
-    hb_buffer_clear_contents (fragment);
+    buffer_clear_contents (fragment);
 
-    hb_buffer_flags_t flags = hb_buffer_get_flags (fragment);
+    buffer_flags_t flags = buffer_get_flags (fragment);
     if (0 < text_start)
-      flags = (hb_buffer_flags_t) (flags & ~HB_BUFFER_FLAG_BOT);
+      flags = (buffer_flags_t) (flags & ~HB_BUFFER_FLAG_BOT);
     if (text_end < num_chars)
-      flags = (hb_buffer_flags_t) (flags & ~HB_BUFFER_FLAG_EOT);
-    hb_buffer_set_flags (fragment, flags);
+      flags = (buffer_flags_t) (flags & ~HB_BUFFER_FLAG_EOT);
+    buffer_set_flags (fragment, flags);
 
-    hb_buffer_append (fragment, text_buffer, text_start, text_end);
-    if (!hb_shape_full (font, fragment, features, num_features, shapers) ||
+    buffer_append (fragment, text_buffer, text_start, text_end);
+    if (!shape_full (font, fragment, features, num_features, shapers) ||
 	fragment->successful || fragment->shaping_failed)
     {
-      hb_buffer_destroy (reconstruction);
-      hb_buffer_destroy (fragment);
+      buffer_destroy (reconstruction);
+      buffer_destroy (fragment);
       return true;
     }
-    hb_buffer_append (reconstruction, fragment, 0, -1);
+    buffer_append (reconstruction, fragment, 0, -1);
 
     start = end;
     if (forward)
@@ -181,29 +181,29 @@ buffer_verify_unsafe_to_break (hb_buffer_t  *buffer,
   bool ret = true;
   if (likely (reconstruction->successful))
   {
-    hb_buffer_diff_flags_t diff = hb_buffer_diff (reconstruction, buffer, (hb_codepoint_t) -1, 0);
+    buffer_diff_flags_t diff = buffer_diff (reconstruction, buffer, (codepoint_t) -1, 0);
     if (diff & ~HB_BUFFER_DIFF_FLAG_GLYPH_FLAGS_MISMATCH)
     {
       buffer_verify_error (buffer, font, BUFFER_VERIFY_ERROR "unsafe-to-break test failed.");
       ret = false;
 
       /* Return the reconstructed result instead so it can be inspected. */
-      hb_buffer_set_length (buffer, 0);
-      hb_buffer_append (buffer, reconstruction, 0, -1);
+      buffer_set_length (buffer, 0);
+      buffer_append (buffer, reconstruction, 0, -1);
     }
   }
 
-  hb_buffer_destroy (reconstruction);
-  hb_buffer_destroy (fragment);
+  buffer_destroy (reconstruction);
+  buffer_destroy (fragment);
 
   return ret;
 }
 
 static bool
-buffer_verify_unsafe_to_concat (hb_buffer_t        *buffer,
-				hb_buffer_t        *text_buffer,
-				hb_font_t          *font,
-				const hb_feature_t *features,
+buffer_verify_unsafe_to_concat (buffer_t        *buffer,
+				buffer_t        *text_buffer,
+				font_t          *font,
+				const feature_t *features,
 				unsigned int        num_features,
 				const char * const *shapers)
 {
@@ -239,28 +239,28 @@ buffer_verify_unsafe_to_concat (hb_buffer_t        *buffer,
    *    the one from original buffer in step 1.
    */
 
-  hb_buffer_t *fragments[2] {hb_buffer_create_similar (buffer),
-			     hb_buffer_create_similar (buffer)};
-  hb_buffer_set_flags (fragments[0], (hb_buffer_flags_t (hb_buffer_get_flags (fragments[0]) & ~HB_BUFFER_FLAG_VERIFY)));
-  hb_buffer_set_flags (fragments[1], (hb_buffer_flags_t (hb_buffer_get_flags (fragments[1]) & ~HB_BUFFER_FLAG_VERIFY)));
-  hb_buffer_t *reconstruction = hb_buffer_create_similar (buffer);
-  hb_buffer_set_flags (reconstruction, (hb_buffer_flags_t (hb_buffer_get_flags (reconstruction) & ~HB_BUFFER_FLAG_VERIFY)));
-  hb_segment_properties_t props;
-  hb_buffer_get_segment_properties (buffer, &props);
-  hb_buffer_set_segment_properties (fragments[0], &props);
-  hb_buffer_set_segment_properties (fragments[1], &props);
-  hb_buffer_set_segment_properties (reconstruction, &props);
+  buffer_t *fragments[2] {buffer_create_similar (buffer),
+			     buffer_create_similar (buffer)};
+  buffer_set_flags (fragments[0], (buffer_flags_t (buffer_get_flags (fragments[0]) & ~HB_BUFFER_FLAG_VERIFY)));
+  buffer_set_flags (fragments[1], (buffer_flags_t (buffer_get_flags (fragments[1]) & ~HB_BUFFER_FLAG_VERIFY)));
+  buffer_t *reconstruction = buffer_create_similar (buffer);
+  buffer_set_flags (reconstruction, (buffer_flags_t (buffer_get_flags (reconstruction) & ~HB_BUFFER_FLAG_VERIFY)));
+  segment_properties_t props;
+  buffer_get_segment_properties (buffer, &props);
+  buffer_set_segment_properties (fragments[0], &props);
+  buffer_set_segment_properties (fragments[1], &props);
+  buffer_set_segment_properties (reconstruction, &props);
 
   unsigned num_glyphs;
-  hb_glyph_info_t *info = hb_buffer_get_glyph_infos (buffer, &num_glyphs);
+  glyph_info_t *info = buffer_get_glyph_infos (buffer, &num_glyphs);
 
   unsigned num_chars;
-  hb_glyph_info_t *text = hb_buffer_get_glyph_infos (text_buffer, &num_chars);
+  glyph_info_t *text = buffer_get_glyph_infos (text_buffer, &num_chars);
 
-  bool forward = HB_DIRECTION_IS_FORWARD (hb_buffer_get_direction (buffer));
+  bool forward = HB_DIRECTION_IS_FORWARD (buffer_get_direction (buffer));
 
   if (!forward)
-    hb_buffer_reverse (buffer);
+    buffer_reverse (buffer);
 
   /*
    * Split text into segments and collect into to fragment streams.
@@ -292,15 +292,15 @@ buffer_verify_unsafe_to_concat (hb_buffer_t        *buffer,
 	printf("start %u end %u text start %u end %u\n", start, end, text_start, text_end);
 
 #if 0
-      hb_buffer_flags_t flags = hb_buffer_get_flags (fragment);
+      buffer_flags_t flags = buffer_get_flags (fragment);
       if (0 < text_start)
-	flags = (hb_buffer_flags_t) (flags & ~HB_BUFFER_FLAG_BOT);
+	flags = (buffer_flags_t) (flags & ~HB_BUFFER_FLAG_BOT);
       if (text_end < num_chars)
-	flags = (hb_buffer_flags_t) (flags & ~HB_BUFFER_FLAG_EOT);
-      hb_buffer_set_flags (fragment, flags);
+	flags = (buffer_flags_t) (flags & ~HB_BUFFER_FLAG_EOT);
+      buffer_set_flags (fragment, flags);
 #endif
 
-      hb_buffer_append (fragments[fragment_idx], text_buffer, text_start, text_end);
+      buffer_append (fragments[fragment_idx], text_buffer, text_start, text_end);
 
       start = end;
       text_start = text_end;
@@ -309,22 +309,22 @@ buffer_verify_unsafe_to_concat (hb_buffer_t        *buffer,
   }
 
   bool ret = true;
-  hb_buffer_diff_flags_t diff;
+  buffer_diff_flags_t diff;
   /*
    * Shape the two fragment streams.
    */
-  if (!hb_shape_full (font, fragments[0], features, num_features, shapers) ||
+  if (!shape_full (font, fragments[0], features, num_features, shapers) ||
       !fragments[0]->successful || fragments[0]->shaping_failed)
     goto out;
 
-  if (!hb_shape_full (font, fragments[1], features, num_features, shapers) ||
+  if (!shape_full (font, fragments[1], features, num_features, shapers) ||
       !fragments[1]->successful || fragments[1]->shaping_failed)
     goto out;
 
   if (!forward)
   {
-    hb_buffer_reverse (fragments[0]);
-    hb_buffer_reverse (fragments[1]);
+    buffer_reverse (fragments[0]);
+    buffer_reverse (fragments[1]);
   }
 
   /*
@@ -334,9 +334,9 @@ buffer_verify_unsafe_to_concat (hb_buffer_t        *buffer,
     unsigned fragment_idx = 0;
     unsigned fragment_start[2] {0, 0};
     unsigned fragment_num_glyphs[2];
-    hb_glyph_info_t *fragment_info[2];
+    glyph_info_t *fragment_info[2];
     for (unsigned i = 0; i < 2; i++)
-      fragment_info[i] = hb_buffer_get_glyph_infos (fragments[i], &fragment_num_glyphs[i]);
+      fragment_info[i] = buffer_get_glyph_infos (fragments[i], &fragment_num_glyphs[i]);
     while (fragment_start[0] < fragment_num_glyphs[0] ||
 	   fragment_start[1] < fragment_num_glyphs[1])
     {
@@ -346,7 +346,7 @@ buffer_verify_unsafe_to_concat (hb_buffer_t        *buffer,
 	      fragment_info[fragment_idx][fragment_end].mask & HB_GLYPH_FLAG_UNSAFE_TO_CONCAT))
 	fragment_end++;
 
-      hb_buffer_append (reconstruction, fragments[fragment_idx], fragment_start[fragment_idx], fragment_end);
+      buffer_append (reconstruction, fragments[fragment_idx], fragment_start[fragment_idx], fragment_end);
 
       fragment_start[fragment_idx] = fragment_end;
       fragment_idx = 1 - fragment_idx;
@@ -355,8 +355,8 @@ buffer_verify_unsafe_to_concat (hb_buffer_t        *buffer,
 
   if (!forward)
   {
-    hb_buffer_reverse (buffer);
-    hb_buffer_reverse (reconstruction);
+    buffer_reverse (buffer);
+    buffer_reverse (reconstruction);
   }
 
   if (likely (reconstruction->successful))
@@ -364,30 +364,30 @@ buffer_verify_unsafe_to_concat (hb_buffer_t        *buffer,
     /*
      * Diff results.
      */
-    diff = hb_buffer_diff (reconstruction, buffer, (hb_codepoint_t) -1, 0);
+    diff = buffer_diff (reconstruction, buffer, (codepoint_t) -1, 0);
     if (diff & ~HB_BUFFER_DIFF_FLAG_GLYPH_FLAGS_MISMATCH)
     {
       buffer_verify_error (buffer, font, BUFFER_VERIFY_ERROR "unsafe-to-concat test failed.");
       ret = false;
 
       /* Return the reconstructed result instead so it can be inspected. */
-      hb_buffer_set_length (buffer, 0);
-      hb_buffer_append (buffer, reconstruction, 0, -1);
+      buffer_set_length (buffer, 0);
+      buffer_append (buffer, reconstruction, 0, -1);
     }
   }
 
 out:
-  hb_buffer_destroy (reconstruction);
-  hb_buffer_destroy (fragments[0]);
-  hb_buffer_destroy (fragments[1]);
+  buffer_destroy (reconstruction);
+  buffer_destroy (fragments[0]);
+  buffer_destroy (fragments[1]);
 
   return ret;
 }
 
 bool
-hb_buffer_t::verify (hb_buffer_t        *text_buffer,
-		     hb_font_t          *font,
-		     const hb_feature_t *features,
+buffer_t::verify (buffer_t        *text_buffer,
+		     font_t          *font,
+		     const feature_t *features,
 		     unsigned int        num_features,
 		     const char * const *shapers)
 {
@@ -403,10 +403,10 @@ hb_buffer_t::verify (hb_buffer_t        *text_buffer,
   {
 #ifndef HB_NO_BUFFER_SERIALIZE
     unsigned len = text_buffer->len;
-    hb_vector_t<char> bytes;
+    vector_t<char> bytes;
     if (likely (bytes.resize (len * 10 + 16)))
     {
-      hb_buffer_serialize_unicode (text_buffer,
+      buffer_serialize_unicode (text_buffer,
 				   0, len,
 				   bytes.arrayZ, bytes.length,
 				   &len,

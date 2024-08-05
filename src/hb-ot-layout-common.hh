@@ -48,39 +48,39 @@ using OT::Layout::MediumTypes;
 namespace OT {
 
 template<typename Iterator>
-static inline bool ClassDef_serialize (hb_serialize_context_t *c,
+static inline bool ClassDef_serialize (serialize_context_t *c,
 				       Iterator it);
 
 static bool ClassDef_remap_and_serialize (
-    hb_serialize_context_t *c,
-    const hb_set_t &klasses,
+    serialize_context_t *c,
+    const set_t &klasses,
     bool use_class_zero,
-    hb_sorted_vector_t<hb_codepoint_pair_t> &glyph_and_klass, /* IN/OUT */
-    hb_map_t *klass_map /*IN/OUT*/);
+    sorted_vector_t<codepoint_pair_t> &glyph_and_klass, /* IN/OUT */
+    map_t *klass_map /*IN/OUT*/);
 
-struct hb_collect_feature_substitutes_with_var_context_t
+struct collect_feature_substitutes_with_var_context_t
 {
-  const hb_map_t *axes_index_tag_map;
-  const hb_hashmap_t<hb_tag_t, Triple> *axes_location;
-  hb_hashmap_t<unsigned, hb::shared_ptr<hb_set_t>> *record_cond_idx_map;
-  hb_hashmap_t<unsigned, const Feature*> *feature_substitutes_map;
-  hb_set_t& catch_all_record_feature_idxes;
+  const map_t *axes_index_tag_map;
+  const hashmap_t<tag_t, Triple> *axes_location;
+  hashmap_t<unsigned, hb::shared_ptr<set_t>> *record_cond_idx_map;
+  hashmap_t<unsigned, const Feature*> *feature_substitutes_map;
+  set_t& catch_all_record_feature_idxes;
 
   // not stored in subset_plan
-  hb_set_t *feature_indices;
+  set_t *feature_indices;
   bool apply;
   bool variation_applied;
   bool universal;
   unsigned cur_record_idx;
-  hb_hashmap_t<hb::shared_ptr<hb_map_t>, unsigned> *conditionset_map;
+  hashmap_t<hb::shared_ptr<map_t>, unsigned> *conditionset_map;
 };
 
-struct hb_prune_langsys_context_t
+struct prune_langsys_context_t
 {
-  hb_prune_langsys_context_t (const void         *table_,
-                              hb_hashmap_t<unsigned, hb::unique_ptr<hb_set_t>> *script_langsys_map_,
-                              const hb_map_t     *duplicate_feature_map_,
-                              hb_set_t           *new_collected_feature_indexes_)
+  prune_langsys_context_t (const void         *table_,
+                              hashmap_t<unsigned, hb::unique_ptr<set_t>> *script_langsys_map_,
+                              const map_t     *duplicate_feature_map_,
+                              set_t           *new_collected_feature_indexes_)
       :table (table_),
       script_langsys_map (script_langsys_map_),
       duplicate_feature_map (duplicate_feature_map_),
@@ -98,20 +98,20 @@ struct hb_prune_langsys_context_t
 
   public:
   const void *table;
-  hb_hashmap_t<unsigned, hb::unique_ptr<hb_set_t>> *script_langsys_map;
-  const hb_map_t     *duplicate_feature_map;
-  hb_set_t           *new_feature_indexes;
+  hashmap_t<unsigned, hb::unique_ptr<set_t>> *script_langsys_map;
+  const map_t     *duplicate_feature_map;
+  set_t           *new_feature_indexes;
 
   private:
   unsigned script_count;
   unsigned langsys_feature_count;
 };
 
-struct hb_subset_layout_context_t :
-  hb_dispatch_context_t<hb_subset_layout_context_t, hb_empty_t, HB_DEBUG_SUBSET>
+struct subset_layout_context_t :
+  dispatch_context_t<subset_layout_context_t, empty_t, HB_DEBUG_SUBSET>
 {
   const char *get_name () { return "SUBSET_LAYOUT"; }
-  static return_t default_return_value () { return hb_empty_t (); }
+  static return_t default_return_value () { return empty_t (); }
 
   bool visitScript ()
   {
@@ -135,21 +135,21 @@ struct hb_subset_layout_context_t :
     return lookup_index_count < HB_MAX_LOOKUP_VISIT_COUNT;
   }
 
-  hb_subset_context_t *subset_context;
-  const hb_tag_t table_tag;
-  const hb_map_t *lookup_index_map;
-  const hb_hashmap_t<unsigned, hb::unique_ptr<hb_set_t>> *script_langsys_map;
-  const hb_map_t *feature_index_map;
-  const hb_hashmap_t<unsigned, const Feature*> *feature_substitutes_map;
-  hb_hashmap_t<unsigned, hb::shared_ptr<hb_set_t>> *feature_record_cond_idx_map;
-  const hb_set_t *catch_all_record_feature_idxes;
-  const hb_hashmap_t<unsigned, hb_pair_t<const void*, const void*>> *feature_idx_tag_map;
+  subset_context_t *subset_context;
+  const tag_t table_tag;
+  const map_t *lookup_index_map;
+  const hashmap_t<unsigned, hb::unique_ptr<set_t>> *script_langsys_map;
+  const map_t *feature_index_map;
+  const hashmap_t<unsigned, const Feature*> *feature_substitutes_map;
+  hashmap_t<unsigned, hb::shared_ptr<set_t>> *feature_record_cond_idx_map;
+  const set_t *catch_all_record_feature_idxes;
+  const hashmap_t<unsigned, pair_t<const void*, const void*>> *feature_idx_tag_map;
 
   unsigned cur_script_index;
   unsigned cur_feature_var_record_idx;
 
-  hb_subset_layout_context_t (hb_subset_context_t *c_,
-			      hb_tag_t tag_) :
+  subset_layout_context_t (subset_context_t *c_,
+			      tag_t tag_) :
 				subset_context (c_),
 				table_tag (tag_),
 				cur_script_index (0xFFFFu),
@@ -189,20 +189,20 @@ struct hb_subset_layout_context_t :
 };
 
 struct ItemVariationStore;
-struct hb_collect_variation_indices_context_t :
-       hb_dispatch_context_t<hb_collect_variation_indices_context_t>
+struct collect_variation_indices_context_t :
+       dispatch_context_t<collect_variation_indices_context_t>
 {
   template <typename T>
-  return_t dispatch (const T &obj) { obj.collect_variation_indices (this); return hb_empty_t (); }
-  static return_t default_return_value () { return hb_empty_t (); }
+  return_t dispatch (const T &obj) { obj.collect_variation_indices (this); return empty_t (); }
+  static return_t default_return_value () { return empty_t (); }
 
-  hb_set_t *layout_variation_indices;
-  const hb_set_t *glyph_set;
-  const hb_map_t *gpos_lookups;
+  set_t *layout_variation_indices;
+  const set_t *glyph_set;
+  const map_t *gpos_lookups;
 
-  hb_collect_variation_indices_context_t (hb_set_t *layout_variation_indices_,
-					  const hb_set_t *glyph_set_,
-					  const hb_map_t *gpos_lookups_) :
+  collect_variation_indices_context_t (set_t *layout_variation_indices_,
+					  const set_t *glyph_set_,
+					  const map_t *gpos_lookups_) :
 					layout_variation_indices (layout_variation_indices_),
 					glyph_set (glyph_set_),
 					gpos_lookups (gpos_lookups_) {}
@@ -211,7 +211,7 @@ struct hb_collect_variation_indices_context_t :
 template<typename OutputArray>
 struct subset_offset_array_t
 {
-  subset_offset_array_t (hb_subset_context_t *subset_context_,
+  subset_offset_array_t (subset_context_t *subset_context_,
 			 OutputArray& out_,
 			 const void *base_) : subset_context (subset_context_),
 					      out (out_), base (base_) {}
@@ -232,7 +232,7 @@ struct subset_offset_array_t
   }
 
   private:
-  hb_subset_context_t *subset_context;
+  subset_context_t *subset_context;
   OutputArray &out;
   const void *base;
 };
@@ -241,7 +241,7 @@ struct subset_offset_array_t
 template<typename OutputArray, typename Arg>
 struct subset_offset_array_arg_t
 {
-  subset_offset_array_arg_t (hb_subset_context_t *subset_context_,
+  subset_offset_array_arg_t (subset_context_t *subset_context_,
 			     OutputArray& out_,
 			     const void *base_,
 			     Arg &&arg_) : subset_context (subset_context_), out (out_),
@@ -263,7 +263,7 @@ struct subset_offset_array_arg_t
   }
 
   private:
-  hb_subset_context_t *subset_context;
+  subset_context_t *subset_context;
   OutputArray &out;
   const void *base;
   Arg &&arg;
@@ -278,14 +278,14 @@ struct
 {
   template<typename OutputArray>
   subset_offset_array_t<OutputArray>
-  operator () (hb_subset_context_t *subset_context, OutputArray& out,
+  operator () (subset_context_t *subset_context, OutputArray& out,
 	       const void *base) const
   { return subset_offset_array_t<OutputArray> (subset_context, out, base); }
 
   /* Variant with one extra argument passed to serialize_subset */
   template<typename OutputArray, typename Arg>
   subset_offset_array_arg_t<OutputArray, Arg>
-  operator () (hb_subset_context_t *subset_context, OutputArray& out,
+  operator () (subset_context_t *subset_context, OutputArray& out,
 	       const void *base, Arg &&arg) const
   { return subset_offset_array_arg_t<OutputArray, Arg> (subset_context, out, base, arg); }
 }
@@ -294,7 +294,7 @@ HB_FUNCOBJ (subset_offset_array);
 template<typename OutputArray>
 struct subset_record_array_t
 {
-  subset_record_array_t (hb_subset_layout_context_t *c_, OutputArray* out_,
+  subset_record_array_t (subset_layout_context_t *c_, OutputArray* out_,
 			 const void *base_) : subset_layout_context (c_),
 					      out (out_), base (base_) {}
 
@@ -309,7 +309,7 @@ struct subset_record_array_t
   }
 
   private:
-  hb_subset_layout_context_t *subset_layout_context;
+  subset_layout_context_t *subset_layout_context;
   OutputArray *out;
   const void *base;
 };
@@ -317,7 +317,7 @@ struct subset_record_array_t
 template<typename OutputArray, typename Arg>
 struct subset_record_array_arg_t
 {
-  subset_record_array_arg_t (hb_subset_layout_context_t *c_, OutputArray* out_,
+  subset_record_array_arg_t (subset_layout_context_t *c_, OutputArray* out_,
 			     const void *base_,
 			     Arg &&arg_) : subset_layout_context (c_),
 					   out (out_), base (base_), arg (arg_) {}
@@ -333,7 +333,7 @@ struct subset_record_array_arg_t
   }
 
   private:
-  hb_subset_layout_context_t *subset_layout_context;
+  subset_layout_context_t *subset_layout_context;
   OutputArray *out;
   const void *base;
   Arg &&arg;
@@ -347,14 +347,14 @@ struct
 {
   template<typename OutputArray>
   subset_record_array_t<OutputArray>
-  operator () (hb_subset_layout_context_t *c, OutputArray* out,
+  operator () (subset_layout_context_t *c, OutputArray* out,
 	       const void *base) const
   { return subset_record_array_t<OutputArray> (c, out, base); }
 
   /* Variant with one extra argument passed to subset */
   template<typename OutputArray, typename Arg>
   subset_record_array_arg_t<OutputArray, Arg>
-  operator () (hb_subset_layout_context_t *c, OutputArray* out,
+  operator () (subset_layout_context_t *c, OutputArray* out,
                const void *base, Arg &&arg) const
   { return subset_record_array_arg_t<OutputArray, Arg> (c, out, base, arg); }
 }
@@ -364,7 +364,7 @@ HB_FUNCOBJ (subset_record_array);
 template<typename OutputArray>
 struct serialize_math_record_array_t
 {
-  serialize_math_record_array_t (hb_serialize_context_t *serialize_context_,
+  serialize_math_record_array_t (serialize_context_t *serialize_context_,
                          OutputArray& out_,
                          const void *base_) : serialize_context (serialize_context_),
                                               out (out_), base (base_) {}
@@ -378,7 +378,7 @@ struct serialize_math_record_array_t
   }
 
   private:
-  hb_serialize_context_t *serialize_context;
+  serialize_context_t *serialize_context;
   OutputArray &out;
   const void *base;
 };
@@ -390,7 +390,7 @@ struct
 {
   template<typename OutputArray>
   serialize_math_record_array_t<OutputArray>
-  operator () (hb_serialize_context_t *serialize_context, OutputArray& out,
+  operator () (serialize_context_t *serialize_context, OutputArray& out,
                const void *base) const
   { return serialize_math_record_array_t<OutputArray> (serialize_context, out, base); }
 
@@ -410,13 +410,13 @@ HB_FUNCOBJ (serialize_math_record_array);
 
 struct IndexArray : Array16Of<Index>
 {
-  bool intersects (const hb_map_t *indexes) const
-  { return hb_any (*this, indexes); }
+  bool intersects (const map_t *indexes) const
+  { return any (*this, indexes); }
 
   template <typename Iterator,
-	    hb_requires (hb_is_iterator (Iterator))>
-  void serialize (hb_serialize_context_t *c,
-		  hb_subset_layout_context_t *l,
+	    requires (is_iterator (Iterator))>
+  void serialize (serialize_context_t *c,
+		  subset_layout_context_t *l,
 		  Iterator it)
   {
     if (!it) return;
@@ -440,13 +440,13 @@ struct IndexArray : Array16Of<Index>
     if (_count)
     {
       + this->as_array ().sub_array (start_offset, _count)
-      | hb_sink (hb_array (_indexes, *_count))
+      | sink (array (_indexes, *_count))
       ;
     }
     return this->len;
   }
 
-  void add_indexes_to (hb_set_t* output /* OUT */) const
+  void add_indexes_to (set_t* output /* OUT */) const
   {
     output->add_array (as_array ());
   }
@@ -456,11 +456,11 @@ struct IndexArray : Array16Of<Index>
 /* https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#size */
 struct FeatureParamsSize
 {
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     if (unlikely (!c->check_struct (this))) return_trace (false);
-    hb_barrier ();
+    barrier ();
 
     /* This subtable has some "history", if you will.  Some earlier versions of
      * Adobe tools calculated the offset of the FeatureParams subtable from the
@@ -527,10 +527,10 @@ struct FeatureParamsSize
       return_trace (true);
   }
 
-  void collect_name_ids (hb_set_t *nameids_to_retain /* OUT */) const
+  void collect_name_ids (set_t *nameids_to_retain /* OUT */) const
   { nameids_to_retain->add (subfamilyNameID); }
 
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
     return_trace ((bool) c->serializer->embed (*this));
@@ -578,7 +578,7 @@ struct FeatureParamsSize
 /* https://docs.microsoft.com/en-us/typography/opentype/spec/features_pt#ssxx */
 struct FeatureParamsStylisticSet
 {
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     /* Right now minorVersion is at zero.  Which means, any table supports
@@ -586,10 +586,10 @@ struct FeatureParamsStylisticSet
     return_trace (c->check_struct (this));
   }
 
-  void collect_name_ids (hb_set_t *nameids_to_retain /* OUT */) const
+  void collect_name_ids (set_t *nameids_to_retain /* OUT */) const
   { nameids_to_retain->add (uiNameID); }
 
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
     return_trace ((bool) c->serializer->embed (*this));
@@ -622,12 +622,12 @@ struct FeatureParamsStylisticSet
 struct FeatureParamsCharacterVariants
 {
   unsigned
-  get_characters (unsigned start_offset, unsigned *char_count, hb_codepoint_t *chars) const
+  get_characters (unsigned start_offset, unsigned *char_count, codepoint_t *chars) const
   {
     if (char_count)
     {
       + characters.as_array ().sub_array (start_offset, char_count)
-      | hb_sink (hb_array (chars, *char_count))
+      | sink (array (chars, *char_count))
       ;
     }
     return characters.len;
@@ -636,7 +636,7 @@ struct FeatureParamsCharacterVariants
   unsigned get_size () const
   { return min_size + characters.len * HBUINT24::static_size; }
 
-  void collect_name_ids (hb_set_t *nameids_to_retain /* OUT */) const
+  void collect_name_ids (set_t *nameids_to_retain /* OUT */) const
   {
     if (featUILableNameID) nameids_to_retain->add (featUILableNameID);
     if (featUITooltipTextNameID) nameids_to_retain->add (featUITooltipTextNameID);
@@ -650,13 +650,13 @@ struct FeatureParamsCharacterVariants
       nameids_to_retain->add_range (firstParamUILabelNameID, last_name_id);
   }
 
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
     return_trace ((bool) c->serializer->embed (*this));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
@@ -697,7 +697,7 @@ struct FeatureParamsCharacterVariants
 
 struct FeatureParams
 {
-  bool sanitize (hb_sanitize_context_t *c, hb_tag_t tag) const
+  bool sanitize (sanitize_context_t *c, tag_t tag) const
   {
 #ifdef HB_NO_LAYOUT_FEATURE_PARAMS
     return true;
@@ -712,7 +712,7 @@ struct FeatureParams
     return_trace (true);
   }
 
-  void collect_name_ids (hb_tag_t tag, hb_set_t *nameids_to_retain /* OUT */) const
+  void collect_name_ids (tag_t tag, set_t *nameids_to_retain /* OUT */) const
   {
 #ifdef HB_NO_LAYOUT_FEATURE_PARAMS
     return;
@@ -725,7 +725,7 @@ struct FeatureParams
       return (u.characterVariants.collect_name_ids (nameids_to_retain));
   }
 
-  bool subset (hb_subset_context_t *c, const Tag* tag) const
+  bool subset (subset_context_t *c, const Tag* tag) const
   {
     TRACE_SUBSET (this);
     if (!tag) return_trace (false);
@@ -739,19 +739,19 @@ struct FeatureParams
   }
 
 #ifndef HB_NO_LAYOUT_FEATURE_PARAMS
-  const FeatureParamsSize& get_size_params (hb_tag_t tag) const
+  const FeatureParamsSize& get_size_params (tag_t tag) const
   {
     if (tag == HB_TAG ('s','i','z','e'))
       return u.size;
     return Null (FeatureParamsSize);
   }
-  const FeatureParamsStylisticSet& get_stylistic_set_params (hb_tag_t tag) const
+  const FeatureParamsStylisticSet& get_stylistic_set_params (tag_t tag) const
   {
     if ((tag & 0xFFFF0000u) == HB_TAG ('s','s','\0','\0')) /* ssXX */
       return u.stylisticSet;
     return Null (FeatureParamsStylisticSet);
   }
-  const FeatureParamsCharacterVariants& get_character_variants_params (hb_tag_t tag) const
+  const FeatureParamsCharacterVariants& get_character_variants_params (tag_t tag) const
   {
     if ((tag & 0xFFFF0000u) == HB_TAG ('c','v','\0','\0')) /* cvXX */
       return u.characterVariants;
@@ -770,7 +770,7 @@ struct FeatureParams
 };
 
 struct Record_sanitize_closure_t {
-  hb_tag_t tag;
+  tag_t tag;
   const void *list_base;
 };
 
@@ -778,29 +778,29 @@ struct Feature
 {
   unsigned int get_lookup_count () const
   { return lookupIndex.len; }
-  hb_tag_t get_lookup_index (unsigned int i) const
+  tag_t get_lookup_index (unsigned int i) const
   { return lookupIndex[i]; }
   unsigned int get_lookup_indexes (unsigned int start_index,
 				   unsigned int *lookup_count /* IN/OUT */,
 				   unsigned int *lookup_tags /* OUT */) const
   { return lookupIndex.get_indexes (start_index, lookup_count, lookup_tags); }
-  void add_lookup_indexes_to (hb_set_t *lookup_indexes) const
+  void add_lookup_indexes_to (set_t *lookup_indexes) const
   { lookupIndex.add_indexes_to (lookup_indexes); }
 
   const FeatureParams &get_feature_params () const
   { return this+featureParams; }
 
-  bool intersects_lookup_indexes (const hb_map_t *lookup_indexes) const
+  bool intersects_lookup_indexes (const map_t *lookup_indexes) const
   { return lookupIndex.intersects (lookup_indexes); }
 
-  void collect_name_ids (hb_tag_t tag, hb_set_t *nameids_to_retain /* OUT */) const
+  void collect_name_ids (tag_t tag, set_t *nameids_to_retain /* OUT */) const
   {
     if (featureParams)
       get_feature_params ().collect_name_ids (tag, nameids_to_retain);
   }
 
-  bool subset (hb_subset_context_t         *c,
-	       hb_subset_layout_context_t  *l,
+  bool subset (subset_context_t         *c,
+	       subset_layout_context_t  *l,
 	       const Tag                   *tag = nullptr) const
   {
     TRACE_SUBSET (this);
@@ -810,9 +810,9 @@ struct Feature
     out->featureParams.serialize_subset (c, featureParams, this, tag);
 
     auto it =
-    + hb_iter (lookupIndex)
-    | hb_filter (l->lookup_index_map)
-    | hb_map (l->lookup_index_map)
+    + iter (lookupIndex)
+    | filter (l->lookup_index_map)
+    | map (l->lookup_index_map)
     ;
 
     out->lookupIndex.serialize (c->serializer, l, it);
@@ -821,13 +821,13 @@ struct Feature
     return_trace (true);
   }
 
-  bool sanitize (hb_sanitize_context_t *c,
+  bool sanitize (sanitize_context_t *c,
 		 const Record_sanitize_closure_t *closure = nullptr) const
   {
     TRACE_SANITIZE (this);
     if (unlikely (!(c->check_struct (this) && lookupIndex.sanitize (c))))
       return_trace (false);
-    hb_barrier ();
+    barrier ();
 
     /* Some earlier versions of Adobe tools calculated the offset of the
      * FeatureParams subtable from the beginning of the FeatureList table!
@@ -846,7 +846,7 @@ struct Feature
     unsigned int orig_offset = featureParams;
     if (unlikely (!featureParams.sanitize (c, this, closure ? closure->tag : HB_TAG_NONE)))
       return_trace (false);
-    hb_barrier ();
+    barrier ();
 
     if (featureParams == 0 && closure &&
 	closure->tag == HB_TAG ('s','i','z','e') &&
@@ -880,9 +880,9 @@ struct Feature
 template <typename Type>
 struct Record
 {
-  int cmp (hb_tag_t a) const { return tag.cmp (a); }
+  int cmp (tag_t a) const { return tag.cmp (a); }
 
-  bool subset (hb_subset_layout_context_t *c, const void *base, const void *f_sub = nullptr) const
+  bool subset (subset_layout_context_t *c, const void *base, const void *f_sub = nullptr) const
   {
     TRACE_SUBSET (this);
     auto *out = c->subset_context->serializer->embed (this);
@@ -905,7 +905,7 @@ struct Record
     return_trace (ret);
   }
 
-  bool sanitize (hb_sanitize_context_t *c, const void *base) const
+  bool sanitize (sanitize_context_t *c, const void *base) const
   {
     TRACE_SANITIZE (this);
     const Record_sanitize_closure_t closure = {tag, base};
@@ -932,18 +932,18 @@ struct RecordArrayOf : SortedArray16Of<Record<Type>>
   { return (*this)[i].tag; }
   unsigned int get_tags (unsigned int start_offset,
                          unsigned int *record_count /* IN/OUT */,
-                         hb_tag_t     *record_tags /* OUT */) const
+                         tag_t     *record_tags /* OUT */) const
   {
     if (record_count)
     {
       + this->as_array ().sub_array (start_offset, record_count)
-      | hb_map (&Record<Type>::tag)
-      | hb_sink (hb_array (record_tags, *record_count))
+      | map (&Record<Type>::tag)
+      | sink (array (record_tags, *record_count))
       ;
     }
     return this->len;
   }
-  bool find_index (hb_tag_t tag, unsigned int *index) const
+  bool find_index (tag_t tag, unsigned int *index) const
   {
     return this->bfind (tag, index, HB_NOT_FOUND_STORE, Index::NOT_FOUND_INDEX);
   }
@@ -955,20 +955,20 @@ struct RecordListOf : RecordArrayOf<Type>
   const Type& operator [] (unsigned int i) const
   { return this+this->get_offset (i); }
 
-  bool subset (hb_subset_context_t *c,
-               hb_subset_layout_context_t *l) const
+  bool subset (subset_context_t *c,
+               subset_layout_context_t *l) const
   {
     TRACE_SUBSET (this);
     auto *out = c->serializer->start_embed (*this);
     if (unlikely (!c->serializer->extend_min (out))) return_trace (false);
 
     + this->iter ()
-    | hb_apply (subset_record_array (l, out, this))
+    | apply (subset_record_array (l, out, this))
     ;
     return_trace (true);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (RecordArrayOf<Type>::sanitize (c, this));
@@ -977,16 +977,16 @@ struct RecordListOf : RecordArrayOf<Type>
 
 struct RecordListOfFeature : RecordListOf<Feature>
 {
-  bool subset (hb_subset_context_t *c,
-	       hb_subset_layout_context_t *l) const
+  bool subset (subset_context_t *c,
+	       subset_layout_context_t *l) const
   {
     TRACE_SUBSET (this);
     auto *out = c->serializer->start_embed (*this);
     if (unlikely (!c->serializer->extend_min (out))) return_trace (false);
 
-    + hb_enumerate (*this)
-    | hb_filter (l->feature_index_map, hb_first)
-    | hb_apply ([l, out, this] (const hb_pair_t<unsigned, const Record<Feature>&>& _)
+    + enumerate (*this)
+    | filter (l->feature_index_map, first)
+    | apply ([l, out, this] (const pair_t<unsigned, const Record<Feature>&>& _)
                 {
                   const Feature *f_sub = nullptr;
                   const Feature **f = nullptr;
@@ -1008,13 +1008,13 @@ struct LangSys
 {
   unsigned int get_feature_count () const
   { return featureIndex.len; }
-  hb_tag_t get_feature_index (unsigned int i) const
+  tag_t get_feature_index (unsigned int i) const
   { return featureIndex[i]; }
   unsigned int get_feature_indexes (unsigned int start_offset,
 				    unsigned int *feature_count /* IN/OUT */,
 				    unsigned int *feature_indexes /* OUT */) const
   { return featureIndex.get_indexes (start_offset, feature_count, feature_indexes); }
-  void add_feature_indexes_to (hb_set_t *feature_indexes) const
+  void add_feature_indexes_to (set_t *feature_indexes) const
   { featureIndex.add_indexes_to (feature_indexes); }
 
   bool has_required_feature () const { return reqFeatureIndex != 0xFFFFu; }
@@ -1025,27 +1025,27 @@ struct LangSys
    return reqFeatureIndex;
   }
 
-  LangSys* copy (hb_serialize_context_t *c) const
+  LangSys* copy (serialize_context_t *c) const
   {
     TRACE_SERIALIZE (this);
     return_trace (c->embed (*this));
   }
 
-  bool compare (const LangSys& o, const hb_map_t *feature_index_map) const
+  bool compare (const LangSys& o, const map_t *feature_index_map) const
   {
     if (reqFeatureIndex != o.reqFeatureIndex)
       return false;
 
     auto iter =
-    + hb_iter (featureIndex)
-    | hb_filter (feature_index_map)
-    | hb_map (feature_index_map)
+    + iter (featureIndex)
+    | filter (feature_index_map)
+    | map (feature_index_map)
     ;
 
     auto o_iter =
-    + hb_iter (o.featureIndex)
-    | hb_filter (feature_index_map)
-    | hb_map (feature_index_map)
+    + iter (o.featureIndex)
+    | filter (feature_index_map)
+    | map (feature_index_map)
     ;
 
     for (; iter && o_iter; iter++, o_iter++)
@@ -1060,21 +1060,21 @@ struct LangSys
     return true;
   }
 
-  void collect_features (hb_prune_langsys_context_t *c) const
+  void collect_features (prune_langsys_context_t *c) const
   {
     if (!has_required_feature () && !get_feature_count ()) return;
     if (has_required_feature () &&
         c->duplicate_feature_map->has (reqFeatureIndex))
       c->new_feature_indexes->add (get_required_feature_index ());
 
-    + hb_iter (featureIndex)
-    | hb_filter (c->duplicate_feature_map)
-    | hb_sink (c->new_feature_indexes)
+    + iter (featureIndex)
+    | filter (c->duplicate_feature_map)
+    | sink (c->new_feature_indexes)
     ;
   }
 
-  bool subset (hb_subset_context_t        *c,
-	       hb_subset_layout_context_t *l,
+  bool subset (subset_context_t        *c,
+	       subset_layout_context_t *l,
 	       const Tag                  *tag = nullptr) const
   {
     TRACE_SUBSET (this);
@@ -1088,9 +1088,9 @@ struct LangSys
       return_trace (false);
 
     auto it =
-    + hb_iter (featureIndex)
-    | hb_filter (l->feature_index_map)
-    | hb_map (l->feature_index_map)
+    + iter (featureIndex)
+    | filter (l->feature_index_map)
+    | map (l->feature_index_map)
     ;
 
     bool ret = bool (it);
@@ -1098,7 +1098,7 @@ struct LangSys
     return_trace (ret);
   }
 
-  bool sanitize (hb_sanitize_context_t *c,
+  bool sanitize (sanitize_context_t *c,
 		 const Record_sanitize_closure_t * = nullptr) const
   {
     TRACE_SANITIZE (this);
@@ -1124,20 +1124,20 @@ struct Script
   { return langSys.get_tag (i); }
   unsigned int get_lang_sys_tags (unsigned int start_offset,
 				  unsigned int *lang_sys_count /* IN/OUT */,
-				  hb_tag_t     *lang_sys_tags /* OUT */) const
+				  tag_t     *lang_sys_tags /* OUT */) const
   { return langSys.get_tags (start_offset, lang_sys_count, lang_sys_tags); }
   const LangSys& get_lang_sys (unsigned int i) const
   {
     if (i == Index::NOT_FOUND_INDEX) return get_default_lang_sys ();
     return this+langSys[i].offset;
   }
-  bool find_lang_sys_index (hb_tag_t tag, unsigned int *index) const
+  bool find_lang_sys_index (tag_t tag, unsigned int *index) const
   { return langSys.find_index (tag, index); }
 
   bool has_default_lang_sys () const           { return defaultLangSys != 0; }
   const LangSys& get_default_lang_sys () const { return this+defaultLangSys; }
 
-  void prune_langsys (hb_prune_langsys_context_t *c,
+  void prune_langsys (prune_langsys_context_t *c,
                       unsigned script_index) const
   {
     if (!has_default_lang_sys () && !get_lang_sys_count ()) return;
@@ -1145,7 +1145,7 @@ struct Script
 
     if (!c->script_langsys_map->has (script_index))
     {
-      if (unlikely (!c->script_langsys_map->set (script_index, hb::unique_ptr<hb_set_t> {hb_set_create ()})))
+      if (unlikely (!c->script_langsys_map->set (script_index, hb::unique_ptr<set_t> {set_create ()})))
 	return;
     }
 
@@ -1157,7 +1157,7 @@ struct Script
         d.collect_features (c);
       }
 
-      for (auto _ : + hb_enumerate (langSys))
+      for (auto _ : + enumerate (langSys))
       {
         const LangSys& l = this+_.second.offset;
         if (!c->visitLangsys (l.get_feature_count ())) continue;
@@ -1169,7 +1169,7 @@ struct Script
     }
     else
     {
-      for (auto _ : + hb_enumerate (langSys))
+      for (auto _ : + enumerate (langSys))
       {
         const LangSys& l = this+_.second.offset;
         if (!c->visitLangsys (l.get_feature_count ())) continue;
@@ -1179,8 +1179,8 @@ struct Script
     }
   }
 
-  bool subset (hb_subset_context_t         *c,
-	       hb_subset_layout_context_t  *l,
+  bool subset (subset_context_t         *c,
+	       subset_layout_context_t  *l,
 	       const Tag                   *tag) const
   {
     TRACE_SUBSET (this);
@@ -1209,21 +1209,21 @@ struct Script
       }
     }
 
-    const hb_set_t *active_langsys = l->script_langsys_map->get (l->cur_script_index);
+    const set_t *active_langsys = l->script_langsys_map->get (l->cur_script_index);
     if (active_langsys)
     {
-      + hb_enumerate (langSys)
-      | hb_filter (active_langsys, hb_first)
-      | hb_map (hb_second)
-      | hb_filter ([=] (const Record<LangSys>& record) {return l->visitLangSys (); })
-      | hb_apply (subset_record_array (l, &(out->langSys), this))
+      + enumerate (langSys)
+      | filter (active_langsys, first)
+      | map (second)
+      | filter ([=] (const Record<LangSys>& record) {return l->visitLangSys (); })
+      | apply (subset_record_array (l, &(out->langSys), this))
       ;
     }
 
     return_trace (bool (out->langSys.len) || defaultLang || l->table_tag == HB_OT_TAG_GSUB);
   }
 
-  bool sanitize (hb_sanitize_context_t *c,
+  bool sanitize (sanitize_context_t *c,
 		 const Record_sanitize_closure_t * = nullptr) const
   {
     TRACE_SANITIZE (this);
@@ -1243,14 +1243,14 @@ struct Script
 
 struct RecordListOfScript : RecordListOf<Script>
 {
-  bool subset (hb_subset_context_t *c,
-               hb_subset_layout_context_t *l) const
+  bool subset (subset_context_t *c,
+               subset_layout_context_t *l) const
   {
     TRACE_SUBSET (this);
     auto *out = c->serializer->start_embed (*this);
     if (unlikely (!c->serializer->extend_min (out))) return_trace (false);
 
-    for (auto _ : + hb_enumerate (*this))
+    for (auto _ : + enumerate (*this))
     {
       auto snap = c->serializer->snapshot ();
       l->cur_script_index = _.first;
@@ -1344,7 +1344,7 @@ struct Lookup
     return_trace (c->default_return_value ());
   }
 
-  bool serialize (hb_serialize_context_t *c,
+  bool serialize (serialize_context_t *c,
 		  unsigned int lookup_type,
 		  uint32_t lookup_props,
 		  unsigned int num_subtables)
@@ -1364,7 +1364,7 @@ struct Lookup
   }
 
   template <typename TSubTable>
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
     auto *out = c->serializer->start_embed (*this);
@@ -1372,17 +1372,17 @@ struct Lookup
     out->lookupType = lookupType;
     out->lookupFlag = lookupFlag;
 
-    const hb_set_t *glyphset = c->plan->glyphset_gsub ();
+    const set_t *glyphset = c->plan->glyphset_gsub ();
     unsigned int lookup_type = get_type ();
-    + hb_iter (get_subtables <TSubTable> ())
-    | hb_filter ([this, glyphset, lookup_type] (const Offset16To<TSubTable> &_) { return (this+_).intersects (glyphset, lookup_type); })
-    | hb_apply (subset_offset_array (c, out->get_subtables<TSubTable> (), this, lookup_type))
+    + iter (get_subtables <TSubTable> ())
+    | filter ([this, glyphset, lookup_type] (const Offset16To<TSubTable> &_) { return (this+_).intersects (glyphset, lookup_type); })
+    | apply (subset_offset_array (c, out->get_subtables<TSubTable> (), this, lookup_type))
     ;
 
     if (lookupFlag & LookupFlag::UseMarkFilteringSet)
     {
       const HBUINT16 &markFilteringSet = StructAfter<HBUINT16> (subTable);
-      hb_codepoint_t *idx;
+      codepoint_t *idx;
       if (!c->plan->used_mark_sets_map.has (markFilteringSet, &idx))
       {
         unsigned new_flag = lookupFlag;
@@ -1407,11 +1407,11 @@ struct Lookup
   }
 
   template <typename TSubTable>
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     if (!(c->check_struct (this) && subTable.sanitize (c))) return_trace (false);
-    hb_barrier ();
+    barrier ();
 
     unsigned subtables = get_subtable_count ();
     if (unlikely (!c->visit_subtables (subtables))) return_trace (false);
@@ -1427,7 +1427,7 @@ struct Lookup
 
     if (unlikely (get_type () == TSubTable::Extension && !c->get_edit_count ()))
     {
-      hb_barrier ();
+      barrier ();
 
       /* The spec says all subtables of an Extension lookup should
        * have the same type, which shall not be the Extension type
@@ -1465,22 +1465,22 @@ using LookupList = List16OfOffsetTo<Lookup, typename Types::HBUINT>;
 template <typename TLookup, typename OffsetType>
 struct LookupOffsetList : List16OfOffsetTo<TLookup, OffsetType>
 {
-  bool subset (hb_subset_context_t        *c,
-	       hb_subset_layout_context_t *l) const
+  bool subset (subset_context_t        *c,
+	       subset_layout_context_t *l) const
   {
     TRACE_SUBSET (this);
     auto *out = c->serializer->start_embed (this);
     if (unlikely (!c->serializer->extend_min (out))) return_trace (false);
 
-    + hb_enumerate (*this)
-    | hb_filter (l->lookup_index_map, hb_first)
-    | hb_map (hb_second)
-    | hb_apply (subset_offset_array (c, *out, this))
+    + enumerate (*this)
+    | filter (l->lookup_index_map, first)
+    | map (second)
+    | apply (subset_offset_array (c, *out, this))
     ;
     return_trace (true);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (List16OfOffset16To<TLookup>::sanitize (c, this));
@@ -1493,11 +1493,11 @@ struct LookupOffsetList : List16OfOffsetTo<TLookup, OffsetType>
  */
 
 
-static bool ClassDef_remap_and_serialize (hb_serialize_context_t *c,
-					  const hb_set_t &klasses,
+static bool ClassDef_remap_and_serialize (serialize_context_t *c,
+					  const set_t &klasses,
                                           bool use_class_zero,
-                                          hb_sorted_vector_t<hb_codepoint_pair_t> &glyph_and_klass, /* IN/OUT */
-					  hb_map_t *klass_map /*IN/OUT*/)
+                                          sorted_vector_t<codepoint_pair_t> &glyph_and_klass, /* IN/OUT */
+					  map_t *klass_map /*IN/OUT*/)
 {
   if (!klass_map)
     return ClassDef_serialize (c, glyph_and_klass.iter ());
@@ -1518,7 +1518,7 @@ static bool ClassDef_remap_and_serialize (hb_serialize_context_t *c,
 
   for (unsigned i = 0; i < glyph_and_klass.length; i++)
   {
-    hb_codepoint_t klass = glyph_and_klass[i].second;
+    codepoint_t klass = glyph_and_klass[i].second;
     glyph_and_klass[i].second = klass_map->get (klass);
   }
 
@@ -1536,7 +1536,7 @@ struct ClassDefFormat1_3
   friend struct ClassDef;
 
   private:
-  unsigned int get_class (hb_codepoint_t glyph_id) const
+  unsigned int get_class (codepoint_t glyph_id) const
   {
     return classValue[(unsigned int) (glyph_id - startGlyph)];
   }
@@ -1547,8 +1547,8 @@ struct ClassDefFormat1_3
   }
 
   template<typename Iterator,
-	   hb_requires (hb_is_sorted_source_of (Iterator, hb_codepoint_t))>
-  bool serialize (hb_serialize_context_t *c,
+	   requires (is_sorted_source_of (Iterator, codepoint_t))>
+  bool serialize (serialize_context_t *c,
 		  Iterator it)
   {
     TRACE_SERIALIZE (this);
@@ -1562,15 +1562,15 @@ struct ClassDefFormat1_3
       return_trace (true);
     }
 
-    hb_codepoint_t glyph_min = (*it).first;
-    hb_codepoint_t glyph_max = + it
-			       | hb_map (hb_first)
-			       | hb_reduce (hb_max, 0u);
+    codepoint_t glyph_min = (*it).first;
+    codepoint_t glyph_max = + it
+			       | map (first)
+			       | reduce (max, 0u);
     unsigned glyph_count = glyph_max - glyph_min + 1;
 
     startGlyph = glyph_min;
     if (unlikely (!classValue.serialize (c, glyph_count))) return_trace (false);
-    for (const hb_pair_t<hb_codepoint_t, uint32_t> gid_klass_pair : + it)
+    for (const pair_t<codepoint_t, uint32_t> gid_klass_pair : + it)
     {
       unsigned idx = gid_klass_pair.first - glyph_min;
       classValue[idx] = gid_klass_pair.second;
@@ -1578,38 +1578,38 @@ struct ClassDefFormat1_3
     return_trace (true);
   }
 
-  bool subset (hb_subset_context_t *c,
-	       hb_map_t *klass_map = nullptr /*OUT*/,
+  bool subset (subset_context_t *c,
+	       map_t *klass_map = nullptr /*OUT*/,
                bool keep_empty_table = true,
                bool use_class_zero = true,
                const Coverage* glyph_filter = nullptr) const
   {
     TRACE_SUBSET (this);
-    const hb_map_t &glyph_map = c->plan->glyph_map_gsub;
+    const map_t &glyph_map = c->plan->glyph_map_gsub;
 
-    hb_sorted_vector_t<hb_codepoint_pair_t> glyph_and_klass;
-    hb_set_t orig_klasses;
+    sorted_vector_t<codepoint_pair_t> glyph_and_klass;
+    set_t orig_klasses;
 
-    hb_codepoint_t start = startGlyph;
-    hb_codepoint_t end   = start + classValue.len;
+    codepoint_t start = startGlyph;
+    codepoint_t end   = start + classValue.len;
 
-    for (const hb_codepoint_t gid : + hb_range (start, end))
+    for (const codepoint_t gid : + range (start, end))
     {
-      hb_codepoint_t new_gid = glyph_map[gid];
+      codepoint_t new_gid = glyph_map[gid];
       if (new_gid == HB_MAP_VALUE_INVALID) continue;
       if (glyph_filter && !glyph_filter->has(gid)) continue;
 
       unsigned klass = classValue[gid - start];
       if (!klass) continue;
 
-      glyph_and_klass.push (hb_pair (new_gid, klass));
+      glyph_and_klass.push (pair (new_gid, klass));
       orig_klasses.add (klass);
     }
 
     if (use_class_zero)
     {
       unsigned glyph_count = glyph_filter
-			     ? hb_len (hb_iter (glyph_map.keys()) | hb_filter (glyph_filter))
+			     ? len (iter (glyph_map.keys()) | filter (glyph_filter))
 			     : glyph_map.get_population ();
       use_class_zero = glyph_count <= glyph_and_klass.length;
     }
@@ -1622,7 +1622,7 @@ struct ClassDefFormat1_3
     return_trace (keep_empty_table || (bool) glyph_and_klass);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && classValue.sanitize (c));
@@ -1662,22 +1662,22 @@ struct ClassDefFormat1_3
     return true;
   }
 
-  bool intersects (const hb_set_t *glyphs) const
+  bool intersects (const set_t *glyphs) const
   {
-    hb_codepoint_t start = startGlyph;
-    hb_codepoint_t end = startGlyph + classValue.len;
-    for (hb_codepoint_t iter = startGlyph - 1;
+    codepoint_t start = startGlyph;
+    codepoint_t end = startGlyph + classValue.len;
+    for (codepoint_t iter = startGlyph - 1;
 	 glyphs->next (&iter) && iter < end;)
       if (classValue[iter - start]) return true;
     return false;
   }
-  bool intersects_class (const hb_set_t *glyphs, uint16_t klass) const
+  bool intersects_class (const set_t *glyphs, uint16_t klass) const
   {
     unsigned int count = classValue.len;
     if (klass == 0)
     {
       /* Match if there's any glyph that is not listed! */
-      hb_codepoint_t g = HB_SET_VALUE_INVALID;
+      codepoint_t g = HB_SET_VALUE_INVALID;
       if (!glyphs->next (&g)) return false;
       if (g < startGlyph) return true;
       g = startGlyph + count - 1;
@@ -1693,7 +1693,7 @@ struct ClassDefFormat1_3
     return false;
   }
 
-  void intersected_class_glyphs (const hb_set_t *glyphs, unsigned klass, hb_set_t *intersect_glyphs) const
+  void intersected_class_glyphs (const set_t *glyphs, unsigned klass, set_t *intersect_glyphs) const
   {
     unsigned count = classValue.len;
     if (klass == 0)
@@ -1726,17 +1726,17 @@ struct ClassDefFormat1_3
 #endif
   }
 
-  void intersected_classes (const hb_set_t *glyphs, hb_set_t *intersect_classes) const
+  void intersected_classes (const set_t *glyphs, set_t *intersect_classes) const
   {
     if (glyphs->is_empty ()) return;
-    hb_codepoint_t end_glyph = startGlyph + classValue.len - 1;
+    codepoint_t end_glyph = startGlyph + classValue.len - 1;
     if (glyphs->get_min () < startGlyph ||
         glyphs->get_max () > end_glyph)
       intersect_classes->add (0);
 
-    for (const auto& _ : + hb_enumerate (classValue))
+    for (const auto& _ : + enumerate (classValue))
     {
-      hb_codepoint_t g = startGlyph + _.first;
+      codepoint_t g = startGlyph + _.first;
       if (glyphs->has (g))
         intersect_classes->add (_.second);
     }
@@ -1758,7 +1758,7 @@ struct ClassDefFormat2_4
   friend struct ClassDef;
 
   private:
-  unsigned int get_class (hb_codepoint_t glyph_id) const
+  unsigned int get_class (codepoint_t glyph_id) const
   {
     return rangeRecord.bsearch (glyph_id).value;
   }
@@ -1772,8 +1772,8 @@ struct ClassDefFormat2_4
   }
 
   template<typename Iterator,
-	   hb_requires (hb_is_sorted_source_of (Iterator, hb_codepoint_t))>
-  bool serialize (hb_serialize_context_t *c,
+	   requires (is_sorted_source_of (Iterator, codepoint_t))>
+  bool serialize (serialize_context_t *c,
 		  Iterator it)
   {
     TRACE_SERIALIZE (this);
@@ -1788,7 +1788,7 @@ struct ClassDefFormat2_4
 
     unsigned unsorted = false;
     unsigned num_ranges = 1;
-    hb_codepoint_t prev_gid = (*it).first;
+    codepoint_t prev_gid = (*it).first;
     unsigned prev_klass = (*it).second;
 
     RangeRecord<Types> range_rec;
@@ -1801,7 +1801,7 @@ struct ClassDefFormat2_4
 
     for (const auto gid_klass_pair : + (++it))
     {
-      hb_codepoint_t cur_gid = gid_klass_pair.first;
+      codepoint_t cur_gid = gid_klass_pair.first;
       unsigned cur_klass = gid_klass_pair.second;
 
       if (cur_gid != prev_gid + 1 ||
@@ -1837,30 +1837,30 @@ struct ClassDefFormat2_4
     return_trace (true);
   }
 
-  bool subset (hb_subset_context_t *c,
-	       hb_map_t *klass_map = nullptr /*OUT*/,
+  bool subset (subset_context_t *c,
+	       map_t *klass_map = nullptr /*OUT*/,
                bool keep_empty_table = true,
                bool use_class_zero = true,
                const Coverage* glyph_filter = nullptr) const
   {
     TRACE_SUBSET (this);
-    const hb_map_t &glyph_map = c->plan->glyph_map_gsub;
-    const hb_set_t &glyph_set = *c->plan->glyphset_gsub ();
+    const map_t &glyph_map = c->plan->glyph_map_gsub;
+    const set_t &glyph_set = *c->plan->glyphset_gsub ();
 
-    hb_sorted_vector_t<hb_codepoint_pair_t> glyph_and_klass;
-    hb_set_t orig_klasses;
+    sorted_vector_t<codepoint_pair_t> glyph_and_klass;
+    set_t orig_klasses;
 
-    if (glyph_set.get_population () * hb_bit_storage ((unsigned) rangeRecord.len) / 2
+    if (glyph_set.get_population () * bit_storage ((unsigned) rangeRecord.len) / 2
 	< get_population ())
     {
-      for (hb_codepoint_t g : glyph_set)
+      for (codepoint_t g : glyph_set)
       {
 	unsigned klass = get_class (g);
 	if (!klass) continue;
-	hb_codepoint_t new_gid = glyph_map[g];
+	codepoint_t new_gid = glyph_map[g];
 	if (new_gid == HB_MAP_VALUE_INVALID) continue;
 	if (glyph_filter && !glyph_filter->has (g)) continue;
-	glyph_and_klass.push (hb_pair (new_gid, klass));
+	glyph_and_klass.push (pair (new_gid, klass));
 	orig_klasses.add (klass);
       }
     }
@@ -1871,23 +1871,23 @@ struct ClassDefFormat2_4
       {
 	unsigned klass = range.value;
 	if (!klass) continue;
-	hb_codepoint_t start = range.first;
-	hb_codepoint_t end   = hb_min (range.last + 1, num_source_glyphs);
-	for (hb_codepoint_t g = start; g < end; g++)
+	codepoint_t start = range.first;
+	codepoint_t end   = min (range.last + 1, num_source_glyphs);
+	for (codepoint_t g = start; g < end; g++)
 	{
-	  hb_codepoint_t new_gid = glyph_map[g];
+	  codepoint_t new_gid = glyph_map[g];
 	  if (new_gid == HB_MAP_VALUE_INVALID) continue;
 	  if (glyph_filter && !glyph_filter->has (g)) continue;
 
-	  glyph_and_klass.push (hb_pair (new_gid, klass));
+	  glyph_and_klass.push (pair (new_gid, klass));
 	  orig_klasses.add (klass);
 	}
       }
     }
 
-    const hb_set_t& glyphset = *c->plan->glyphset_gsub ();
+    const set_t& glyphset = *c->plan->glyphset_gsub ();
     unsigned glyph_count = glyph_filter
-                           ? hb_len (hb_iter (glyphset) | hb_filter (glyph_filter))
+                           ? len (iter (glyphset) | filter (glyph_filter))
                            : glyph_map.get_population ();
     use_class_zero = use_class_zero && glyph_count <= glyph_and_klass.length;
     if (!ClassDef_remap_and_serialize (c->serializer,
@@ -1899,13 +1899,13 @@ struct ClassDefFormat2_4
     return_trace (keep_empty_table || (bool) glyph_and_klass);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (rangeRecord.sanitize (c));
   }
 
-  unsigned cost () const { return hb_bit_storage ((unsigned) rangeRecord.len); /* bsearch cost */ }
+  unsigned cost () const { return bit_storage ((unsigned) rangeRecord.len); /* bsearch cost */ }
 
   template <typename set_t>
   bool collect_coverage (set_t *glyphs) const
@@ -1929,9 +1929,9 @@ struct ClassDefFormat2_4
     return true;
   }
 
-  bool intersects (const hb_set_t *glyphs) const
+  bool intersects (const set_t *glyphs) const
   {
-    if (rangeRecord.len > glyphs->get_population () * hb_bit_storage ((unsigned) rangeRecord.len) / 2)
+    if (rangeRecord.len > glyphs->get_population () * bit_storage ((unsigned) rangeRecord.len) / 2)
     {
       for (auto g : *glyphs)
         if (get_class (g))
@@ -1939,17 +1939,17 @@ struct ClassDefFormat2_4
       return false;
     }
 
-    return hb_any (+ hb_iter (rangeRecord)
-                   | hb_map ([glyphs] (const RangeRecord<Types> &range) { return range.intersects (*glyphs) && range.value; }));
+    return any (+ iter (rangeRecord)
+                   | map ([glyphs] (const RangeRecord<Types> &range) { return range.intersects (*glyphs) && range.value; }));
   }
-  bool intersects_class (const hb_set_t *glyphs, uint16_t klass) const
+  bool intersects_class (const set_t *glyphs, uint16_t klass) const
   {
     if (klass == 0)
     {
       /* Match if there's any glyph that is not listed! */
-      hb_codepoint_t g = HB_SET_VALUE_INVALID;
-      hb_codepoint_t last = HB_SET_VALUE_INVALID;
-      auto it = hb_iter (rangeRecord);
+      codepoint_t g = HB_SET_VALUE_INVALID;
+      codepoint_t last = HB_SET_VALUE_INVALID;
+      auto it = iter (rangeRecord);
       for (auto &range : it)
       {
         if (it->first == last + 1)
@@ -1975,11 +1975,11 @@ struct ClassDefFormat2_4
     return false;
   }
 
-  void intersected_class_glyphs (const hb_set_t *glyphs, unsigned klass, hb_set_t *intersect_glyphs) const
+  void intersected_class_glyphs (const set_t *glyphs, unsigned klass, set_t *intersect_glyphs) const
   {
     if (klass == 0)
     {
-      hb_codepoint_t g = HB_SET_VALUE_INVALID;
+      codepoint_t g = HB_SET_VALUE_INVALID;
       for (auto &range : rangeRecord)
       {
 	if (!glyphs->next (&g))
@@ -2000,7 +2000,7 @@ struct ClassDefFormat2_4
     }
 
     unsigned count = rangeRecord.len;
-    if (count > glyphs->get_population () * hb_bit_storage (count) * 8)
+    if (count > glyphs->get_population () * bit_storage (count) * 8)
     {
       for (auto g : *glyphs)
       {
@@ -2017,17 +2017,17 @@ struct ClassDefFormat2_4
       if (range.value != klass) continue;
 
       unsigned end = range.last + 1;
-      for (hb_codepoint_t g = range.first - 1;
+      for (codepoint_t g = range.first - 1;
 	   glyphs->next (&g) && g < end;)
 	intersect_glyphs->add (g);
     }
   }
 
-  void intersected_classes (const hb_set_t *glyphs, hb_set_t *intersect_classes) const
+  void intersected_classes (const set_t *glyphs, set_t *intersect_classes) const
   {
     if (glyphs->is_empty ()) return;
 
-    hb_codepoint_t g = HB_SET_VALUE_INVALID;
+    codepoint_t g = HB_SET_VALUE_INVALID;
     for (auto &range : rangeRecord)
     {
       if (!glyphs->next (&g))
@@ -2059,13 +2059,13 @@ struct ClassDefFormat2_4
 struct ClassDef
 {
   /* Has interface. */
-  unsigned operator [] (hb_codepoint_t k) const { return get (k); }
-  bool has (hb_codepoint_t k) const { return (*this)[k]; }
+  unsigned operator [] (codepoint_t k) const { return get (k); }
+  bool has (codepoint_t k) const { return (*this)[k]; }
   /* Projection. */
-  hb_codepoint_t operator () (hb_codepoint_t k) const { return get (k); }
+  codepoint_t operator () (codepoint_t k) const { return get (k); }
 
-  unsigned int get (hb_codepoint_t k) const { return get_class (k); }
-  unsigned int get_class (hb_codepoint_t glyph_id) const
+  unsigned int get (codepoint_t k) const { return get_class (k); }
+  unsigned int get_class (codepoint_t glyph_id) const
   {
     switch (u.format) {
     case 1: return u.format1.get_class (glyph_id);
@@ -2092,29 +2092,29 @@ struct ClassDef
   }
 
   template<typename Iterator,
-	   hb_requires (hb_is_sorted_source_of (Iterator, hb_codepoint_t))>
-  bool serialize (hb_serialize_context_t *c, Iterator it_with_class_zero)
+	   requires (is_sorted_source_of (Iterator, codepoint_t))>
+  bool serialize (serialize_context_t *c, Iterator it_with_class_zero)
   {
     TRACE_SERIALIZE (this);
     if (unlikely (!c->extend_min (this))) return_trace (false);
 
-    auto it = + it_with_class_zero | hb_filter (hb_second);
+    auto it = + it_with_class_zero | filter (second);
 
     unsigned format = 2;
-    hb_codepoint_t glyph_max = 0;
+    codepoint_t glyph_max = 0;
     if (likely (it))
     {
-      hb_codepoint_t glyph_min = (*it).first;
+      codepoint_t glyph_min = (*it).first;
       glyph_max = glyph_min;
 
       unsigned num_glyphs = 0;
       unsigned num_ranges = 1;
-      hb_codepoint_t prev_gid = glyph_min;
+      codepoint_t prev_gid = glyph_min;
       unsigned prev_klass = (*it).second;
 
       for (const auto gid_klass_pair : it)
       {
-	hb_codepoint_t cur_gid = gid_klass_pair.first;
+	codepoint_t cur_gid = gid_klass_pair.first;
 	unsigned cur_klass = gid_klass_pair.second;
         num_glyphs++;
 	if (cur_gid == glyph_min) continue;
@@ -2157,8 +2157,8 @@ struct ClassDef
     }
   }
 
-  bool subset (hb_subset_context_t *c,
-	       hb_map_t *klass_map = nullptr /*OUT*/,
+  bool subset (subset_context_t *c,
+	       map_t *klass_map = nullptr /*OUT*/,
                bool keep_empty_table = true,
                bool use_class_zero = true,
                const Coverage* glyph_filter = nullptr) const
@@ -2175,11 +2175,11 @@ struct ClassDef
     }
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     if (!u.format.sanitize (c)) return_trace (false);
-    hb_barrier ();
+    barrier ();
     switch (u.format) {
     case 1: return_trace (u.format1.sanitize (c));
     case 2: return_trace (u.format2.sanitize (c));
@@ -2236,7 +2236,7 @@ struct ClassDef
     }
   }
 
-  bool intersects (const hb_set_t *glyphs) const
+  bool intersects (const set_t *glyphs) const
   {
     switch (u.format) {
     case 1: return u.format1.intersects (glyphs);
@@ -2248,7 +2248,7 @@ struct ClassDef
     default:return false;
     }
   }
-  bool intersects_class (const hb_set_t *glyphs, unsigned int klass) const
+  bool intersects_class (const set_t *glyphs, unsigned int klass) const
   {
     switch (u.format) {
     case 1: return u.format1.intersects_class (glyphs, klass);
@@ -2261,7 +2261,7 @@ struct ClassDef
     }
   }
 
-  void intersected_class_glyphs (const hb_set_t *glyphs, unsigned klass, hb_set_t *intersect_glyphs) const
+  void intersected_class_glyphs (const set_t *glyphs, unsigned klass, set_t *intersect_glyphs) const
   {
     switch (u.format) {
     case 1: return u.format1.intersected_class_glyphs (glyphs, klass, intersect_glyphs);
@@ -2274,7 +2274,7 @@ struct ClassDef
     }
   }
 
-  void intersected_classes (const hb_set_t *glyphs, hb_set_t *intersect_classes) const
+  void intersected_classes (const set_t *glyphs, set_t *intersect_classes) const
   {
     switch (u.format) {
     case 1: return u.format1.intersected_classes (glyphs, intersect_classes);
@@ -2303,7 +2303,7 @@ struct ClassDef
 };
 
 template<typename Iterator>
-static inline bool ClassDef_serialize (hb_serialize_context_t *c,
+static inline bool ClassDef_serialize (serialize_context_t *c,
 				       Iterator it)
 { return (c->start_embed<ClassDef> ()->serialize (c, it)); }
 
@@ -2317,15 +2317,15 @@ struct delta_row_encoding_t
 {
   /* each byte represents a region, value is one of 0/1/2/4, which means bytes
    * needed for this region */
-  hb_vector_t<uint8_t> chars;
+  vector_t<uint8_t> chars;
   unsigned width = 0;
-  hb_vector_t<uint8_t> columns;
+  vector_t<uint8_t> columns;
   unsigned overhead = 0;
-  hb_vector_t<const hb_vector_t<int>*> items;
+  vector_t<const vector_t<int>*> items;
 
   delta_row_encoding_t () = default;
-  delta_row_encoding_t (hb_vector_t<uint8_t>&& chars_,
-                        const hb_vector_t<int>* row = nullptr) :
+  delta_row_encoding_t (vector_t<uint8_t>&& chars_,
+                        const vector_t<int>* row = nullptr) :
                         delta_row_encoding_t ()
 
   {
@@ -2339,9 +2339,9 @@ struct delta_row_encoding_t
   bool is_empty () const
   { return !items; }
 
-  static hb_vector_t<uint8_t> get_row_chars (const hb_vector_t<int>& row)
+  static vector_t<uint8_t> get_row_chars (const vector_t<int>& row)
   {
-    hb_vector_t<uint8_t> ret;
+    vector_t<uint8_t> ret;
     if (!ret.alloc (row.length)) return ret;
 
     bool long_words = false;
@@ -2383,15 +2383,15 @@ struct delta_row_encoding_t
 
   inline unsigned get_width ()
   {
-    unsigned ret = + hb_iter (chars)
-                   | hb_reduce (hb_add, 0u)
+    unsigned ret = + iter (chars)
+                   | reduce (add, 0u)
                    ;
     return ret;
   }
 
-  hb_vector_t<uint8_t> get_columns ()
+  vector_t<uint8_t> get_columns ()
   {
-    hb_vector_t<uint8_t> cols;
+    vector_t<uint8_t> cols;
     cols.alloc (chars.length);
     for (auto v : chars)
     {
@@ -2401,7 +2401,7 @@ struct delta_row_encoding_t
     return cols;
   }
 
-  static inline unsigned get_chars_overhead (const hb_vector_t<uint8_t>& cols)
+  static inline unsigned get_chars_overhead (const vector_t<uint8_t>& cols)
   {
     unsigned c = 4 + 6; // 4 bytes for LOffset, 6 bytes for VarData header
     unsigned cols_bit_count = 0;
@@ -2413,16 +2413,16 @@ struct delta_row_encoding_t
   unsigned get_gain () const
   {
     int count = items.length;
-    return hb_max (0, (int) overhead - count);
+    return max (0, (int) overhead - count);
   }
 
   int gain_from_merging (const delta_row_encoding_t& other_encoding) const
   {
     int combined_width = 0;
     for (unsigned i = 0; i < chars.length; i++)
-      combined_width += hb_max (chars.arrayZ[i], other_encoding.chars.arrayZ[i]);
+      combined_width += max (chars.arrayZ[i], other_encoding.chars.arrayZ[i]);
 
-    hb_vector_t<uint8_t> combined_columns;
+    vector_t<uint8_t> combined_columns;
     combined_columns.alloc (columns.length);
     for (unsigned i = 0; i < columns.length; i++)
       combined_columns.push (columns.arrayZ[i] | other_encoding.columns.arrayZ[i]);
@@ -2460,7 +2460,7 @@ struct delta_row_encoding_t
     return (b->chars).as_array ().cmp ((a->chars).as_array ());
   }
 
-  bool add_row (const hb_vector_t<int>* row)
+  bool add_row (const vector_t<int>* row)
   { return items.push (row); }
 };
 
@@ -2492,13 +2492,13 @@ struct VarRegionAxis
       return float (end - coord) / (end - peak);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
   }
 
-  bool serialize (hb_serialize_context_t *c) const
+  bool serialize (serialize_context_t *c) const
   {
     TRACE_SERIALIZE (this);
     return_trace (c->embed (this));
@@ -2520,13 +2520,13 @@ struct SparseVarRegionAxis
     return axis.evaluate (coord);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
   }
 
-  bool serialize (hb_serialize_context_t *c) const
+  bool serialize (serialize_context_t *c) const
   {
     TRACE_SERIALIZE (this);
     return_trace (c->embed (this));
@@ -2582,23 +2582,23 @@ struct VarRegionList
     return v;
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
-		  hb_barrier () &&
+		  barrier () &&
 		  axesZ.sanitize (c, axisCount * regionCount));
   }
 
-  bool serialize (hb_serialize_context_t *c,
-                  const hb_vector_t<hb_tag_t>& axis_tags,
-                  const hb_vector_t<const hb_hashmap_t<hb_tag_t, Triple>*>& regions)
+  bool serialize (serialize_context_t *c,
+                  const vector_t<tag_t>& axis_tags,
+                  const vector_t<const hashmap_t<tag_t, Triple>*>& regions)
   {
     TRACE_SERIALIZE (this);
     unsigned axis_count = axis_tags.length;
     unsigned region_count = regions.length;
     if (!axis_count || !region_count) return_trace (false);
-    if (unlikely (hb_unsigned_mul_overflows (axis_count * region_count,
+    if (unlikely (unsigned_mul_overflows (axis_count * region_count,
                                              VarRegionAxis::static_size))) return_trace (false);
     if (unlikely (!c->extend_min (this))) return_trace (false);
     axisCount = axis_count;
@@ -2609,7 +2609,7 @@ struct VarRegionList
       const auto& region = regions[r];
       for (unsigned i = 0; i < axis_count; i++)
       {
-        hb_tag_t tag = axis_tags.arrayZ[i];
+        tag_t tag = axis_tags.arrayZ[i];
         VarRegionAxis var_region_rec;
         Triple *coords;
         if (region->has (tag, &coords))
@@ -2631,13 +2631,13 @@ struct VarRegionList
     return_trace (true);
   }
 
-  bool serialize (hb_serialize_context_t *c, const VarRegionList *src, const hb_inc_bimap_t &region_map)
+  bool serialize (serialize_context_t *c, const VarRegionList *src, const inc_bimap_t &region_map)
   {
     TRACE_SERIALIZE (this);
     if (unlikely (!c->extend_min (this))) return_trace (false);
     axisCount = src->axisCount;
     regionCount = region_map.get_population ();
-    if (unlikely (hb_unsigned_mul_overflows (axisCount * regionCount,
+    if (unlikely (unsigned_mul_overflows (axisCount * regionCount,
 					     VarRegionAxis::static_size))) return_trace (false);
     if (unlikely (!c->extend (this))) return_trace (false);
     unsigned int region_count = src->regionCount;
@@ -2645,21 +2645,21 @@ struct VarRegionList
     {
       unsigned int backward = region_map.backward (r);
       if (backward >= region_count) return_trace (false);
-      hb_memcpy (&axesZ[axisCount * r], &src->axesZ[axisCount * backward], VarRegionAxis::static_size * axisCount);
+      memcpy (&axesZ[axisCount * r], &src->axesZ[axisCount * backward], VarRegionAxis::static_size * axisCount);
     }
 
     return_trace (true);
   }
 
   bool get_var_region (unsigned region_index,
-                       const hb_map_t& axes_old_index_tag_map,
-                       hb_hashmap_t<hb_tag_t, Triple>& axis_tuples /* OUT */) const
+                       const map_t& axes_old_index_tag_map,
+                       hashmap_t<tag_t, Triple>& axis_tuples /* OUT */) const
   {
     if (region_index >= regionCount) return false;
     const VarRegionAxis* axis_region = axesZ.arrayZ + (region_index * axisCount);
     for (unsigned i = 0; i < axisCount; i++)
     {
-      hb_tag_t *axis_tag;
+      tag_t *axis_tag;
       if (!axes_old_index_tag_map.has (i, &axis_tag))
         return false;
 
@@ -2674,15 +2674,15 @@ struct VarRegionList
     return !axis_tuples.in_error ();
   }
 
-  bool get_var_regions (const hb_map_t& axes_old_index_tag_map,
-                        hb_vector_t<hb_hashmap_t<hb_tag_t, Triple>>& regions /* OUT */) const
+  bool get_var_regions (const map_t& axes_old_index_tag_map,
+                        vector_t<hashmap_t<tag_t, Triple>>& regions /* OUT */) const
   {
     if (!regions.alloc (regionCount))
       return false;
 
     for (unsigned i = 0; i < regionCount; i++)
     {
-      hb_hashmap_t<hb_tag_t, Triple> axis_tuples;
+      hashmap_t<tag_t, Triple> axis_tuples;
       if (!get_var_region (i, axes_old_index_tag_map, axis_tuples))
         return false;
       regions.push (std::move (axis_tuples));
@@ -2747,7 +2747,7 @@ struct SparseVarRegionList
     return v;
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (regions.sanitize (c, this));
@@ -2828,28 +2828,28 @@ struct VarData
 			   float *scalars /*OUT */,
 			   unsigned int num_scalars) const
   {
-    unsigned count = hb_min (num_scalars, regionIndices.len);
+    unsigned count = min (num_scalars, regionIndices.len);
     for (unsigned int i = 0; i < count; i++)
       scalars[i] = regions.evaluate (regionIndices.arrayZ[i], coords, coord_count);
     for (unsigned int i = count; i < num_scalars; i++)
       scalars[i] = 0.f;
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
 		  regionIndices.sanitize (c) &&
-		  hb_barrier () &&
+		  barrier () &&
 		  wordCount () <= regionIndices.len &&
 		  c->check_range (get_delta_bytes (),
 				  itemCount,
 				  get_row_size ()));
   }
 
-  bool serialize (hb_serialize_context_t *c,
+  bool serialize (serialize_context_t *c,
                   bool has_long,
-                  const hb_vector_t<const hb_vector_t<int>*>& rows)
+                  const vector_t<const vector_t<int>*>& rows)
   {
     TRACE_SERIALIZE (this);
     if (unlikely (!c->extend_min (this))) return_trace (false);
@@ -2859,7 +2859,7 @@ struct VarData
     int min_threshold = has_long ? -65536 : -128;
     int max_threshold = has_long ? +65535 : +127;
     enum delta_size_t { kZero=0, kNonWord, kWord };
-    hb_vector_t<delta_size_t> delta_sz;
+    vector_t<delta_size_t> delta_sz;
     unsigned num_regions = rows[0]->length;
     if (!delta_sz.resize (num_regions))
       return_trace (false);
@@ -2886,7 +2886,7 @@ struct VarData
     /* reorder regions: words and then non-words*/
     unsigned word_index = 0;
     unsigned non_word_index = word_count;
-    hb_map_t ri_map;
+    map_t ri_map;
     for (unsigned r = 0; r < num_regions; r++)
     {
       if (!delta_sz[r]) continue;
@@ -2903,7 +2903,7 @@ struct VarData
 
     for (unsigned r = 0; r < ri_count; r++)
     {
-      hb_codepoint_t *idx;
+      codepoint_t *idx;
       if (!ri_map.has (r, &idx))
         return_trace (false);
       regionIndices[r] = *idx;
@@ -2922,10 +2922,10 @@ struct VarData
     return_trace (true);
   }
 
-  bool serialize (hb_serialize_context_t *c,
+  bool serialize (serialize_context_t *c,
 		  const VarData *src,
-		  const hb_inc_bimap_t &inner_map,
-		  const hb_inc_bimap_t &region_map)
+		  const inc_bimap_t &inner_map,
+		  const inc_bimap_t &region_map)
   {
     TRACE_SERIALIZE (this);
     if (unlikely (!c->extend_min (this))) return_trace (false);
@@ -2934,8 +2934,8 @@ struct VarData
     /* Optimize word count */
     unsigned ri_count = src->regionIndices.len;
     enum delta_size_t { kZero=0, kNonWord, kWord };
-    hb_vector_t<delta_size_t> delta_sz;
-    hb_vector_t<unsigned int> ri_map;	/* maps new index to old index */
+    vector_t<delta_size_t> delta_sz;
+    vector_t<unsigned int> ri_map;	/* maps new index to old index */
     delta_sz.resize (ri_count);
     ri_map.resize (ri_count);
     unsigned int new_word_count = 0;
@@ -3024,7 +3024,7 @@ struct VarData
     return_trace (true);
   }
 
-  void collect_region_refs (hb_set_t &region_indices, const hb_inc_bimap_t &inner_map) const
+  void collect_region_refs (set_t &region_indices, const inc_bimap_t &inner_map) const
   {
     const HBUINT8 *delta_bytes = get_delta_bytes ();
     unsigned row_size = get_row_size ();
@@ -3033,7 +3033,7 @@ struct VarData
     {
       unsigned int region = regionIndices.arrayZ[r];
       if (region_indices.has (region)) continue;
-      for (hb_codepoint_t old_gid : inner_map.keys())
+      for (codepoint_t old_gid : inner_map.keys())
 	if (get_item_delta_fast (old_gid, r, delta_bytes, row_size) != 0)
 	{
 	  region_indices.add (region);
@@ -3133,7 +3133,7 @@ struct MultiVarData
   void get_delta (unsigned int inner,
 		  const int *coords, unsigned int coord_count,
 		  const SparseVarRegionList &regions,
-		  hb_array_t<float> out,
+		  array_t<float> out,
 		  SparseVarRegionList::cache_t *cache = nullptr) const
   {
     auto &deltaSets = StructAfter<decltype (deltaSetsX)> (regionIndices);
@@ -3158,14 +3158,14 @@ struct MultiVarData
     }
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (format.sanitize (c) &&
-		  hb_barrier () &&
+		  barrier () &&
 		  format == 1 &&
 		  regionIndices.sanitize (c) &&
-		  hb_barrier () &&
+		  barrier () &&
 		  StructAfter<decltype (deltaSetsX)> (regionIndices).sanitize (c));
   }
 
@@ -3190,7 +3190,7 @@ struct ItemVariationStore
     auto &r = this+regions;
     unsigned count = r.regionCount;
 
-    float *cache = (float *) hb_malloc (sizeof (float) * count);
+    float *cache = (float *) malloc (sizeof (float) * count);
     if (unlikely (!cache)) return nullptr;
 
     for (unsigned i = 0; i < count; i++)
@@ -3199,7 +3199,7 @@ struct ItemVariationStore
     return cache;
   }
 
-  static void destroy_cache (cache_t *cache) { hb_free (cache); }
+  static void destroy_cache (cache_t *cache) { free (cache); }
 
   private:
   float get_delta (unsigned int outer, unsigned int inner,
@@ -3229,7 +3229,7 @@ struct ItemVariationStore
     return get_delta (outer, inner, coords, coord_count, cache);
   }
   float get_delta (unsigned int index,
-		   hb_array_t<const int> coords,
+		   array_t<const int> coords,
 		   VarRegionList::cache_t *cache = nullptr) const
   {
     return get_delta (index,
@@ -3237,7 +3237,7 @@ struct ItemVariationStore
 		      cache);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
 #ifdef HB_NO_VAR
     return true;
@@ -3245,17 +3245,17 @@ struct ItemVariationStore
 
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
-		  hb_barrier () &&
+		  barrier () &&
 		  format == 1 &&
 		  regions.sanitize (c, this) &&
 		  dataSets.sanitize (c, this));
   }
 
-  bool serialize (hb_serialize_context_t *c,
+  bool serialize (serialize_context_t *c,
                   bool has_long,
-                  const hb_vector_t<hb_tag_t>& axis_tags,
-                  const hb_vector_t<const hb_hashmap_t<hb_tag_t, Triple>*>& region_list,
-                  const hb_vector_t<delta_row_encoding_t>& vardata_encodings)
+                  const vector_t<tag_t>& axis_tags,
+                  const vector_t<const hashmap_t<tag_t, Triple>*>& region_list,
+                  const vector_t<delta_row_encoding_t>& vardata_encodings)
   {
     TRACE_SERIALIZE (this);
 #ifdef HB_NO_VAR
@@ -3281,9 +3281,9 @@ struct ItemVariationStore
     return_trace (true);
   }
 
-  bool serialize (hb_serialize_context_t *c,
+  bool serialize (serialize_context_t *c,
 		  const ItemVariationStore *src,
-		  const hb_array_t <const hb_inc_bimap_t> &inner_maps)
+		  const array_t <const inc_bimap_t> &inner_maps)
   {
     TRACE_SERIALIZE (this);
 #ifdef HB_NO_VAR
@@ -3301,19 +3301,19 @@ struct ItemVariationStore
 
     const auto &src_regions = src+src->regions;
 
-    hb_set_t region_indices;
+    set_t region_indices;
     for (unsigned int i = 0; i < inner_maps.length; i++)
       (src+src->dataSets[i]).collect_region_refs (region_indices, inner_maps[i]);
 
     if (region_indices.in_error ())
       return_trace (false);
 
-    region_indices.del_range ((src_regions).regionCount, hb_set_t::INVALID);
+    region_indices.del_range ((src_regions).regionCount, set_t::INVALID);
 
     /* TODO use constructor when our data-structures support that. */
-    hb_inc_bimap_t region_map;
-    + hb_iter (region_indices)
-    | hb_apply ([&region_map] (unsigned _) { region_map.add(_); })
+    inc_bimap_t region_map;
+    + iter (region_indices)
+    | apply ([&region_map] (unsigned _) { region_map.add(_); })
     ;
     if (region_map.in_error())
       return_trace (false);
@@ -3338,17 +3338,17 @@ struct ItemVariationStore
     return_trace (true);
   }
 
-  ItemVariationStore *copy (hb_serialize_context_t *c) const
+  ItemVariationStore *copy (serialize_context_t *c) const
   {
     TRACE_SERIALIZE (this);
     auto *out = c->start_embed (this);
     if (unlikely (!out)) return_trace (nullptr);
 
-    hb_vector_t <hb_inc_bimap_t> inner_maps;
+    vector_t <inc_bimap_t> inner_maps;
     unsigned count = dataSets.len;
     for (unsigned i = 0; i < count; i++)
     {
-      hb_inc_bimap_t *map = inner_maps.push ();
+      inc_bimap_t *map = inner_maps.push ();
       if (!c->propagate_error(inner_maps))
         return_trace(nullptr);
       auto &data = this+dataSets[i];
@@ -3363,7 +3363,7 @@ struct ItemVariationStore
     return_trace (out);
   }
 
-  bool subset (hb_subset_context_t *c, const hb_array_t<const hb_inc_bimap_t> &inner_maps) const
+  bool subset (subset_context_t *c, const array_t<const inc_bimap_t> &inner_maps) const
   {
     TRACE_SUBSET (this);
 #ifdef HB_NO_VAR
@@ -3448,7 +3448,7 @@ struct MultiItemVariationStore
     auto &r = this+regions;
     unsigned count = r.regions.len;
 
-    float *cache = (float *) hb_malloc (sizeof (float) * count);
+    float *cache = (float *) malloc (sizeof (float) * count);
     if (unlikely (!cache)) return nullptr;
 
     for (unsigned i = 0; i < count; i++)
@@ -3457,12 +3457,12 @@ struct MultiItemVariationStore
     return cache;
   }
 
-  static void destroy_cache (cache_t *cache) { hb_free (cache); }
+  static void destroy_cache (cache_t *cache) { free (cache); }
 
   private:
   void get_delta (unsigned int outer, unsigned int inner,
 		  const int *coords, unsigned int coord_count,
-		  hb_array_t<float> out,
+		  array_t<float> out,
 		  VarRegionList::cache_t *cache = nullptr) const
   {
 #ifdef HB_NO_VAR
@@ -3482,7 +3482,7 @@ struct MultiItemVariationStore
   public:
   void get_delta (unsigned int index,
 		  const int *coords, unsigned int coord_count,
-		  hb_array_t<float> out,
+		  array_t<float> out,
 		  VarRegionList::cache_t *cache = nullptr) const
   {
     unsigned int outer = index >> 16;
@@ -3490,8 +3490,8 @@ struct MultiItemVariationStore
     get_delta (outer, inner, coords, coord_count, out, cache);
   }
   void get_delta (unsigned int index,
-		  hb_array_t<const int> coords,
-		  hb_array_t<float> out,
+		  array_t<const int> coords,
+		  array_t<float> out,
 		  VarRegionList::cache_t *cache = nullptr) const
   {
     return get_delta (index,
@@ -3500,7 +3500,7 @@ struct MultiItemVariationStore
 		      cache);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
 #ifdef HB_NO_VAR
     return true;
@@ -3508,7 +3508,7 @@ struct MultiItemVariationStore
 
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
-		  hb_barrier () &&
+		  barrier () &&
 		  format == 1 &&
 		  regions.sanitize (c, this) &&
 		  dataSets.sanitize (c, this));
@@ -3533,18 +3533,18 @@ struct DeltaSetIndexMapFormat01
   { return min_size + mapCount * get_width (); }
 
   private:
-  DeltaSetIndexMapFormat01* copy (hb_serialize_context_t *c) const
+  DeltaSetIndexMapFormat01* copy (serialize_context_t *c) const
   {
     TRACE_SERIALIZE (this);
     return_trace (c->embed (this));
   }
 
   template <typename T>
-  bool serialize (hb_serialize_context_t *c, const T &plan)
+  bool serialize (serialize_context_t *c, const T &plan)
   {
     unsigned int width = plan.get_width ();
     unsigned int inner_bit_count = plan.get_inner_bit_count ();
-    const hb_array_t<const uint32_t> output_map = plan.get_output_map ();
+    const array_t<const uint32_t> output_map = plan.get_output_map ();
 
     TRACE_SERIALIZE (this);
     if (unlikely (output_map.length && ((((inner_bit_count-1)&~0xF)!=0) || (((width-1)&~0x3)!=0))))
@@ -3607,11 +3607,11 @@ struct DeltaSetIndexMapFormat01
   unsigned get_inner_bit_count () const { return (entryFormat & 0xF) + 1; }
 
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) &&
-		  hb_barrier () &&
+		  barrier () &&
                   c->check_range (mapDataZ.arrayZ,
                                   mapCount,
                                   get_width ()));
@@ -3632,7 +3632,7 @@ struct DeltaSetIndexMapFormat01
 struct DeltaSetIndexMap
 {
   template <typename T>
-  bool serialize (hb_serialize_context_t *c, const T &plan)
+  bool serialize (serialize_context_t *c, const T &plan)
   {
     TRACE_SERIALIZE (this);
     unsigned length = plan.get_output_map ().length;
@@ -3680,11 +3680,11 @@ struct DeltaSetIndexMap
     }
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     if (!u.format.sanitize (c)) return_trace (false);
-    hb_barrier ();
+    barrier ();
     switch (u.format) {
     case 0: return_trace (u.format0.sanitize (c));
     case 1: return_trace (u.format1.sanitize (c));
@@ -3692,7 +3692,7 @@ struct DeltaSetIndexMap
     }
   }
 
-  DeltaSetIndexMap* copy (hb_serialize_context_t *c) const
+  DeltaSetIndexMap* copy (serialize_context_t *c) const
   {
     TRACE_SERIALIZE (this);
     switch (u.format) {
@@ -3717,7 +3717,7 @@ struct ItemVarStoreInstancer
 {
   ItemVarStoreInstancer (const ItemVariationStore *varStore,
 			 const DeltaSetIndexMap *varIdxMap,
-			 hb_array_t<const int> coords,
+			 array_t<const int> coords,
 			 VarRegionList::cache_t *cache = nullptr) :
     varStore (varStore), varIdxMap (varIdxMap), coords (coords), cache (cache)
   {
@@ -3741,7 +3741,7 @@ struct ItemVarStoreInstancer
 
   const ItemVariationStore *varStore;
   const DeltaSetIndexMap *varIdxMap;
-  hb_array_t<const int> coords;
+  array_t<const int> coords;
   VarRegionList::cache_t *cache;
 };
 
@@ -3749,7 +3749,7 @@ struct MultiItemVarStoreInstancer
 {
   MultiItemVarStoreInstancer (const MultiItemVariationStore *varStore,
 			      const DeltaSetIndexMap *varIdxMap,
-			      hb_array_t<const int> coords,
+			      array_t<const int> coords,
 			      SparseVarRegionList::cache_t *cache = nullptr) :
     varStore (varStore), varIdxMap (varIdxMap), coords (coords), cache (cache)
   {
@@ -3762,11 +3762,11 @@ struct MultiItemVarStoreInstancer
   float operator[] (uint32_t varIdx) const
   {
     float v = 0;
-    (*this) (hb_array (&v, 1), varIdx);
+    (*this) (array (&v, 1), varIdx);
     return v;
   }
 
-  void operator() (hb_array_t<float> out, uint32_t varIdx, unsigned short offset = 0) const
+  void operator() (array_t<float> out, uint32_t varIdx, unsigned short offset = 0) const
   {
     if (coords)
     {
@@ -3783,7 +3783,7 @@ struct MultiItemVarStoreInstancer
 
   const MultiItemVariationStore *varStore;
   const DeltaSetIndexMap *varIdxMap;
-  hb_array_t<const int> coords;
+  array_t<const int> coords;
   SparseVarRegionList::cache_t *cache;
 };
 
@@ -3803,7 +3803,7 @@ struct Condition;
 
 template <typename Instancer>
 static bool
-_hb_recurse_condition_evaluate (const struct Condition &condition,
+_recurse_condition_evaluate (const struct Condition &condition,
 				const int *coords,
 				unsigned int coord_len,
 				Instancer *instancer);
@@ -3812,28 +3812,28 @@ struct ConditionAxisRange
 {
   friend struct Condition;
 
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
     auto *out = c->serializer->embed (this);
     if (unlikely (!out)) return_trace (false);
 
-    const hb_map_t *index_map = &c->plan->axes_index_map;
+    const map_t *index_map = &c->plan->axes_index_map;
     if (index_map->is_empty ()) return_trace (true);
 
-    const hb_map_t& axes_old_index_tag_map = c->plan->axes_old_index_tag_map;
-    hb_codepoint_t *axis_tag;
+    const map_t& axes_old_index_tag_map = c->plan->axes_old_index_tag_map;
+    codepoint_t *axis_tag;
     if (!axes_old_index_tag_map.has (axisIndex, &axis_tag) ||
         !index_map->has (axisIndex))
       return_trace (false);
 
-    const hb_hashmap_t<hb_tag_t, Triple>& normalized_axes_location = c->plan->axes_location;
+    const hashmap_t<tag_t, Triple>& normalized_axes_location = c->plan->axes_location;
     Triple axis_limit{-1.0, 0.0, 1.0};
     Triple *normalized_limit;
     if (normalized_axes_location.has (*axis_tag, &normalized_limit))
       axis_limit = *normalized_limit;
 
-    const hb_hashmap_t<hb_tag_t, TripleDistances>& axes_triple_distances = c->plan->axes_triple_distances;
+    const hashmap_t<tag_t, TripleDistances>& axes_triple_distances = c->plan->axes_triple_distances;
     TripleDistances axis_triple_distances{1.0, 1.0};
     TripleDistances *triple_dists;
     if (axes_triple_distances.has (*axis_tag, &triple_dists))
@@ -3849,14 +3849,14 @@ struct ConditionAxisRange
   }
 
   private:
-  Cond_with_Var_flag_t keep_with_variations (hb_collect_feature_substitutes_with_var_context_t *c,
-                                             hb_map_t *condition_map /* OUT */) const
+  Cond_with_Var_flag_t keep_with_variations (collect_feature_substitutes_with_var_context_t *c,
+                                             map_t *condition_map /* OUT */) const
   {
     //invalid axis index, drop the entire record
     if (!c->axes_index_tag_map->has (axisIndex))
       return DROP_RECORD_WITH_VAR;
 
-    hb_tag_t axis_tag = c->axes_index_tag_map->get (axisIndex);
+    tag_t axis_tag = c->axes_index_tag_map->get (axisIndex);
 
     Triple axis_range (-1.0, 0.0, 1.0);
     Triple *axis_limit;
@@ -3893,7 +3893,7 @@ struct ConditionAxisRange
       // unique with variations
       int16_t int_filter_max_val = filterRangeMaxValue.to_int ();
       int16_t int_filter_min_val = filterRangeMinValue.to_int ();
-      hb_codepoint_t val = (int_filter_max_val << 16) + int_filter_min_val;
+      codepoint_t val = (int_filter_max_val << 16) + int_filter_min_val;
 
       condition_map->set (axisIndex, val);
       return KEEP_COND_WITH_VAR;
@@ -3909,7 +3909,7 @@ struct ConditionAxisRange
     return filterRangeMinValue.to_int () <= coord && coord <= filterRangeMaxValue.to_int ();
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
@@ -3928,7 +3928,7 @@ struct ConditionValue
 {
   friend struct Condition;
 
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
     // TODO(subset)
@@ -3945,8 +3945,8 @@ struct ConditionValue
     return value > 0;
   }
 
-  bool subset (hb_subset_context_t *c,
-               hb_subset_layout_context_t *l,
+  bool subset (subset_context_t *c,
+               subset_layout_context_t *l,
                bool insert_catch_all) const
   {
     TRACE_SUBSET (this);
@@ -3954,7 +3954,7 @@ struct ConditionValue
     return_trace (false);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
@@ -3972,7 +3972,7 @@ struct ConditionAnd
 {
   friend struct Condition;
 
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
     // TODO(subset)
@@ -3986,15 +3986,15 @@ struct ConditionAnd
   {
     unsigned int count = conditions.len;
     for (unsigned int i = 0; i < count; i++)
-      if (!_hb_recurse_condition_evaluate (this+conditions.arrayZ[i],
+      if (!_recurse_condition_evaluate (this+conditions.arrayZ[i],
 					   coords, coord_len,
 					   instancer))
 	return false;
     return true;
   }
 
-  bool subset (hb_subset_context_t *c,
-               hb_subset_layout_context_t *l,
+  bool subset (subset_context_t *c,
+               subset_layout_context_t *l,
                bool insert_catch_all) const
   {
     TRACE_SUBSET (this);
@@ -4002,7 +4002,7 @@ struct ConditionAnd
     return_trace (false);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (conditions.sanitize (c, this));
@@ -4019,7 +4019,7 @@ struct ConditionOr
 {
   friend struct Condition;
 
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
     // TODO(subset)
@@ -4033,15 +4033,15 @@ struct ConditionOr
   {
     unsigned int count = conditions.len;
     for (unsigned int i = 0; i < count; i++)
-      if (_hb_recurse_condition_evaluate (this+conditions.arrayZ[i],
+      if (_recurse_condition_evaluate (this+conditions.arrayZ[i],
 					  coords, coord_len,
 					  instancer))
 	return true;
     return false;
   }
 
-  bool subset (hb_subset_context_t *c,
-               hb_subset_layout_context_t *l,
+  bool subset (subset_context_t *c,
+               subset_layout_context_t *l,
                bool insert_catch_all) const
   {
     TRACE_SUBSET (this);
@@ -4049,7 +4049,7 @@ struct ConditionOr
     return_trace (false);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (conditions.sanitize (c, this));
@@ -4066,7 +4066,7 @@ struct ConditionNegate
 {
   friend struct Condition;
 
-  bool subset (hb_subset_context_t *c) const
+  bool subset (subset_context_t *c) const
   {
     TRACE_SUBSET (this);
     // TODO(subset)
@@ -4078,13 +4078,13 @@ struct ConditionNegate
   bool evaluate (const int *coords, unsigned int coord_len,
 		 Instancer *instancer) const
   {
-    return !_hb_recurse_condition_evaluate (this+condition,
+    return !_recurse_condition_evaluate (this+condition,
 					    coords, coord_len,
 					    instancer);
   }
 
-  bool subset (hb_subset_context_t *c,
-               hb_subset_layout_context_t *l,
+  bool subset (subset_context_t *c,
+               subset_layout_context_t *l,
                bool insert_catch_all) const
   {
     TRACE_SUBSET (this);
@@ -4092,7 +4092,7 @@ struct ConditionNegate
     return_trace (false);
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (condition.sanitize (c, this));
@@ -4121,8 +4121,8 @@ struct Condition
     }
   }
 
-  Cond_with_Var_flag_t keep_with_variations (hb_collect_feature_substitutes_with_var_context_t *c,
-                                             hb_map_t *condition_map /* OUT */) const
+  Cond_with_Var_flag_t keep_with_variations (collect_feature_substitutes_with_var_context_t *c,
+                                             map_t *condition_map /* OUT */) const
   {
     switch (u.format) {
     case 1: return u.format1.keep_with_variations (c, condition_map);
@@ -4146,11 +4146,11 @@ struct Condition
     }
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     if (!u.format.sanitize (c)) return_trace (false);
-    hb_barrier ();
+    barrier ();
     switch (u.format) {
     case 1: return_trace (u.format1.sanitize (c));
     case 2: return_trace (u.format2.sanitize (c));
@@ -4176,7 +4176,7 @@ struct Condition
 
 template <typename Instancer>
 bool
-_hb_recurse_condition_evaluate (const struct Condition &condition,
+_recurse_condition_evaluate (const struct Condition &condition,
 				const int *coords,
 				unsigned int coord_len,
 				Instancer *instancer)
@@ -4189,7 +4189,7 @@ struct ConditionList
   const Condition& operator[] (unsigned i) const
   { return this+conditions[i]; }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (conditions.sanitize (c, this));
@@ -4213,15 +4213,15 @@ struct ConditionSet
     return true;
   }
 
-  void keep_with_variations (hb_collect_feature_substitutes_with_var_context_t *c) const
+  void keep_with_variations (collect_feature_substitutes_with_var_context_t *c) const
   {
-    hb_map_t *condition_map = hb_map_create ();
+    map_t *condition_map = map_create ();
     if (unlikely (!condition_map)) return;
-    hb::shared_ptr<hb_map_t> p {condition_map};
+    hb::shared_ptr<map_t> p {condition_map};
 
-    hb_set_t *cond_set = hb_set_create ();
+    set_t *cond_set = set_create ();
     if (unlikely (!cond_set)) return;
-    hb::shared_ptr<hb_set_t> s {cond_set};
+    hb::shared_ptr<set_t> s {cond_set};
 
     c->apply = true;
     bool should_keep = false;
@@ -4259,8 +4259,8 @@ struct ConditionSet
       c->universal = true;
   }
 
-  bool subset (hb_subset_context_t *c,
-               hb_subset_layout_context_t *l,
+  bool subset (subset_context_t *c,
+               subset_layout_context_t *l,
                bool insert_catch_all) const
   {
     TRACE_SUBSET (this);
@@ -4269,7 +4269,7 @@ struct ConditionSet
 
     if (insert_catch_all) return_trace (true);
 
-    hb_set_t *retained_cond_set = nullptr;
+    set_t *retained_cond_set = nullptr;
     if (l->feature_record_cond_idx_map != nullptr)
       retained_cond_set = l->feature_record_cond_idx_map->get (l->cur_feature_var_record_idx);
 
@@ -4284,7 +4284,7 @@ struct ConditionSet
     return_trace (bool (out->conditions));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (conditions.sanitize (c, this));
@@ -4300,22 +4300,22 @@ struct FeatureTableSubstitutionRecord
 {
   friend struct FeatureTableSubstitution;
 
-  void collect_lookups (const void *base, hb_set_t *lookup_indexes /* OUT */) const
+  void collect_lookups (const void *base, set_t *lookup_indexes /* OUT */) const
   {
     return (base+feature).add_lookup_indexes_to (lookup_indexes);
   }
 
   void closure_features (const void *base,
-			 const hb_map_t *lookup_indexes,
-			 hb_set_t       *feature_indexes /* OUT */) const
+			 const map_t *lookup_indexes,
+			 set_t       *feature_indexes /* OUT */) const
   {
     if ((base+feature).intersects_lookup_indexes (lookup_indexes))
       feature_indexes->add (featureIndex);
   }
 
-  void collect_feature_substitutes_with_variations (hb_hashmap_t<unsigned, const Feature*> *feature_substitutes_map,
-                                                    hb_set_t& catch_all_record_feature_idxes,
-                                                    const hb_set_t *feature_indices,
+  void collect_feature_substitutes_with_variations (hashmap_t<unsigned, const Feature*> *feature_substitutes_map,
+                                                    set_t& catch_all_record_feature_idxes,
+                                                    const set_t *feature_indices,
                                                     const void *base) const
   {
     if (feature_indices->has (featureIndex))
@@ -4325,12 +4325,12 @@ struct FeatureTableSubstitutionRecord
     }
   }
 
-  bool serialize (hb_subset_layout_context_t *c,
+  bool serialize (subset_layout_context_t *c,
                   unsigned feature_index,
                   const Feature *f, const Tag *tag)
   {
     TRACE_SERIALIZE (this);
-    hb_serialize_context_t *s = c->subset_context->serializer;
+    serialize_context_t *s = c->subset_context->serializer;
     if (unlikely (!s->extend_min (this))) return_trace (false);
 
     uint32_t *new_feature_idx;
@@ -4348,7 +4348,7 @@ struct FeatureTableSubstitutionRecord
     return_trace (ret);
   }
 
-  bool subset (hb_subset_layout_context_t *c, const void *base) const
+  bool subset (subset_layout_context_t *c, const void *base) const
   {
     TRACE_SUBSET (this);
     uint32_t *new_feature_index;
@@ -4362,7 +4362,7 @@ struct FeatureTableSubstitutionRecord
     return_trace (out->feature.serialize_subset (c->subset_context, feature, base, c));
   }
 
-  bool sanitize (hb_sanitize_context_t *c, const void *base) const
+  bool sanitize (sanitize_context_t *c, const void *base) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && feature.sanitize (c, base));
@@ -4389,24 +4389,24 @@ struct FeatureTableSubstitution
     return nullptr;
   }
 
-  void collect_lookups (const hb_set_t *feature_indexes,
-			hb_set_t       *lookup_indexes /* OUT */) const
+  void collect_lookups (const set_t *feature_indexes,
+			set_t       *lookup_indexes /* OUT */) const
   {
-    + hb_iter (substitutions)
-    | hb_filter (feature_indexes, &FeatureTableSubstitutionRecord::featureIndex)
-    | hb_apply ([this, lookup_indexes] (const FeatureTableSubstitutionRecord& r)
+    + iter (substitutions)
+    | filter (feature_indexes, &FeatureTableSubstitutionRecord::featureIndex)
+    | apply ([this, lookup_indexes] (const FeatureTableSubstitutionRecord& r)
 		{ r.collect_lookups (this, lookup_indexes); })
     ;
   }
 
-  void closure_features (const hb_map_t *lookup_indexes,
-			 hb_set_t       *feature_indexes /* OUT */) const
+  void closure_features (const map_t *lookup_indexes,
+			 set_t       *feature_indexes /* OUT */) const
   {
     for (const FeatureTableSubstitutionRecord& record : substitutions)
       record.closure_features (this, lookup_indexes, feature_indexes);
   }
 
-  bool intersects_features (const hb_map_t *feature_index_map) const
+  bool intersects_features (const map_t *feature_index_map) const
   {
     for (const FeatureTableSubstitutionRecord& record : substitutions)
     {
@@ -4415,7 +4415,7 @@ struct FeatureTableSubstitution
     return false;
   }
 
-  void collect_feature_substitutes_with_variations (hb_collect_feature_substitutes_with_var_context_t *c) const
+  void collect_feature_substitutes_with_variations (collect_feature_substitutes_with_var_context_t *c) const
   {
     for (const FeatureTableSubstitutionRecord& record : substitutions)
       record.collect_feature_substitutes_with_variations (c->feature_substitutes_map,
@@ -4423,8 +4423,8 @@ struct FeatureTableSubstitution
                                                           c->feature_indices, this);
   }
 
-  bool subset (hb_subset_context_t        *c,
-	       hb_subset_layout_context_t *l,
+  bool subset (subset_context_t        *c,
+	       subset_layout_context_t *l,
                bool insert_catch_all) const
   {
     TRACE_SUBSET (this);
@@ -4438,7 +4438,7 @@ struct FeatureTableSubstitution
     {
       for (unsigned feature_index : *(l->catch_all_record_feature_idxes))
       {
-        hb_pair_t<const void*, const void*> *p;
+        pair_t<const void*, const void*> *p;
         if (!l->feature_idx_tag_map->has (feature_index, &p))
           return_trace (false);
         auto *o = out->substitutions.serialize_append (c->serializer);
@@ -4451,17 +4451,17 @@ struct FeatureTableSubstitution
     }
 
     + substitutions.iter ()
-    | hb_apply (subset_record_array (l, &(out->substitutions), this))
+    | apply (subset_record_array (l, &(out->substitutions), this))
     ;
 
     return_trace (bool (out->substitutions));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (version.sanitize (c) &&
-		  hb_barrier () &&
+		  barrier () &&
 		  likely (version.major == 1) &&
 		  substitutions.sanitize (c, this));
   }
@@ -4479,25 +4479,25 @@ struct FeatureVariationRecord
   friend struct FeatureVariations;
 
   void collect_lookups (const void     *base,
-			const hb_set_t *feature_indexes,
-			hb_set_t       *lookup_indexes /* OUT */) const
+			const set_t *feature_indexes,
+			set_t       *lookup_indexes /* OUT */) const
   {
     return (base+substitutions).collect_lookups (feature_indexes, lookup_indexes);
   }
 
   void closure_features (const void     *base,
-			 const hb_map_t *lookup_indexes,
-			 hb_set_t       *feature_indexes /* OUT */) const
+			 const map_t *lookup_indexes,
+			 set_t       *feature_indexes /* OUT */) const
   {
     (base+substitutions).closure_features (lookup_indexes, feature_indexes);
   }
 
-  bool intersects_features (const void *base, const hb_map_t *feature_index_map) const
+  bool intersects_features (const void *base, const map_t *feature_index_map) const
   {
     return (base+substitutions).intersects_features (feature_index_map);
   }
 
-  void collect_feature_substitutes_with_variations (hb_collect_feature_substitutes_with_var_context_t *c,
+  void collect_feature_substitutes_with_variations (collect_feature_substitutes_with_var_context_t *c,
                                                     const void *base) const
   {
     (base+conditions).keep_with_variations (c);
@@ -4508,7 +4508,7 @@ struct FeatureVariationRecord
     }
   }
 
-  bool subset (hb_subset_layout_context_t *c, const void *base,
+  bool subset (subset_layout_context_t *c, const void *base,
                bool insert_catch_all = false) const
   {
     TRACE_SUBSET (this);
@@ -4521,7 +4521,7 @@ struct FeatureVariationRecord
     return_trace (true);
   }
 
-  bool sanitize (hb_sanitize_context_t *c, const void *base) const
+  bool sanitize (sanitize_context_t *c, const void *base) const
   {
     TRACE_SANITIZE (this);
     return_trace (conditions.sanitize (c, base) &&
@@ -4566,7 +4566,7 @@ struct FeatureVariations
     return (this+record.substitutions).find_substitute (feature_index);
   }
 
-  void collect_feature_substitutes_with_variations (hb_collect_feature_substitutes_with_var_context_t *c) const
+  void collect_feature_substitutes_with_variations (collect_feature_substitutes_with_var_context_t *c) const
   {
     unsigned int count = varRecords.len;
     for (unsigned int i = 0; i < count; i++)
@@ -4580,15 +4580,15 @@ struct FeatureVariations
       c->catch_all_record_feature_idxes.reset ();
   }
 
-  FeatureVariations* copy (hb_serialize_context_t *c) const
+  FeatureVariations* copy (serialize_context_t *c) const
   {
     TRACE_SERIALIZE (this);
     return_trace (c->embed (*this));
   }
 
-  void collect_lookups (const hb_set_t *feature_indexes,
-			const hb_hashmap_t<unsigned, hb::shared_ptr<hb_set_t>> *feature_record_cond_idx_map,
-			hb_set_t       *lookup_indexes /* OUT */) const
+  void collect_lookups (const set_t *feature_indexes,
+			const hashmap_t<unsigned, hb::shared_ptr<set_t>> *feature_record_cond_idx_map,
+			set_t       *lookup_indexes /* OUT */) const
   {
     unsigned count = varRecords.len;
     for (unsigned int i = 0; i < count; i++)
@@ -4600,9 +4600,9 @@ struct FeatureVariations
     }
   }
 
-  void closure_features (const hb_map_t *lookup_indexes,
-			 const hb_hashmap_t<unsigned, hb::shared_ptr<hb_set_t>> *feature_record_cond_idx_map,
-			 hb_set_t       *feature_indexes /* OUT */) const
+  void closure_features (const map_t *lookup_indexes,
+			 const hashmap_t<unsigned, hb::shared_ptr<set_t>> *feature_record_cond_idx_map,
+			 set_t       *feature_indexes /* OUT */) const
   {
     unsigned int count = varRecords.len;
     for (unsigned int i = 0; i < count; i++)
@@ -4614,8 +4614,8 @@ struct FeatureVariations
     }
   }
 
-  bool subset (hb_subset_context_t *c,
-	       hb_subset_layout_context_t *l) const
+  bool subset (subset_context_t *c,
+	       subset_layout_context_t *l) const
   {
     TRACE_SUBSET (this);
     auto *out = c->serializer->start_embed (*this);
@@ -4652,11 +4652,11 @@ struct FeatureVariations
     return_trace (bool (out->varRecords));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (version.sanitize (c) &&
-		  hb_barrier () &&
+		  barrier () &&
 		  likely (version.major == 1) &&
 		  varRecords.sanitize (c, this));
   }
@@ -4680,10 +4680,10 @@ struct HintingDevice
 
   private:
 
-  hb_position_t get_x_delta (hb_font_t *font) const
+  position_t get_x_delta (font_t *font) const
   { return get_delta (font->x_ppem, font->x_scale); }
 
-  hb_position_t get_y_delta (hb_font_t *font) const
+  position_t get_y_delta (font_t *font) const
   { return get_delta (font->y_ppem, font->y_scale); }
 
   public:
@@ -4695,13 +4695,13 @@ struct HintingDevice
     return HBUINT16::static_size * (4 + ((endSize - startSize) >> (4 - f)));
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this) && c->check_range (this, this->get_size ()));
   }
 
-  HintingDevice* copy (hb_serialize_context_t *c) const
+  HintingDevice* copy (serialize_context_t *c) const
   {
     TRACE_SERIALIZE (this);
     return_trace (c->embed<HintingDevice> (this));
@@ -4762,23 +4762,23 @@ struct VariationDevice
 
   private:
 
-  hb_position_t get_x_delta (hb_font_t *font,
+  position_t get_x_delta (font_t *font,
 			     const ItemVariationStore &store,
 			     ItemVariationStore::cache_t *store_cache = nullptr) const
   { return font->em_scalef_x (get_delta (font, store, store_cache)); }
 
-  hb_position_t get_y_delta (hb_font_t *font,
+  position_t get_y_delta (font_t *font,
 			     const ItemVariationStore &store,
 			     ItemVariationStore::cache_t *store_cache = nullptr) const
   { return font->em_scalef_y (get_delta (font, store, store_cache)); }
 
-  VariationDevice* copy (hb_serialize_context_t *c,
-                         const hb_hashmap_t<unsigned, hb_pair_t<unsigned, int>> *layout_variation_idx_delta_map) const
+  VariationDevice* copy (serialize_context_t *c,
+                         const hashmap_t<unsigned, pair_t<unsigned, int>> *layout_variation_idx_delta_map) const
   {
     TRACE_SERIALIZE (this);
     if (!layout_variation_idx_delta_map) return_trace (nullptr);
 
-    hb_pair_t<unsigned, int> *v;
+    pair_t<unsigned, int> *v;
     if (!layout_variation_idx_delta_map->has (varIdx, &v))
       return_trace (nullptr);
 
@@ -4786,15 +4786,15 @@ struct VariationDevice
     auto *out = c->embed (this);
     if (unlikely (!out)) return_trace (nullptr);
 
-    if (!c->check_assign (out->varIdx, hb_first (*v), HB_SERIALIZE_ERROR_INT_OVERFLOW))
+    if (!c->check_assign (out->varIdx, first (*v), HB_SERIALIZE_ERROR_INT_OVERFLOW))
       return_trace (nullptr);
     return_trace (out);
   }
 
-  void collect_variation_index (hb_collect_variation_indices_context_t *c) const
+  void collect_variation_index (collect_variation_indices_context_t *c) const
   { c->layout_variation_indices->add (varIdx); }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     return_trace (c->check_struct (this));
@@ -4802,7 +4802,7 @@ struct VariationDevice
 
   private:
 
-  float get_delta (hb_font_t *font,
+  float get_delta (font_t *font,
 		   const ItemVariationStore &store,
 		   ItemVariationStore::cache_t *store_cache = nullptr) const
   {
@@ -4829,7 +4829,7 @@ struct DeviceHeader
 
 struct Device
 {
-  hb_position_t get_x_delta (hb_font_t *font,
+  position_t get_x_delta (font_t *font,
 			     const ItemVariationStore &store=Null (ItemVariationStore),
 			     ItemVariationStore::cache_t *store_cache = nullptr) const
   {
@@ -4847,7 +4847,7 @@ struct Device
       return 0;
     }
   }
-  hb_position_t get_y_delta (hb_font_t *font,
+  position_t get_y_delta (font_t *font,
 			     const ItemVariationStore &store=Null (ItemVariationStore),
 			     ItemVariationStore::cache_t *store_cache = nullptr) const
   {
@@ -4866,7 +4866,7 @@ struct Device
     }
   }
 
-  bool sanitize (hb_sanitize_context_t *c) const
+  bool sanitize (sanitize_context_t *c) const
   {
     TRACE_SANITIZE (this);
     if (!u.b.format.sanitize (c)) return_trace (false);
@@ -4884,8 +4884,8 @@ struct Device
     }
   }
 
-  Device* copy (hb_serialize_context_t *c,
-                const hb_hashmap_t<unsigned, hb_pair_t<unsigned, int>> *layout_variation_idx_delta_map=nullptr) const
+  Device* copy (serialize_context_t *c,
+                const hashmap_t<unsigned, pair_t<unsigned, int>> *layout_variation_idx_delta_map=nullptr) const
   {
     TRACE_SERIALIZE (this);
     switch (u.b.format) {
@@ -4904,7 +4904,7 @@ struct Device
     }
   }
 
-  void collect_variation_indices (hb_collect_variation_indices_context_t *c) const
+  void collect_variation_indices (collect_variation_indices_context_t *c) const
   {
     switch (u.b.format) {
 #ifndef HB_NO_HINTING

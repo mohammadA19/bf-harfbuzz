@@ -85,25 +85,25 @@
  */
 
 
-using hb_ft_advance_cache_t = hb_cache_t<16, 24, 8, false>;
+using ft_advance_cache_t = cache_t<16, 24, 8, false>;
 
-struct hb_ft_font_t
+struct ft_font_t
 {
   int load_flags;
   bool symbol; /* Whether selected cmap is symbol cmap. */
   bool unref; /* Whether to destroy ft_face when done. */
   bool transform; /* Whether to apply FT_Face's transform. */
 
-  mutable hb_mutex_t lock; /* Protects members below. */
+  mutable mutex_t lock; /* Protects members below. */
   FT_Face ft_face;
   mutable unsigned cached_serial;
-  mutable hb_ft_advance_cache_t advance_cache;
+  mutable ft_advance_cache_t advance_cache;
 };
 
-static hb_ft_font_t *
-_hb_ft_font_create (FT_Face ft_face, bool symbol, bool unref)
+static ft_font_t *
+_ft_font_create (FT_Face ft_face, bool symbol, bool unref)
 {
-  hb_ft_font_t *ft_font = (hb_ft_font_t *) hb_calloc (1, sizeof (hb_ft_font_t));
+  ft_font_t *ft_font = (ft_font_t *) calloc (1, sizeof (ft_font_t));
   if (unlikely (!ft_font)) return nullptr;
 
   ft_font->lock.init ();
@@ -114,35 +114,35 @@ _hb_ft_font_create (FT_Face ft_face, bool symbol, bool unref)
   ft_font->load_flags = FT_LOAD_DEFAULT | FT_LOAD_NO_HINTING;
 
   ft_font->cached_serial = (unsigned) -1;
-  new (&ft_font->advance_cache) hb_ft_advance_cache_t;
+  new (&ft_font->advance_cache) ft_advance_cache_t;
 
   return ft_font;
 }
 
 static void
-_hb_ft_face_destroy (void *data)
+_ft_face_destroy (void *data)
 {
   FT_Done_Face ((FT_Face) data);
 }
 
 static void
-_hb_ft_font_destroy (void *data)
+_ft_font_destroy (void *data)
 {
-  hb_ft_font_t *ft_font = (hb_ft_font_t *) data;
+  ft_font_t *ft_font = (ft_font_t *) data;
 
   if (ft_font->unref)
-    _hb_ft_face_destroy (ft_font->ft_face);
+    _ft_face_destroy (ft_font->ft_face);
 
   ft_font->lock.fini ();
 
-  hb_free (ft_font);
+  free (ft_font);
 }
 
 
-/* hb_font changed, update FT_Face. */
-static void _hb_ft_hb_font_changed (hb_font_t *font, FT_Face ft_face)
+/* font changed, update FT_Face. */
+static void _ft_font_changed (font_t *font, FT_Face ft_face)
 {
-  hb_ft_font_t *ft_font = (hb_ft_font_t *) font->user_data;
+  ft_font_t *ft_font = (ft_font_t *) font->user_data;
 
   float x_mult = 1.f, y_mult = 1.f;
 
@@ -186,29 +186,29 @@ static void _hb_ft_hb_font_changed (hb_font_t *font, FT_Face ft_face)
 
 #if defined(HAVE_FT_GET_VAR_BLEND_COORDINATES) && !defined(HB_NO_VAR)
   unsigned int num_coords;
-  const float *coords = hb_font_get_var_coords_design (font, &num_coords);
+  const float *coords = font_get_var_coords_design (font, &num_coords);
   if (num_coords)
   {
-    FT_Fixed *ft_coords = (FT_Fixed *) hb_calloc (num_coords, sizeof (FT_Fixed));
+    FT_Fixed *ft_coords = (FT_Fixed *) calloc (num_coords, sizeof (FT_Fixed));
     if (ft_coords)
     {
       for (unsigned int i = 0; i < num_coords; i++)
 	  ft_coords[i] = coords[i] * 65536.f;
       FT_Set_Var_Design_Coordinates (ft_face, num_coords, ft_coords);
-      hb_free (ft_coords);
+      free (ft_coords);
     }
   }
 #endif
 }
 
-/* Check if hb_font changed, update FT_Face. */
+/* Check if font changed, update FT_Face. */
 static inline bool
-_hb_ft_hb_font_check_changed (hb_font_t *font,
-			      const hb_ft_font_t *ft_font)
+_ft_font_check_changed (font_t *font,
+			      const ft_font_t *ft_font)
 {
   if (font->serial != ft_font->cached_serial)
   {
-    _hb_ft_hb_font_changed (font, ft_font->ft_face);
+    _ft_font_changed (font, ft_font->ft_face);
     ft_font->advance_cache.clear ();
     ft_font->cached_serial = font->serial;
     return true;
@@ -218,108 +218,108 @@ _hb_ft_hb_font_check_changed (hb_font_t *font,
 
 
 /**
- * hb_ft_font_set_load_flags:
- * @font: #hb_font_t to work upon
+ * ft_font_set_load_flags:
+ * @font: #font_t to work upon
  * @load_flags: The FreeType load flags to set
  *
- * Sets the FT_Load_Glyph load flags for the specified #hb_font_t.
+ * Sets the FT_Load_Glyph load flags for the specified #font_t.
  *
  * For more information, see
  * <https://freetype.org/freetype2/docs/reference/ft2-glyph_retrieval.html#ft_load_xxx>
  *
- * This function works with #hb_font_t objects created by
- * hb_ft_font_create() or hb_ft_font_create_referenced().
+ * This function works with #font_t objects created by
+ * ft_font_create() or ft_font_create_referenced().
  *
  * Since: 1.0.5
  **/
 void
-hb_ft_font_set_load_flags (hb_font_t *font, int load_flags)
+ft_font_set_load_flags (font_t *font, int load_flags)
 {
-  if (hb_object_is_immutable (font))
+  if (object_is_immutable (font))
     return;
 
-  if (unlikely (font->destroy != (hb_destroy_func_t) _hb_ft_font_destroy))
+  if (unlikely (font->destroy != (destroy_func_t) _ft_font_destroy))
     return;
 
-  hb_ft_font_t *ft_font = (hb_ft_font_t *) font->user_data;
+  ft_font_t *ft_font = (ft_font_t *) font->user_data;
 
   ft_font->load_flags = load_flags;
 }
 
 /**
- * hb_ft_font_get_load_flags:
- * @font: #hb_font_t to work upon
+ * ft_font_get_load_flags:
+ * @font: #font_t to work upon
  *
- * Fetches the FT_Load_Glyph load flags of the specified #hb_font_t.
+ * Fetches the FT_Load_Glyph load flags of the specified #font_t.
  *
  * For more information, see
  * <https://freetype.org/freetype2/docs/reference/ft2-glyph_retrieval.html#ft_load_xxx>
  *
- * This function works with #hb_font_t objects created by
- * hb_ft_font_create() or hb_ft_font_create_referenced().
+ * This function works with #font_t objects created by
+ * ft_font_create() or ft_font_create_referenced().
  *
  * Return value: FT_Load_Glyph flags found, or 0
  *
  * Since: 1.0.5
  **/
 int
-hb_ft_font_get_load_flags (hb_font_t *font)
+ft_font_get_load_flags (font_t *font)
 {
-  if (unlikely (font->destroy != (hb_destroy_func_t) _hb_ft_font_destroy))
+  if (unlikely (font->destroy != (destroy_func_t) _ft_font_destroy))
     return 0;
 
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font->user_data;
+  const ft_font_t *ft_font = (const ft_font_t *) font->user_data;
 
   return ft_font->load_flags;
 }
 
 /**
- * hb_ft_font_get_face: (skip)
- * @font: #hb_font_t to work upon
+ * ft_font_get_face: (skip)
+ * @font: #font_t to work upon
  *
- * Fetches the FT_Face associated with the specified #hb_font_t
+ * Fetches the FT_Face associated with the specified #font_t
  * font object.
  *
- * This function works with #hb_font_t objects created by
- * hb_ft_font_create() or hb_ft_font_create_referenced().
+ * This function works with #font_t objects created by
+ * ft_font_create() or ft_font_create_referenced().
  *
  * Return value: (nullable): the FT_Face found or `NULL`
  *
  * Since: 0.9.2
  **/
 FT_Face
-hb_ft_font_get_face (hb_font_t *font)
+ft_font_get_face (font_t *font)
 {
-  if (unlikely (font->destroy != (hb_destroy_func_t) _hb_ft_font_destroy))
+  if (unlikely (font->destroy != (destroy_func_t) _ft_font_destroy))
     return nullptr;
 
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font->user_data;
+  const ft_font_t *ft_font = (const ft_font_t *) font->user_data;
 
   return ft_font->ft_face;
 }
 
 /**
- * hb_ft_font_lock_face: (skip)
- * @font: #hb_font_t to work upon
+ * ft_font_lock_face: (skip)
+ * @font: #font_t to work upon
  *
  * Gets the FT_Face associated with @font.
  *
  * This face will be kept around and access to the FT_Face object
- * from other HarfBuzz API wil be blocked until you call hb_ft_font_unlock_face().
+ * from other HarfBuzz API wil be blocked until you call ft_font_unlock_face().
  *
- * This function works with #hb_font_t objects created by
- * hb_ft_font_create() or hb_ft_font_create_referenced().
+ * This function works with #font_t objects created by
+ * ft_font_create() or ft_font_create_referenced().
  *
  * Return value: (nullable) (transfer none): the FT_Face associated with @font or `NULL`
  * Since: 2.6.5
  **/
 FT_Face
-hb_ft_font_lock_face (hb_font_t *font)
+ft_font_lock_face (font_t *font)
 {
-  if (unlikely (font->destroy != (hb_destroy_func_t) _hb_ft_font_destroy))
+  if (unlikely (font->destroy != (destroy_func_t) _ft_font_destroy))
     return nullptr;
 
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font->user_data;
+  const ft_font_t *ft_font = (const ft_font_t *) font->user_data;
 
   ft_font->lock.lock ();
 
@@ -327,34 +327,34 @@ hb_ft_font_lock_face (hb_font_t *font)
 }
 
 /**
- * hb_ft_font_unlock_face: (skip)
- * @font: #hb_font_t to work upon
+ * ft_font_unlock_face: (skip)
+ * @font: #font_t to work upon
  *
- * Releases an FT_Face previously obtained with hb_ft_font_lock_face().
+ * Releases an FT_Face previously obtained with ft_font_lock_face().
  *
  * Since: 2.6.5
  **/
 void
-hb_ft_font_unlock_face (hb_font_t *font)
+ft_font_unlock_face (font_t *font)
 {
-  if (unlikely (font->destroy != (hb_destroy_func_t) _hb_ft_font_destroy))
+  if (unlikely (font->destroy != (destroy_func_t) _ft_font_destroy))
     return;
 
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font->user_data;
+  const ft_font_t *ft_font = (const ft_font_t *) font->user_data;
 
   ft_font->lock.unlock ();
 }
 
 
-static hb_bool_t
-hb_ft_get_nominal_glyph (hb_font_t *font,
+static bool_t
+ft_get_nominal_glyph (font_t *font,
 			 void *font_data,
-			 hb_codepoint_t unicode,
-			 hb_codepoint_t *glyph,
+			 codepoint_t unicode,
+			 codepoint_t *glyph,
 			 void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   unsigned int g = FT_Get_Char_Index (ft_font->ft_face, unicode);
 
   if (unlikely (!g))
@@ -373,10 +373,10 @@ hb_ft_get_nominal_glyph (hb_font_t *font,
 	break;
 #ifndef HB_NO_OT_SHAPER_ARABIC_FALLBACK
       case OT::OS2::font_page_t::FONT_PAGE_SIMP_ARABIC:
-	g = FT_Get_Char_Index (ft_font->ft_face, _hb_arabic_pua_simp_map (unicode));
+	g = FT_Get_Char_Index (ft_font->ft_face, _arabic_pua_simp_map (unicode));
 	break;
       case OT::OS2::font_page_t::FONT_PAGE_TRAD_ARABIC:
-	g = FT_Get_Char_Index (ft_font->ft_face, _hb_arabic_pua_trad_map (unicode));
+	g = FT_Get_Char_Index (ft_font->ft_face, _arabic_pua_trad_map (unicode));
 	break;
 #endif
       default:
@@ -394,24 +394,24 @@ hb_ft_get_nominal_glyph (hb_font_t *font,
 }
 
 static unsigned int
-hb_ft_get_nominal_glyphs (hb_font_t *font HB_UNUSED,
+ft_get_nominal_glyphs (font_t *font HB_UNUSED,
 			  void *font_data,
 			  unsigned int count,
-			  const hb_codepoint_t *first_unicode,
+			  const codepoint_t *first_unicode,
 			  unsigned int unicode_stride,
-			  hb_codepoint_t *first_glyph,
+			  codepoint_t *first_glyph,
 			  unsigned int glyph_stride,
 			  void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   unsigned int done;
   for (done = 0;
        done < count && (*first_glyph = FT_Get_Char_Index (ft_font->ft_face, *first_unicode));
        done++)
   {
-    first_unicode = &StructAtOffsetUnaligned<hb_codepoint_t> (first_unicode, unicode_stride);
-    first_glyph = &StructAtOffsetUnaligned<hb_codepoint_t> (first_glyph, glyph_stride);
+    first_unicode = &StructAtOffsetUnaligned<codepoint_t> (first_unicode, unicode_stride);
+    first_glyph = &StructAtOffsetUnaligned<codepoint_t> (first_glyph, glyph_stride);
   }
   /* We don't need to do ft_font->symbol dance here, since HB calls the singular
    * nominal_glyph() for what we don't handle here. */
@@ -419,16 +419,16 @@ hb_ft_get_nominal_glyphs (hb_font_t *font HB_UNUSED,
 }
 
 
-static hb_bool_t
-hb_ft_get_variation_glyph (hb_font_t *font HB_UNUSED,
+static bool_t
+ft_get_variation_glyph (font_t *font HB_UNUSED,
 			   void *font_data,
-			   hb_codepoint_t unicode,
-			   hb_codepoint_t variation_selector,
-			   hb_codepoint_t *glyph,
+			   codepoint_t unicode,
+			   codepoint_t variation_selector,
+			   codepoint_t *glyph,
 			   void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   unsigned int g = FT_Face_GetCharVariantIndex (ft_font->ft_face, unicode, variation_selector);
 
   if (unlikely (!g))
@@ -439,17 +439,17 @@ hb_ft_get_variation_glyph (hb_font_t *font HB_UNUSED,
 }
 
 static void
-hb_ft_get_glyph_h_advances (hb_font_t* font, void* font_data,
+ft_get_glyph_h_advances (font_t* font, void* font_data,
 			    unsigned count,
-			    const hb_codepoint_t *first_glyph,
+			    const codepoint_t *first_glyph,
 			    unsigned glyph_stride,
-			    hb_position_t *first_advance,
+			    position_t *first_advance,
 			    unsigned advance_stride,
 			    void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_position_t *orig_first_advance = first_advance;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  position_t *orig_first_advance = first_advance;
+  lock_t lock (ft_font->lock);
   FT_Face ft_face = ft_font->ft_face;
   int load_flags = ft_font->load_flags;
   float x_mult;
@@ -470,7 +470,7 @@ hb_ft_get_glyph_h_advances (hb_font_t* font, void* font_data,
   for (unsigned int i = 0; i < count; i++)
   {
     FT_Fixed v = 0;
-    hb_codepoint_t glyph = *first_glyph;
+    codepoint_t glyph = *first_glyph;
 
     unsigned int cv;
     if (ft_font->advance_cache.get (glyph, &cv))
@@ -486,32 +486,32 @@ hb_ft_get_glyph_h_advances (hb_font_t* font, void* font_data,
     }
 
     *first_advance = v;
-    first_glyph = &StructAtOffsetUnaligned<hb_codepoint_t> (first_glyph, glyph_stride);
-    first_advance = &StructAtOffsetUnaligned<hb_position_t> (first_advance, advance_stride);
+    first_glyph = &StructAtOffsetUnaligned<codepoint_t> (first_glyph, glyph_stride);
+    first_advance = &StructAtOffsetUnaligned<position_t> (first_advance, advance_stride);
   }
 
   if (font->x_strength && !font->embolden_in_place)
   {
     /* Emboldening. */
-    hb_position_t x_strength = font->x_scale >= 0 ? font->x_strength : -font->x_strength;
+    position_t x_strength = font->x_scale >= 0 ? font->x_strength : -font->x_strength;
     first_advance = orig_first_advance;
     for (unsigned int i = 0; i < count; i++)
     {
       *first_advance += *first_advance ? x_strength : 0;
-      first_advance = &StructAtOffsetUnaligned<hb_position_t> (first_advance, advance_stride);
+      first_advance = &StructAtOffsetUnaligned<position_t> (first_advance, advance_stride);
     }
   }
 }
 
 #ifndef HB_NO_VERTICAL
-static hb_position_t
-hb_ft_get_glyph_v_advance (hb_font_t *font,
+static position_t
+ft_get_glyph_v_advance (font_t *font,
 			   void *font_data,
-			   hb_codepoint_t glyph,
+			   codepoint_t glyph,
 			   void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   FT_Fixed v;
   float y_mult;
 #ifdef HAVE_FT_GET_TRANSFORM
@@ -536,22 +536,22 @@ hb_ft_get_glyph_v_advance (hb_font_t *font,
   /* Note: FreeType's vertical metrics grows downward while other FreeType coordinates
    * have a Y growing upward.  Hence the extra negation. */
 
-  hb_position_t y_strength = font->y_scale >= 0 ? font->y_strength : -font->y_strength;
+  position_t y_strength = font->y_scale >= 0 ? font->y_strength : -font->y_strength;
   return ((-v + (1<<9)) >> 10) + (font->embolden_in_place ? 0 : y_strength);
 }
 #endif
 
 #ifndef HB_NO_VERTICAL
-static hb_bool_t
-hb_ft_get_glyph_v_origin (hb_font_t *font,
+static bool_t
+ft_get_glyph_v_origin (font_t *font,
 			  void *font_data,
-			  hb_codepoint_t glyph,
-			  hb_position_t *x,
-			  hb_position_t *y,
+			  codepoint_t glyph,
+			  position_t *x,
+			  position_t *y,
 			  void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   FT_Face ft_face = ft_font->ft_face;
   float x_mult, y_mult;
 #ifdef HAVE_FT_GET_TRANSFORM
@@ -579,23 +579,23 @@ hb_ft_get_glyph_v_origin (hb_font_t *font,
   *x = ft_face->glyph->metrics.horiBearingX -   ft_face->glyph->metrics.vertBearingX;
   *y = ft_face->glyph->metrics.horiBearingY - (-ft_face->glyph->metrics.vertBearingY);
 
-  *x = (hb_position_t) (x_mult * *x);
-  *y = (hb_position_t) (y_mult * *y);
+  *x = (position_t) (x_mult * *x);
+  *y = (position_t) (y_mult * *y);
 
   return true;
 }
 #endif
 
 #ifndef HB_NO_OT_SHAPE_FALLBACK
-static hb_position_t
-hb_ft_get_glyph_h_kerning (hb_font_t *font,
+static position_t
+ft_get_glyph_h_kerning (font_t *font,
 			   void *font_data,
-			   hb_codepoint_t left_glyph,
-			   hb_codepoint_t right_glyph,
+			   codepoint_t left_glyph,
+			   codepoint_t right_glyph,
 			   void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   FT_Vector kerningv;
 
   FT_Kerning_Mode mode = font->x_ppem ? FT_KERNING_DEFAULT : FT_KERNING_UNFITTED;
@@ -606,15 +606,15 @@ hb_ft_get_glyph_h_kerning (hb_font_t *font,
 }
 #endif
 
-static hb_bool_t
-hb_ft_get_glyph_extents (hb_font_t *font,
+static bool_t
+ft_get_glyph_extents (font_t *font,
 			 void *font_data,
-			 hb_codepoint_t glyph,
-			 hb_glyph_extents_t *extents,
+			 codepoint_t glyph,
+			 glyph_extents_t *extents,
 			 void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   FT_Face ft_face = ft_font->ft_face;
   float x_mult, y_mult;
   float slant_xy = font->slant_xy;
@@ -638,7 +638,7 @@ hb_ft_get_glyph_extents (hb_font_t *font,
   if (unlikely (FT_Load_Glyph (ft_face, glyph, ft_font->load_flags)))
     return false;
 
-  /* Copied from hb_font_t::scale_glyph_extents. */
+  /* Copied from font_t::scale_glyph_extents. */
 
   float x1 = x_mult * ft_face->glyph->metrics.horiBearingX;
   float y1 = y_mult * ft_face->glyph->metrics.horiBearingY;
@@ -648,8 +648,8 @@ hb_ft_get_glyph_extents (hb_font_t *font,
   /* Apply slant. */
   if (slant_xy)
   {
-    x1 += hb_min (y1 * slant_xy, y2 * slant_xy);
-    x2 += hb_max (y1 * slant_xy, y2 * slant_xy);
+    x1 += min (y1 * slant_xy, y2 * slant_xy);
+    x2 += max (y1 * slant_xy, y2 * slant_xy);
   }
 
   extents->x_bearing = floorf (x1);
@@ -676,17 +676,17 @@ hb_ft_get_glyph_extents (hb_font_t *font,
   return true;
 }
 
-static hb_bool_t
-hb_ft_get_glyph_contour_point (hb_font_t *font HB_UNUSED,
+static bool_t
+ft_get_glyph_contour_point (font_t *font HB_UNUSED,
 			       void *font_data,
-			       hb_codepoint_t glyph,
+			       codepoint_t glyph,
 			       unsigned int point_index,
-			       hb_position_t *x,
-			       hb_position_t *y,
+			       position_t *x,
+			       position_t *y,
 			       void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   FT_Face ft_face = ft_font->ft_face;
 
   if (unlikely (FT_Load_Glyph (ft_face, glyph, ft_font->load_flags)))
@@ -704,33 +704,33 @@ hb_ft_get_glyph_contour_point (hb_font_t *font HB_UNUSED,
   return true;
 }
 
-static hb_bool_t
-hb_ft_get_glyph_name (hb_font_t *font HB_UNUSED,
+static bool_t
+ft_get_glyph_name (font_t *font HB_UNUSED,
 		      void *font_data,
-		      hb_codepoint_t glyph,
+		      codepoint_t glyph,
 		      char *name, unsigned int size,
 		      void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   FT_Face ft_face = ft_font->ft_face;
 
-  hb_bool_t ret = !FT_Get_Glyph_Name (ft_face, glyph, name, size);
+  bool_t ret = !FT_Get_Glyph_Name (ft_face, glyph, name, size);
   if (ret && (size && !*name))
     ret = false;
 
   return ret;
 }
 
-static hb_bool_t
-hb_ft_get_glyph_from_name (hb_font_t *font HB_UNUSED,
+static bool_t
+ft_get_glyph_from_name (font_t *font HB_UNUSED,
 			   void *font_data,
 			   const char *name, int len, /* -1 means nul-terminated */
-			   hb_codepoint_t *glyph,
+			   codepoint_t *glyph,
 			   void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   FT_Face ft_face = ft_font->ft_face;
 
   if (len < 0)
@@ -738,7 +738,7 @@ hb_ft_get_glyph_from_name (hb_font_t *font HB_UNUSED,
   else {
     /* Make a nul-terminated version. */
     char buf[128];
-    len = hb_min (len, (int) sizeof (buf) - 1);
+    len = min (len, (int) sizeof (buf) - 1);
     strncpy (buf, name, len);
     buf[len] = '\0';
     *glyph = FT_Get_Name_Index (ft_face, buf);
@@ -756,14 +756,14 @@ hb_ft_get_glyph_from_name (hb_font_t *font HB_UNUSED,
   return *glyph != 0;
 }
 
-static hb_bool_t
-hb_ft_get_font_h_extents (hb_font_t *font HB_UNUSED,
+static bool_t
+ft_get_font_h_extents (font_t *font HB_UNUSED,
 			  void *font_data,
-			  hb_font_extents_t *metrics,
+			  font_extents_t *metrics,
 			  void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   FT_Face ft_face = ft_font->ft_face;
   float y_mult;
 #ifdef HAVE_FT_GET_TRANSFORM
@@ -794,9 +794,9 @@ hb_ft_get_font_h_extents (hb_font_t *font HB_UNUSED,
     metrics->line_gap = ft_face->size->metrics.height - (metrics->ascender - metrics->descender);
   }
 
-  metrics->ascender  = (hb_position_t) (y_mult * (metrics->ascender + font->y_strength));
-  metrics->descender = (hb_position_t) (y_mult * metrics->descender);
-  metrics->line_gap  = (hb_position_t) (y_mult * metrics->line_gap);
+  metrics->ascender  = (position_t) (y_mult * (metrics->ascender + font->y_strength));
+  metrics->descender = (position_t) (y_mult * metrics->descender);
+  metrics->line_gap  = (position_t) (y_mult * metrics->line_gap);
 
   return true;
 }
@@ -804,41 +804,41 @@ hb_ft_get_font_h_extents (hb_font_t *font HB_UNUSED,
 #ifndef HB_NO_DRAW
 
 static int
-_hb_ft_move_to (const FT_Vector *to,
+_ft_move_to (const FT_Vector *to,
 		void *arg)
 {
-  hb_draw_session_t *drawing = (hb_draw_session_t *) arg;
+  draw_session_t *drawing = (draw_session_t *) arg;
   drawing->move_to (to->x, to->y);
   return FT_Err_Ok;
 }
 
 static int
-_hb_ft_line_to (const FT_Vector *to,
+_ft_line_to (const FT_Vector *to,
 		void *arg)
 {
-  hb_draw_session_t *drawing = (hb_draw_session_t *) arg;
+  draw_session_t *drawing = (draw_session_t *) arg;
   drawing->line_to (to->x, to->y);
   return FT_Err_Ok;
 }
 
 static int
-_hb_ft_conic_to (const FT_Vector *control,
+_ft_conic_to (const FT_Vector *control,
 		 const FT_Vector *to,
 		 void *arg)
 {
-  hb_draw_session_t *drawing = (hb_draw_session_t *) arg;
+  draw_session_t *drawing = (draw_session_t *) arg;
   drawing->quadratic_to (control->x, control->y,
 			 to->x, to->y);
   return FT_Err_Ok;
 }
 
 static int
-_hb_ft_cubic_to (const FT_Vector *control1,
+_ft_cubic_to (const FT_Vector *control1,
 		 const FT_Vector *control2,
 		 const FT_Vector *to,
 		 void *arg)
 {
-  hb_draw_session_t *drawing = (hb_draw_session_t *) arg;
+  draw_session_t *drawing = (draw_session_t *) arg;
   drawing->cubic_to (control1->x, control1->y,
 		     control2->x, control2->y,
 		     to->x, to->y);
@@ -846,14 +846,14 @@ _hb_ft_cubic_to (const FT_Vector *control1,
 }
 
 static void
-hb_ft_draw_glyph (hb_font_t *font,
+ft_draw_glyph (font_t *font,
 		  void *font_data,
-		  hb_codepoint_t glyph,
-		  hb_draw_funcs_t *draw_funcs, void *draw_data,
+		  codepoint_t glyph,
+		  draw_funcs_t *draw_funcs, void *draw_data,
 		  void *user_data HB_UNUSED)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   FT_Face ft_face = ft_font->ft_face;
 
   if (unlikely (FT_Load_Glyph (ft_face, glyph,
@@ -864,15 +864,15 @@ hb_ft_draw_glyph (hb_font_t *font,
     return;
 
   const FT_Outline_Funcs outline_funcs = {
-    _hb_ft_move_to,
-    _hb_ft_line_to,
-    _hb_ft_conic_to,
-    _hb_ft_cubic_to,
+    _ft_move_to,
+    _ft_line_to,
+    _ft_conic_to,
+    _ft_cubic_to,
     0, /* shift */
     0, /* delta */
   };
 
-  hb_draw_session_t draw_session (draw_funcs, draw_data, font->slant_xy);
+  draw_session_t draw_session (draw_funcs, draw_data, font->slant_xy);
 
   /* Embolden */
   if (font->x_strength || font->y_strength)
@@ -897,7 +897,7 @@ hb_ft_draw_glyph (hb_font_t *font,
     if (x_shift || y_shift)
     {
       auto &outline = ft_face->glyph->outline;
-      for (auto &point : hb_iter (outline.points, outline.contours[outline.n_contours - 1] + 1))
+      for (auto &point : iter (outline.points, outline.contours[outline.n_contours - 1] + 1))
       {
 	point.x += x_shift;
 	point.y += y_shift;
@@ -918,16 +918,16 @@ hb_ft_draw_glyph (hb_font_t *font,
 #include "hb-ft-colr.hh"
 
 static void
-hb_ft_paint_glyph (hb_font_t *font,
+ft_paint_glyph (font_t *font,
                    void *font_data,
-                   hb_codepoint_t gid,
-                   hb_paint_funcs_t *paint_funcs, void *paint_data,
+                   codepoint_t gid,
+                   paint_funcs_t *paint_funcs, void *paint_data,
                    unsigned int palette_index,
-                   hb_color_t foreground,
+                   color_t foreground,
                    void *user_data)
 {
-  const hb_ft_font_t *ft_font = (const hb_ft_font_t *) font_data;
-  hb_lock_t lock (ft_font->lock);
+  const ft_font_t *ft_font = (const ft_font_t *) font_data;
+  lock_t lock (ft_font->lock);
   FT_Face ft_face = ft_font->ft_face;
 
   /* We release the lock before calling into glyph callbacks, such that
@@ -939,7 +939,7 @@ hb_ft_paint_glyph (hb_font_t *font,
 
   if (ft_face->glyph->format == FT_GLYPH_FORMAT_OUTLINE)
   {
-    if (hb_ft_paint_glyph_colr (font, font_data, gid,
+    if (ft_paint_glyph_colr (font, font_data, gid,
 				paint_funcs, paint_data,
 				palette_index, foreground,
 				user_data))
@@ -966,13 +966,13 @@ hb_ft_paint_glyph (hb_font_t *font,
 
       ft_font->lock.unlock ();
 
-      hb_blob_t *blob = hb_blob_create ((const char *) bitmap.buffer,
+      blob_t *blob = blob_create ((const char *) bitmap.buffer,
 					bitmap.pitch * bitmap.rows,
 					HB_MEMORY_MODE_DUPLICATE,
 					nullptr, nullptr);
 
-      hb_glyph_extents_t extents;
-      if (!hb_font_get_glyph_extents (font, gid, &extents))
+      glyph_extents_t extents;
+      if (!font_get_glyph_extents (font, gid, &extents))
 	goto out;
 
       if (!paint_funcs->image (paint_data,
@@ -987,7 +987,7 @@ hb_ft_paint_glyph (hb_font_t *font,
       }
 
     out:
-      hb_blob_destroy (blob);
+      blob_destroy (blob);
       ft_font->lock.lock ();
     }
 
@@ -1000,48 +1000,48 @@ hb_ft_paint_glyph (hb_font_t *font,
 
 static inline void free_static_ft_funcs ();
 
-static struct hb_ft_font_funcs_lazy_loader_t : hb_font_funcs_lazy_loader_t<hb_ft_font_funcs_lazy_loader_t>
+static struct ft_font_funcs_lazy_loader_t : font_funcs_lazy_loader_t<ft_font_funcs_lazy_loader_t>
 {
-  static hb_font_funcs_t *create ()
+  static font_funcs_t *create ()
   {
-    hb_font_funcs_t *funcs = hb_font_funcs_create ();
+    font_funcs_t *funcs = font_funcs_create ();
 
-    hb_font_funcs_set_nominal_glyph_func (funcs, hb_ft_get_nominal_glyph, nullptr, nullptr);
-    hb_font_funcs_set_nominal_glyphs_func (funcs, hb_ft_get_nominal_glyphs, nullptr, nullptr);
-    hb_font_funcs_set_variation_glyph_func (funcs, hb_ft_get_variation_glyph, nullptr, nullptr);
+    font_funcs_set_nominal_glyph_func (funcs, ft_get_nominal_glyph, nullptr, nullptr);
+    font_funcs_set_nominal_glyphs_func (funcs, ft_get_nominal_glyphs, nullptr, nullptr);
+    font_funcs_set_variation_glyph_func (funcs, ft_get_variation_glyph, nullptr, nullptr);
 
-    hb_font_funcs_set_font_h_extents_func (funcs, hb_ft_get_font_h_extents, nullptr, nullptr);
-    hb_font_funcs_set_glyph_h_advances_func (funcs, hb_ft_get_glyph_h_advances, nullptr, nullptr);
-    //hb_font_funcs_set_glyph_h_origin_func (funcs, hb_ft_get_glyph_h_origin, nullptr, nullptr);
+    font_funcs_set_font_h_extents_func (funcs, ft_get_font_h_extents, nullptr, nullptr);
+    font_funcs_set_glyph_h_advances_func (funcs, ft_get_glyph_h_advances, nullptr, nullptr);
+    //font_funcs_set_glyph_h_origin_func (funcs, ft_get_glyph_h_origin, nullptr, nullptr);
 
 #ifndef HB_NO_VERTICAL
-    //hb_font_funcs_set_font_v_extents_func (funcs, hb_ft_get_font_v_extents, nullptr, nullptr);
-    hb_font_funcs_set_glyph_v_advance_func (funcs, hb_ft_get_glyph_v_advance, nullptr, nullptr);
-    hb_font_funcs_set_glyph_v_origin_func (funcs, hb_ft_get_glyph_v_origin, nullptr, nullptr);
+    //font_funcs_set_font_v_extents_func (funcs, ft_get_font_v_extents, nullptr, nullptr);
+    font_funcs_set_glyph_v_advance_func (funcs, ft_get_glyph_v_advance, nullptr, nullptr);
+    font_funcs_set_glyph_v_origin_func (funcs, ft_get_glyph_v_origin, nullptr, nullptr);
 #endif
 
 #ifndef HB_NO_OT_SHAPE_FALLBACK
-    hb_font_funcs_set_glyph_h_kerning_func (funcs, hb_ft_get_glyph_h_kerning, nullptr, nullptr);
+    font_funcs_set_glyph_h_kerning_func (funcs, ft_get_glyph_h_kerning, nullptr, nullptr);
 #endif
-    //hb_font_funcs_set_glyph_v_kerning_func (funcs, hb_ft_get_glyph_v_kerning, nullptr, nullptr);
-    hb_font_funcs_set_glyph_extents_func (funcs, hb_ft_get_glyph_extents, nullptr, nullptr);
-    hb_font_funcs_set_glyph_contour_point_func (funcs, hb_ft_get_glyph_contour_point, nullptr, nullptr);
-    hb_font_funcs_set_glyph_name_func (funcs, hb_ft_get_glyph_name, nullptr, nullptr);
-    hb_font_funcs_set_glyph_from_name_func (funcs, hb_ft_get_glyph_from_name, nullptr, nullptr);
+    //font_funcs_set_glyph_v_kerning_func (funcs, ft_get_glyph_v_kerning, nullptr, nullptr);
+    font_funcs_set_glyph_extents_func (funcs, ft_get_glyph_extents, nullptr, nullptr);
+    font_funcs_set_glyph_contour_point_func (funcs, ft_get_glyph_contour_point, nullptr, nullptr);
+    font_funcs_set_glyph_name_func (funcs, ft_get_glyph_name, nullptr, nullptr);
+    font_funcs_set_glyph_from_name_func (funcs, ft_get_glyph_from_name, nullptr, nullptr);
 
 #ifndef HB_NO_DRAW
-    hb_font_funcs_set_draw_glyph_func (funcs, hb_ft_draw_glyph, nullptr, nullptr);
+    font_funcs_set_draw_glyph_func (funcs, ft_draw_glyph, nullptr, nullptr);
 #endif
 
 #ifndef HB_NO_PAINT
 #if (FREETYPE_MAJOR*10000 + FREETYPE_MINOR*100 + FREETYPE_PATCH) >= 21300
-    hb_font_funcs_set_paint_glyph_func (funcs, hb_ft_paint_glyph, nullptr, nullptr);
+    font_funcs_set_paint_glyph_func (funcs, ft_paint_glyph, nullptr, nullptr);
 #endif
 #endif
 
-    hb_font_funcs_make_immutable (funcs);
+    font_funcs_make_immutable (funcs);
 
-    hb_atexit (free_static_ft_funcs);
+    atexit (free_static_ft_funcs);
 
     return funcs;
   }
@@ -1053,29 +1053,29 @@ void free_static_ft_funcs ()
   static_ft_funcs.free_instance ();
 }
 
-static hb_font_funcs_t *
-_hb_ft_get_font_funcs ()
+static font_funcs_t *
+_ft_get_font_funcs ()
 {
   return static_ft_funcs.get_unconst ();
 }
 
 static void
-_hb_ft_font_set_funcs (hb_font_t *font, FT_Face ft_face, bool unref)
+_ft_font_set_funcs (font_t *font, FT_Face ft_face, bool unref)
 {
   bool symbol = ft_face->charmap && ft_face->charmap->encoding == FT_ENCODING_MS_SYMBOL;
 
-  hb_ft_font_t *ft_font = _hb_ft_font_create (ft_face, symbol, unref);
+  ft_font_t *ft_font = _ft_font_create (ft_face, symbol, unref);
   if (unlikely (!ft_font)) return;
 
-  hb_font_set_funcs (font,
-		     _hb_ft_get_font_funcs (),
+  font_set_funcs (font,
+		     _ft_get_font_funcs (),
 		     ft_font,
-		     _hb_ft_font_destroy);
+		     _ft_font_destroy);
 }
 
 
-static hb_blob_t *
-_hb_ft_reference_table (hb_face_t *face HB_UNUSED, hb_tag_t tag, void *user_data)
+static blob_t *
+_ft_reference_table (face_t *face HB_UNUSED, tag_t tag, void *user_data)
 {
   FT_Face ft_face = (FT_Face) user_data;
   FT_Byte *buffer;
@@ -1088,193 +1088,193 @@ _hb_ft_reference_table (hb_face_t *face HB_UNUSED, hb_tag_t tag, void *user_data
   if (error)
     return nullptr;
 
-  buffer = (FT_Byte *) hb_malloc (length);
+  buffer = (FT_Byte *) malloc (length);
   if (!buffer)
     return nullptr;
 
   error = FT_Load_Sfnt_Table (ft_face, tag, 0, buffer, &length);
   if (error)
   {
-    hb_free (buffer);
+    free (buffer);
     return nullptr;
   }
 
-  return hb_blob_create ((const char *) buffer, length,
+  return blob_create ((const char *) buffer, length,
 			 HB_MEMORY_MODE_WRITABLE,
-			 buffer, hb_free);
+			 buffer, free);
 }
 
 /**
- * hb_ft_face_create:
+ * ft_face_create:
  * @ft_face: (destroy destroy) (scope notified): FT_Face to work upon
  * @destroy: (nullable): A callback to call when the face object is not needed anymore
  *
- * Creates an #hb_face_t face object from the specified FT_Face.
+ * Creates an #face_t face object from the specified FT_Face.
  *
  * Note that this is using the FT_Face object just to get at the underlying
- * font data, and fonts created from the returned #hb_face_t will use the native
- * HarfBuzz font implementation, unless you call hb_ft_font_set_funcs() on them.
+ * font data, and fonts created from the returned #face_t will use the native
+ * HarfBuzz font implementation, unless you call ft_font_set_funcs() on them.
  *
  * This variant of the function does not provide any life-cycle management.
  *
- * Most client programs should use hb_ft_face_create_referenced()
- * (or, perhaps, hb_ft_face_create_cached()) instead.
+ * Most client programs should use ft_face_create_referenced()
+ * (or, perhaps, ft_face_create_cached()) instead.
  *
- * If you know you have valid reasons not to use hb_ft_face_create_referenced(),
+ * If you know you have valid reasons not to use ft_face_create_referenced(),
  * then it is the client program's responsibility to destroy @ft_face
- * after the #hb_face_t face object has been destroyed.
+ * after the #face_t face object has been destroyed.
  *
- * Return value: (transfer full): the new #hb_face_t face object
+ * Return value: (transfer full): the new #face_t face object
  *
  * Since: 0.9.2
  **/
-hb_face_t *
-hb_ft_face_create (FT_Face           ft_face,
-		   hb_destroy_func_t destroy)
+face_t *
+ft_face_create (FT_Face           ft_face,
+		   destroy_func_t destroy)
 {
-  hb_face_t *face;
+  face_t *face;
 
   if (!ft_face->stream->read) {
-    hb_blob_t *blob;
+    blob_t *blob;
 
-    blob = hb_blob_create ((const char *) ft_face->stream->base,
+    blob = blob_create ((const char *) ft_face->stream->base,
 			   (unsigned int) ft_face->stream->size,
 			   HB_MEMORY_MODE_READONLY,
 			   ft_face, destroy);
-    face = hb_face_create (blob, ft_face->face_index);
-    hb_blob_destroy (blob);
+    face = face_create (blob, ft_face->face_index);
+    blob_destroy (blob);
   } else {
-    face = hb_face_create_for_tables (_hb_ft_reference_table, ft_face, destroy);
+    face = face_create_for_tables (_ft_reference_table, ft_face, destroy);
   }
 
-  hb_face_set_index (face, ft_face->face_index);
-  hb_face_set_upem (face, ft_face->units_per_EM);
+  face_set_index (face, ft_face->face_index);
+  face_set_upem (face, ft_face->units_per_EM);
 
   return face;
 }
 
 /**
- * hb_ft_face_create_referenced:
+ * ft_face_create_referenced:
  * @ft_face: FT_Face to work upon
  *
- * Creates an #hb_face_t face object from the specified FT_Face.
+ * Creates an #face_t face object from the specified FT_Face.
  *
  * Note that this is using the FT_Face object just to get at the underlying
- * font data, and fonts created from the returned #hb_face_t will use the native
- * HarfBuzz font implementation, unless you call hb_ft_font_set_funcs() on them.
+ * font data, and fonts created from the returned #face_t will use the native
+ * HarfBuzz font implementation, unless you call ft_font_set_funcs() on them.
  *
- * This is the preferred variant of the hb_ft_face_create*
+ * This is the preferred variant of the ft_face_create*
  * function family, because it calls FT_Reference_Face() on @ft_face,
  * ensuring that @ft_face remains alive as long as the resulting
- * #hb_face_t face object remains alive. Also calls FT_Done_Face()
- * when the #hb_face_t face object is destroyed.
+ * #face_t face object remains alive. Also calls FT_Done_Face()
+ * when the #face_t face object is destroyed.
  *
  * Use this version unless you know you have good reasons not to.
  *
- * Return value: (transfer full): the new #hb_face_t face object
+ * Return value: (transfer full): the new #face_t face object
  *
  * Since: 0.9.38
  **/
-hb_face_t *
-hb_ft_face_create_referenced (FT_Face ft_face)
+face_t *
+ft_face_create_referenced (FT_Face ft_face)
 {
   FT_Reference_Face (ft_face);
-  return hb_ft_face_create (ft_face, _hb_ft_face_destroy);
+  return ft_face_create (ft_face, _ft_face_destroy);
 }
 
 static void
-hb_ft_face_finalize (void *arg)
+ft_face_finalize (void *arg)
 {
   FT_Face ft_face = (FT_Face) arg;
-  hb_face_destroy ((hb_face_t *) ft_face->generic.data);
+  face_destroy ((face_t *) ft_face->generic.data);
 }
 
 /**
- * hb_ft_face_create_cached:
+ * ft_face_create_cached:
  * @ft_face: FT_Face to work upon
  *
- * Creates an #hb_face_t face object from the specified FT_Face.
+ * Creates an #face_t face object from the specified FT_Face.
  *
  * Note that this is using the FT_Face object just to get at the underlying
- * font data, and fonts created from the returned #hb_face_t will use the native
- * HarfBuzz font implementation, unless you call hb_ft_font_set_funcs() on them.
+ * font data, and fonts created from the returned #face_t will use the native
+ * HarfBuzz font implementation, unless you call ft_font_set_funcs() on them.
  *
- * This variant of the function caches the newly created #hb_face_t
+ * This variant of the function caches the newly created #face_t
  * face object, using the @generic pointer of @ft_face. Subsequent function
  * calls that are passed the same @ft_face parameter will have the same
- * #hb_face_t returned to them, and that #hb_face_t will be correctly
+ * #face_t returned to them, and that #face_t will be correctly
  * reference counted.
  *
  * However, client programs are still responsible for destroying
- * @ft_face after the last #hb_face_t face object has been destroyed.
+ * @ft_face after the last #face_t face object has been destroyed.
  *
- * Return value: (transfer full): the new #hb_face_t face object
+ * Return value: (transfer full): the new #face_t face object
  *
  * Since: 0.9.2
  **/
-hb_face_t *
-hb_ft_face_create_cached (FT_Face ft_face)
+face_t *
+ft_face_create_cached (FT_Face ft_face)
 {
-  if (unlikely (!ft_face->generic.data || ft_face->generic.finalizer != hb_ft_face_finalize))
+  if (unlikely (!ft_face->generic.data || ft_face->generic.finalizer != ft_face_finalize))
   {
     if (ft_face->generic.finalizer)
       ft_face->generic.finalizer (ft_face);
 
-    ft_face->generic.data = hb_ft_face_create (ft_face, nullptr);
-    ft_face->generic.finalizer = hb_ft_face_finalize;
+    ft_face->generic.data = ft_face_create (ft_face, nullptr);
+    ft_face->generic.finalizer = ft_face_finalize;
   }
 
-  return hb_face_reference ((hb_face_t *) ft_face->generic.data);
+  return face_reference ((face_t *) ft_face->generic.data);
 }
 
 /**
- * hb_ft_font_create:
+ * ft_font_create:
  * @ft_face: (destroy destroy) (scope notified): FT_Face to work upon
  * @destroy: (nullable): A callback to call when the font object is not needed anymore
  *
- * Creates an #hb_font_t font object from the specified FT_Face.
+ * Creates an #font_t font object from the specified FT_Face.
  *
  * <note>Note: You must set the face size on @ft_face before calling
- * hb_ft_font_create() on it. HarfBuzz assumes size is always set and will
+ * ft_font_create() on it. HarfBuzz assumes size is always set and will
  * access `size` member of FT_Face unconditionally.</note>
  *
  * This variant of the function does not provide any life-cycle management.
  *
- * Most client programs should use hb_ft_font_create_referenced()
+ * Most client programs should use ft_font_create_referenced()
  * instead.
  *
- * If you know you have valid reasons not to use hb_ft_font_create_referenced(),
+ * If you know you have valid reasons not to use ft_font_create_referenced(),
  * then it is the client program's responsibility to destroy @ft_face
- * after the #hb_font_t font object has been destroyed.
+ * after the #font_t font object has been destroyed.
  *
- * HarfBuzz will use the @destroy callback on the #hb_font_t font object
+ * HarfBuzz will use the @destroy callback on the #font_t font object
  * if it is supplied when you use this function. However, even if @destroy
  * is provided, it is the client program's responsibility to destroy @ft_face,
  * and it is the client program's responsibility to ensure that @ft_face is
- * destroyed only after the #hb_font_t font object has been destroyed.
+ * destroyed only after the #font_t font object has been destroyed.
  *
- * Return value: (transfer full): the new #hb_font_t font object
+ * Return value: (transfer full): the new #font_t font object
  *
  * Since: 0.9.2
  **/
-hb_font_t *
-hb_ft_font_create (FT_Face           ft_face,
-		   hb_destroy_func_t destroy)
+font_t *
+ft_font_create (FT_Face           ft_face,
+		   destroy_func_t destroy)
 {
-  hb_font_t *font;
-  hb_face_t *face;
+  font_t *font;
+  face_t *face;
 
-  face = hb_ft_face_create (ft_face, destroy);
-  font = hb_font_create (face);
-  hb_face_destroy (face);
-  _hb_ft_font_set_funcs (font, ft_face, false);
-  hb_ft_font_changed (font);
+  face = ft_face_create (ft_face, destroy);
+  font = font_create (face);
+  face_destroy (face);
+  _ft_font_set_funcs (font, ft_face, false);
+  ft_font_changed (font);
   return font;
 }
 
 /**
- * hb_ft_font_changed:
- * @font: #hb_font_t to work upon
+ * ft_font_changed:
+ * @font: #font_t to work upon
  *
  * Refreshes the state of @font when the underlying FT_Face has changed.
  * This function should be called after changing the size or
@@ -1283,20 +1283,20 @@ hb_ft_font_create (FT_Face           ft_face,
  * Since: 1.0.5
  **/
 void
-hb_ft_font_changed (hb_font_t *font)
+ft_font_changed (font_t *font)
 {
-  if (font->destroy != (hb_destroy_func_t) _hb_ft_font_destroy)
+  if (font->destroy != (destroy_func_t) _ft_font_destroy)
     return;
 
-  hb_ft_font_t *ft_font = (hb_ft_font_t *) font->user_data;
+  ft_font_t *ft_font = (ft_font_t *) font->user_data;
 
   FT_Face ft_face = ft_font->ft_face;
 
-  hb_font_set_scale (font,
+  font_set_scale (font,
 		     (int) (((uint64_t) ft_face->size->metrics.x_scale * (uint64_t) ft_face->units_per_EM + (1u<<15)) >> 16),
 		     (int) (((uint64_t) ft_face->size->metrics.y_scale * (uint64_t) ft_face->units_per_EM + (1u<<15)) >> 16));
 #if 0 /* hb-ft works in no-hinting model */
-  hb_font_set_ppem (font,
+  font_set_ppem (font,
 		    ft_face->size->metrics.x_ppem,
 		    ft_face->size->metrics.y_ppem);
 #endif
@@ -1305,8 +1305,8 @@ hb_ft_font_changed (hb_font_t *font)
   FT_MM_Var *mm_var = nullptr;
   if (!FT_Get_MM_Var (ft_face, &mm_var))
   {
-    FT_Fixed *ft_coords = (FT_Fixed *) hb_calloc (mm_var->num_axis, sizeof (FT_Fixed));
-    int *coords = (int *) hb_calloc (mm_var->num_axis, sizeof (int));
+    FT_Fixed *ft_coords = (FT_Fixed *) calloc (mm_var->num_axis, sizeof (FT_Fixed));
+    int *coords = (int *) calloc (mm_var->num_axis, sizeof (int));
     if (coords && ft_coords)
     {
       if (!FT_Get_Var_Blend_Coordinates (ft_face, mm_var->num_axis, ft_coords))
@@ -1320,17 +1320,17 @@ hb_ft_font_changed (hb_font_t *font)
 	 }
 
 	if (nonzero)
-	  hb_font_set_var_coords_normalized (font, coords, mm_var->num_axis);
+	  font_set_var_coords_normalized (font, coords, mm_var->num_axis);
 	else
-	  hb_font_set_var_coords_normalized (font, nullptr, 0);
+	  font_set_var_coords_normalized (font, nullptr, 0);
       }
     }
-    hb_free (coords);
-    hb_free (ft_coords);
+    free (coords);
+    free (ft_coords);
 #ifdef HAVE_FT_DONE_MM_VAR
     FT_Done_MM_Var (ft_face->glyph->library, mm_var);
 #else
-    hb_free (mm_var);
+    free (mm_var);
 #endif
   }
 #endif
@@ -1340,10 +1340,10 @@ hb_ft_font_changed (hb_font_t *font)
 }
 
 /**
- * hb_ft_hb_font_changed:
- * @font: #hb_font_t to work upon
+ * ft_font_changed:
+ * @font: #font_t to work upon
  *
- * Refreshes the state of the underlying FT_Face of @font when the hb_font_t
+ * Refreshes the state of the underlying FT_Face of @font when the font_t
  * @font has changed.
  * This function should be called after changing the size or
  * variation-axis settings on the @font.
@@ -1353,49 +1353,49 @@ hb_ft_font_changed (hb_font_t *font)
  *
  * Since: 4.4.0
  **/
-hb_bool_t
-hb_ft_hb_font_changed (hb_font_t *font)
+bool_t
+ft_font_changed (font_t *font)
 {
-  if (font->destroy != (hb_destroy_func_t) _hb_ft_font_destroy)
+  if (font->destroy != (destroy_func_t) _ft_font_destroy)
     return false;
 
-  hb_ft_font_t *ft_font = (hb_ft_font_t *) font->user_data;
+  ft_font_t *ft_font = (ft_font_t *) font->user_data;
 
-  return _hb_ft_hb_font_check_changed (font, ft_font);
+  return _ft_font_check_changed (font, ft_font);
 }
 
 /**
- * hb_ft_font_create_referenced:
+ * ft_font_create_referenced:
  * @ft_face: FT_Face to work upon
  *
- * Creates an #hb_font_t font object from the specified FT_Face.
+ * Creates an #font_t font object from the specified FT_Face.
  *
  * <note>Note: You must set the face size on @ft_face before calling
- * hb_ft_font_create_referenced() on it. HarfBuzz assumes size is always set
+ * ft_font_create_referenced() on it. HarfBuzz assumes size is always set
  * and will access `size` member of FT_Face unconditionally.</note>
  *
- * This is the preferred variant of the hb_ft_font_create*
+ * This is the preferred variant of the ft_font_create*
  * function family, because it calls FT_Reference_Face() on @ft_face,
  * ensuring that @ft_face remains alive as long as the resulting
- * #hb_font_t font object remains alive.
+ * #font_t font object remains alive.
  *
  * Use this version unless you know you have good reasons not to.
  *
- * Return value: (transfer full): the new #hb_font_t font object
+ * Return value: (transfer full): the new #font_t font object
  *
  * Since: 0.9.38
  **/
-hb_font_t *
-hb_ft_font_create_referenced (FT_Face ft_face)
+font_t *
+ft_font_create_referenced (FT_Face ft_face)
 {
   FT_Reference_Face (ft_face);
-  return hb_ft_font_create (ft_face, _hb_ft_face_destroy);
+  return ft_font_create (ft_face, _ft_face_destroy);
 }
 
 static inline void free_static_ft_library ();
 
-static struct hb_ft_library_lazy_loader_t : hb_lazy_loader_t<hb_remove_pointer<FT_Library>,
-							     hb_ft_library_lazy_loader_t>
+static struct ft_library_lazy_loader_t : lazy_loader_t<remove_pointer<FT_Library>,
+							     ft_library_lazy_loader_t>
 {
   static FT_Library create ()
   {
@@ -1403,7 +1403,7 @@ static struct hb_ft_library_lazy_loader_t : hb_lazy_loader_t<hb_remove_pointer<F
     if (FT_Init_FreeType (&l))
       return nullptr;
 
-    hb_atexit (free_static_ft_library);
+    atexit (free_static_ft_library);
 
     return l;
   }
@@ -1433,28 +1433,28 @@ static void
 _release_blob (void *arg)
 {
   FT_Face ft_face = (FT_Face) arg;
-  hb_blob_destroy ((hb_blob_t *) ft_face->generic.data);
+  blob_destroy ((blob_t *) ft_face->generic.data);
 }
 
 /**
- * hb_ft_font_set_funcs:
- * @font: #hb_font_t to work upon
+ * ft_font_set_funcs:
+ * @font: #font_t to work upon
  *
  * Configures the font-functions structure of the specified
- * #hb_font_t font object to use FreeType font functions.
+ * #font_t font object to use FreeType font functions.
  *
  * In particular, you can use this function to configure an
- * existing #hb_face_t face object for use with FreeType font
- * functions even if that #hb_face_t face object was initially
- * created with hb_face_create(), and therefore was not
+ * existing #face_t face object for use with FreeType font
+ * functions even if that #face_t face object was initially
+ * created with face_create(), and therefore was not
  * initially configured to use FreeType font functions.
  *
- * An #hb_font_t object created with hb_ft_font_create()
+ * An #font_t object created with ft_font_create()
  * is preconfigured for FreeType font functions and does not
  * require this function to be used.
  *
- * Note that if you modify the underlying #hb_font_t after
- * calling this function, you need to call hb_ft_hb_font_changed()
+ * Note that if you modify the underlying #font_t after
+ * calling this function, you need to call ft_font_changed()
  * to update the underlying FT_Face.
  *
  * <note>Note: Internally, this function creates an FT_Face.
@@ -1463,11 +1463,11 @@ _release_blob (void *arg)
  * Since: 1.0.5
  **/
 void
-hb_ft_font_set_funcs (hb_font_t *font)
+ft_font_set_funcs (font_t *font)
 {
-  hb_blob_t *blob = hb_face_reference_blob (font->face);
+  blob_t *blob = face_reference_blob (font->face);
   unsigned int blob_length;
-  const char *blob_data = hb_blob_get_data (blob, &blob_length);
+  const char *blob_data = blob_get_data (blob, &blob_length);
   if (unlikely (!blob_length))
     DEBUG_MSG (FT, font, "Font face has empty blob");
 
@@ -1475,11 +1475,11 @@ hb_ft_font_set_funcs (hb_font_t *font)
   FT_Error err = FT_New_Memory_Face (get_ft_library (),
 				     (const FT_Byte *) blob_data,
 				     blob_length,
-				     hb_face_get_index (font->face),
+				     face_get_index (font->face),
 				     &ft_face);
 
   if (unlikely (err)) {
-    hb_blob_destroy (blob);
+    blob_destroy (blob);
     DEBUG_MSG (FT, font, "Font face FT_New_Memory_Face() failed");
     return;
   }
@@ -1491,10 +1491,10 @@ hb_ft_font_set_funcs (hb_font_t *font)
   ft_face->generic.data = blob;
   ft_face->generic.finalizer = _release_blob;
 
-  _hb_ft_font_set_funcs (font, ft_face, true);
-  hb_ft_font_set_load_flags (font, FT_LOAD_DEFAULT | FT_LOAD_NO_HINTING);
+  _ft_font_set_funcs (font, ft_face, true);
+  ft_font_set_load_flags (font, FT_LOAD_DEFAULT | FT_LOAD_NO_HINTING);
 
-  _hb_ft_hb_font_changed (font, ft_face);
+  _ft_font_changed (font, ft_face);
 }
 
 #endif

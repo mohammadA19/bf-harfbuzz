@@ -40,42 +40,42 @@
 
 
 /**
- * hb_map_create:
+ * map_create:
  *
  * Creates a new, initially empty map.
  *
- * Return value: (transfer full): The new #hb_map_t
+ * Return value: (transfer full): The new #map_t
  *
  * Since: 1.7.7
  **/
-hb_map_t *
-hb_map_create ()
+map_t *
+map_create ()
 {
-  hb_map_t *map;
+  map_t *map;
 
-  if (!(map = hb_object_create<hb_map_t> ()))
-    return hb_map_get_empty ();
+  if (!(map = object_create<map_t> ()))
+    return map_get_empty ();
 
   return map;
 }
 
 /**
- * hb_map_get_empty:
+ * map_get_empty:
  *
- * Fetches the singleton empty #hb_map_t.
+ * Fetches the singleton empty #map_t.
  *
- * Return value: (transfer full): The empty #hb_map_t
+ * Return value: (transfer full): The empty #map_t
  *
  * Since: 1.7.7
  **/
-hb_map_t *
-hb_map_get_empty ()
+map_t *
+map_get_empty ()
 {
-  return const_cast<hb_map_t *> (&Null (hb_map_t));
+  return const_cast<map_t *> (&Null (map_t));
 }
 
 /**
- * hb_map_reference: (skip)
+ * map_reference: (skip)
  * @map: A map
  *
  * Increases the reference count on a map.
@@ -84,14 +84,14 @@ hb_map_get_empty ()
  *
  * Since: 1.7.7
  **/
-hb_map_t *
-hb_map_reference (hb_map_t *map)
+map_t *
+map_reference (map_t *map)
 {
-  return hb_object_reference (map);
+  return object_reference (map);
 }
 
 /**
- * hb_map_destroy: (skip)
+ * map_destroy: (skip)
  * @map: A map
  *
  * Decreases the reference count on a map. When
@@ -101,15 +101,15 @@ hb_map_reference (hb_map_t *map)
  * Since: 1.7.7
  **/
 void
-hb_map_destroy (hb_map_t *map)
+map_destroy (map_t *map)
 {
-  if (!hb_object_destroy (map)) return;
+  if (!object_destroy (map)) return;
 
-  hb_free (map);
+  free (map);
 }
 
 /**
- * hb_map_set_user_data: (skip)
+ * map_set_user_data: (skip)
  * @map: A map
  * @key: The user-data key to set
  * @data: A pointer to the user data to set
@@ -122,18 +122,18 @@ hb_map_destroy (hb_map_t *map)
  *
  * Since: 1.7.7
  **/
-hb_bool_t
-hb_map_set_user_data (hb_map_t           *map,
-		      hb_user_data_key_t *key,
+bool_t
+map_set_user_data (map_t           *map,
+		      user_data_key_t *key,
 		      void *              data,
-		      hb_destroy_func_t   destroy,
-		      hb_bool_t           replace)
+		      destroy_func_t   destroy,
+		      bool_t           replace)
 {
-  return hb_object_set_user_data (map, key, data, destroy, replace);
+  return object_set_user_data (map, key, data, destroy, replace);
 }
 
 /**
- * hb_map_get_user_data: (skip)
+ * map_get_user_data: (skip)
  * @map: A map
  * @key: The user-data key to query
  *
@@ -145,15 +145,15 @@ hb_map_set_user_data (hb_map_t           *map,
  * Since: 1.7.7
  **/
 void *
-hb_map_get_user_data (const hb_map_t     *map,
-		      hb_user_data_key_t *key)
+map_get_user_data (const map_t     *map,
+		      user_data_key_t *key)
 {
-  return hb_object_get_user_data (map, key);
+  return object_get_user_data (map, key);
 }
 
 
 /**
- * hb_map_allocation_successful:
+ * map_allocation_successful:
  * @map: A map
  *
  * Tests whether memory allocation for a set was successful.
@@ -162,14 +162,14 @@ hb_map_get_user_data (const hb_map_t     *map,
  *
  * Since: 1.7.7
  **/
-hb_bool_t
-hb_map_allocation_successful (const hb_map_t  *map)
+bool_t
+map_allocation_successful (const map_t  *map)
 {
   return map->successful;
 }
 
 /**
- * hb_map_copy:
+ * map_copy:
  * @map: A map
  *
  * Allocate a copy of @map.
@@ -178,19 +178,19 @@ hb_map_allocation_successful (const hb_map_t  *map)
  *
  * Since: 4.4.0
  **/
-hb_map_t *
-hb_map_copy (const hb_map_t *map)
+map_t *
+map_copy (const map_t *map)
 {
-  hb_map_t *copy = hb_map_create ();
+  map_t *copy = map_create ();
   if (unlikely (copy->in_error ()))
-    return hb_map_get_empty ();
+    return map_get_empty ();
 
   *copy = *map;
   return copy;
 }
 
 /**
- * hb_map_set:
+ * map_set:
  * @map: A map
  * @key: The key to store in the map
  * @value: The value to store for @key
@@ -200,16 +200,16 @@ hb_map_copy (const hb_map_t *map)
  * Since: 1.7.7
  **/
 void
-hb_map_set (hb_map_t       *map,
-	    hb_codepoint_t  key,
-	    hb_codepoint_t  value)
+map_set (map_t       *map,
+	    codepoint_t  key,
+	    codepoint_t  value)
 {
   /* Immutable-safe. */
   map->set (key, value);
 }
 
 /**
- * hb_map_get:
+ * map_get:
  * @map: A map
  * @key: The key to query
  *
@@ -217,15 +217,15 @@ hb_map_set (hb_map_t       *map,
  *
  * Since: 1.7.7
  **/
-hb_codepoint_t
-hb_map_get (const hb_map_t *map,
-	    hb_codepoint_t  key)
+codepoint_t
+map_get (const map_t *map,
+	    codepoint_t  key)
 {
   return map->get (key);
 }
 
 /**
- * hb_map_del:
+ * map_del:
  * @map: A map
  * @key: The key to delete
  *
@@ -234,15 +234,15 @@ hb_map_get (const hb_map_t *map,
  * Since: 1.7.7
  **/
 void
-hb_map_del (hb_map_t       *map,
-	    hb_codepoint_t  key)
+map_del (map_t       *map,
+	    codepoint_t  key)
 {
   /* Immutable-safe. */
   map->del (key);
 }
 
 /**
- * hb_map_has:
+ * map_has:
  * @map: A map
  * @key: The key to query
  *
@@ -252,16 +252,16 @@ hb_map_del (hb_map_t       *map,
  *
  * Since: 1.7.7
  **/
-hb_bool_t
-hb_map_has (const hb_map_t *map,
-	    hb_codepoint_t  key)
+bool_t
+map_has (const map_t *map,
+	    codepoint_t  key)
 {
   return map->has (key);
 }
 
 
 /**
- * hb_map_clear:
+ * map_clear:
  * @map: A map
  *
  * Clears out the contents of @map.
@@ -269,13 +269,13 @@ hb_map_has (const hb_map_t *map,
  * Since: 1.7.7
  **/
 void
-hb_map_clear (hb_map_t *map)
+map_clear (map_t *map)
 {
   return map->clear ();
 }
 
 /**
- * hb_map_is_empty:
+ * map_is_empty:
  * @map: A map
  *
  * Tests whether @map is empty (contains no elements).
@@ -284,14 +284,14 @@ hb_map_clear (hb_map_t *map)
  *
  * Since: 1.7.7
  **/
-hb_bool_t
-hb_map_is_empty (const hb_map_t *map)
+bool_t
+map_is_empty (const map_t *map)
 {
   return map->is_empty ();
 }
 
 /**
- * hb_map_get_population:
+ * map_get_population:
  * @map: A map
  *
  * Returns the number of key-value pairs in the map.
@@ -301,13 +301,13 @@ hb_map_is_empty (const hb_map_t *map)
  * Since: 1.7.7
  **/
 unsigned int
-hb_map_get_population (const hb_map_t *map)
+map_get_population (const map_t *map)
 {
   return map->get_population ();
 }
 
 /**
- * hb_map_is_equal:
+ * map_is_equal:
  * @map: A map
  * @other: Another map
  *
@@ -318,15 +318,15 @@ hb_map_get_population (const hb_map_t *map)
  *
  * Since: 4.3.0
  **/
-hb_bool_t
-hb_map_is_equal (const hb_map_t *map,
-		 const hb_map_t *other)
+bool_t
+map_is_equal (const map_t *map,
+		 const map_t *other)
 {
   return map->is_equal (*other);
 }
 
 /**
- * hb_map_hash:
+ * map_hash:
  * @map: A map
  *
  * Creates a hash representing @map.
@@ -337,13 +337,13 @@ hb_map_is_equal (const hb_map_t *map,
  * Since: 4.4.0
  **/
 unsigned int
-hb_map_hash (const hb_map_t *map)
+map_hash (const map_t *map)
 {
   return map->hash ();
 }
 
 /**
- * hb_map_update:
+ * map_update:
  * @map: A map
  * @other: Another map
  *
@@ -352,14 +352,14 @@ hb_map_hash (const hb_map_t *map)
  * Since: 7.0.0
  **/
 HB_EXTERN void
-hb_map_update (hb_map_t *map,
-	       const hb_map_t *other)
+map_update (map_t *map,
+	       const map_t *other)
 {
   map->update (*other);
 }
 
 /**
- * hb_map_next:
+ * map_next:
  * @map: A map
  * @idx: (inout): Iterator internal state
  * @key: (out): Key retrieved
@@ -377,17 +377,17 @@ hb_map_update (hb_map_t *map,
  *
  * Since: 7.0.0
  **/
-hb_bool_t
-hb_map_next (const hb_map_t *map,
+bool_t
+map_next (const map_t *map,
 	     int *idx,
-	     hb_codepoint_t *key,
-	     hb_codepoint_t *value)
+	     codepoint_t *key,
+	     codepoint_t *value)
 {
   return map->next (idx, key, value);
 }
 
 /**
- * hb_map_keys:
+ * map_keys:
  * @map: A map
  * @keys: A set
  *
@@ -396,14 +396,14 @@ hb_map_next (const hb_map_t *map,
  * Since: 7.0.0
  **/
 void
-hb_map_keys (const hb_map_t *map,
-	     hb_set_t *keys)
+map_keys (const map_t *map,
+	     set_t *keys)
 {
-  hb_copy (map->keys() , *keys);
+  copy (map->keys() , *keys);
 }
 
 /**
- * hb_map_values:
+ * map_values:
  * @map: A map
  * @values: A set
  *
@@ -412,8 +412,8 @@ hb_map_keys (const hb_map_t *map,
  * Since: 7.0.0
  **/
 void
-hb_map_values (const hb_map_t *map,
-	       hb_set_t *values)
+map_values (const map_t *map,
+	       set_t *values)
 {
-  hb_copy (map->values() , *values);
+  copy (map->values() , *values);
 }
