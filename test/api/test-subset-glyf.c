@@ -35,12 +35,12 @@ static void check_maxp_field (uint8_t *raw_maxp, unsigned int offset, uint16_t e
   g_assert_cmpuint(expected_value, ==, actual_value);
 }
 
-static void check_maxp_num_glyphs (hb_face_t *face, uint16_t expected_num_glyphs, bool hints)
+static void check_maxp_num_glyphs (face_t *face, uint16_t expected_num_glyphs, bool hints)
 {
-  hb_blob_t *maxp_blob = hb_face_reference_table (face, HB_TAG ('m','a','x', 'p'));
+  blob_t *maxp_blob = face_reference_table (face, HB_TAG ('m','a','x', 'p'));
 
   unsigned int maxp_len;
-  uint8_t *raw_maxp = (uint8_t *) hb_blob_get_data(maxp_blob, &maxp_len);
+  uint8_t *raw_maxp = (uint8_t *) blob_get_data(maxp_blob, &maxp_len);
 
   check_maxp_field (raw_maxp, 4, expected_num_glyphs); // numGlyphs
   if (!hints)
@@ -54,334 +54,334 @@ static void check_maxp_num_glyphs (hb_face_t *face, uint16_t expected_num_glyphs
     check_maxp_field (raw_maxp, 26, 0); // maxSizeOfInstructions
   }
 
-  hb_blob_destroy (maxp_blob);
+  blob_destroy (maxp_blob);
 }
 
 static void
 test_subset_glyf (void)
 {
-  hb_face_t *face_abc = hb_test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
-  hb_face_t *face_ac = hb_test_open_font_file ("fonts/Roboto-Regular.ac.ttf");
+  face_t *face_abc = test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
+  face_t *face_ac = test_open_font_file ("fonts/Roboto-Regular.ac.ttf");
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_face_t *face_abc_subset;
-  hb_set_add (codepoints, 97);
-  hb_set_add (codepoints, 99);
-  face_abc_subset = hb_subset_test_create_subset (face_abc, hb_subset_test_create_input (codepoints));
-  hb_set_destroy (codepoints);
+  set_t *codepoints = set_create();
+  face_t *face_abc_subset;
+  set_add (codepoints, 97);
+  set_add (codepoints, 99);
+  face_abc_subset = subset_test_create_subset (face_abc, subset_test_create_input (codepoints));
+  set_destroy (codepoints);
 
   check_maxp_num_glyphs(face_abc_subset, 3, true);
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('l','o','c', 'a'));
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','l','y','f'));
 
-  hb_face_destroy (face_abc_subset);
-  hb_face_destroy (face_abc);
-  hb_face_destroy (face_ac);
+  face_destroy (face_abc_subset);
+  face_destroy (face_abc);
+  face_destroy (face_ac);
 }
 
 static void
 test_subset_glyf_set_overlaps_flag (void)
 {
-  hb_face_t *face_abcAE = hb_test_open_font_file ("fonts/Roboto-Regular.abcAE.ttf");
-  hb_face_t *face_bAE = hb_test_open_font_file ("fonts/Roboto-Regular.bAE.ttf");
+  face_t *face_abcAE = test_open_font_file ("fonts/Roboto-Regular.abcAE.ttf");
+  face_t *face_bAE = test_open_font_file ("fonts/Roboto-Regular.bAE.ttf");
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_face_t *face_abcAE_subset;
-  hb_set_add (codepoints, 32);
-  hb_set_add (codepoints, 98);
-  hb_set_add (codepoints, 508);
+  set_t *codepoints = set_create();
+  face_t *face_abcAE_subset;
+  set_add (codepoints, 32);
+  set_add (codepoints, 98);
+  set_add (codepoints, 508);
 
-  hb_subset_input_t* input = hb_subset_test_create_input (codepoints);
-  hb_subset_input_set_flags (input, HB_SUBSET_FLAGS_SET_OVERLAPS_FLAG);
-  face_abcAE_subset = hb_subset_test_create_subset (face_abcAE, input);
-  hb_set_destroy (codepoints);
+  subset_input_t* input = subset_test_create_input (codepoints);
+  subset_input_set_flags (input, HB_SUBSET_FLAGS_SET_OVERLAPS_FLAG);
+  face_abcAE_subset = subset_test_create_subset (face_abcAE, input);
+  set_destroy (codepoints);
 
-  hb_subset_test_check (face_bAE, face_abcAE_subset, HB_TAG ('l','o','c', 'a'));
-  hb_subset_test_check (face_bAE, face_abcAE_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_bAE, face_abcAE_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_bAE, face_abcAE_subset, HB_TAG ('g','l','y','f'));
 
-  hb_face_destroy (face_abcAE_subset);
-  hb_face_destroy (face_abcAE);
-  hb_face_destroy (face_bAE);
+  face_destroy (face_abcAE_subset);
+  face_destroy (face_abcAE);
+  face_destroy (face_bAE);
 }
 
 static void
 test_subset_glyf_with_input_glyphs (void)
 {
-  hb_face_t *face_abc = hb_test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
-  hb_face_t *face_ac = hb_test_open_font_file ("fonts/Roboto-Regular.ac.ttf");
+  face_t *face_abc = test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
+  face_t *face_ac = test_open_font_file ("fonts/Roboto-Regular.ac.ttf");
 
-  hb_set_t *glyphs = hb_set_create();
-  hb_face_t *face_abc_subset;
-  hb_set_add (glyphs, 1);
-  hb_set_add (glyphs, 3);
+  set_t *glyphs = set_create();
+  face_t *face_abc_subset;
+  set_add (glyphs, 1);
+  set_add (glyphs, 3);
   face_abc_subset =
-      hb_subset_test_create_subset (face_abc, hb_subset_test_create_input_from_glyphs (glyphs));
-  hb_set_destroy (glyphs);
+      subset_test_create_subset (face_abc, subset_test_create_input_from_glyphs (glyphs));
+  set_destroy (glyphs);
 
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','l','y','f'));
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('l','o','c', 'a'));
   check_maxp_num_glyphs(face_abc_subset, 3, true);
 
-  hb_face_destroy (face_abc_subset);
-  hb_face_destroy (face_abc);
-  hb_face_destroy (face_ac);
+  face_destroy (face_abc_subset);
+  face_destroy (face_abc);
+  face_destroy (face_ac);
 }
 
 static void
 test_subset_glyf_with_components (void)
 {
-  hb_face_t *face_components = hb_test_open_font_file ("fonts/Roboto-Regular.components.ttf");
-  hb_face_t *face_subset = hb_test_open_font_file ("fonts/Roboto-Regular.components.subset.ttf");
+  face_t *face_components = test_open_font_file ("fonts/Roboto-Regular.components.ttf");
+  face_t *face_subset = test_open_font_file ("fonts/Roboto-Regular.components.subset.ttf");
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_face_t *face_generated_subset;
-  hb_set_add (codepoints, 0x1fc);
-  face_generated_subset = hb_subset_test_create_subset (face_components, hb_subset_test_create_input (codepoints));
-  hb_set_destroy (codepoints);
+  set_t *codepoints = set_create();
+  face_t *face_generated_subset;
+  set_add (codepoints, 0x1fc);
+  face_generated_subset = subset_test_create_subset (face_components, subset_test_create_input (codepoints));
+  set_destroy (codepoints);
 
-  hb_subset_test_check (face_subset, face_generated_subset, HB_TAG ('g','l','y','f'));
-  hb_subset_test_check (face_subset, face_generated_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_subset, face_generated_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_subset, face_generated_subset, HB_TAG ('l','o','c', 'a'));
   check_maxp_num_glyphs(face_generated_subset, 4, true);
 
-  hb_face_destroy (face_generated_subset);
-  hb_face_destroy (face_subset);
-  hb_face_destroy (face_components);
+  face_destroy (face_generated_subset);
+  face_destroy (face_subset);
+  face_destroy (face_components);
 }
 
 static void
 test_subset_glyf_with_gsub (void)
 {
-  hb_face_t *face_fil = hb_test_open_font_file ("fonts/Roboto-Regular.gsub.fil.ttf");
-  hb_face_t *face_fi = hb_test_open_font_file ("fonts/Roboto-Regular.gsub.fi.ttf");
-  hb_subset_input_t *input;
-  hb_face_t *face_subset;
+  face_t *face_fil = test_open_font_file ("fonts/Roboto-Regular.gsub.fil.ttf");
+  face_t *face_fi = test_open_font_file ("fonts/Roboto-Regular.gsub.fi.ttf");
+  subset_input_t *input;
+  face_t *face_subset;
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_set_add (codepoints, 102); // f
-  hb_set_add (codepoints, 105); // i
+  set_t *codepoints = set_create();
+  set_add (codepoints, 102); // f
+  set_add (codepoints, 105); // i
 
-  input = hb_subset_test_create_input (codepoints);
-  hb_set_destroy (codepoints);
-  hb_set_del (hb_subset_input_set (input, HB_SUBSET_SETS_DROP_TABLE_TAG), HB_TAG('G', 'S', 'U', 'B'));
-  hb_set_del (hb_subset_input_set (input, HB_SUBSET_SETS_DROP_TABLE_TAG), HB_TAG('G', 'P', 'O', 'S'));
-  hb_set_del (hb_subset_input_set (input, HB_SUBSET_SETS_DROP_TABLE_TAG), HB_TAG('G', 'D', 'E', 'F'));
+  input = subset_test_create_input (codepoints);
+  set_destroy (codepoints);
+  set_del (subset_input_set (input, HB_SUBSET_SETS_DROP_TABLE_TAG), HB_TAG('G', 'S', 'U', 'B'));
+  set_del (subset_input_set (input, HB_SUBSET_SETS_DROP_TABLE_TAG), HB_TAG('G', 'P', 'O', 'S'));
+  set_del (subset_input_set (input, HB_SUBSET_SETS_DROP_TABLE_TAG), HB_TAG('G', 'D', 'E', 'F'));
 
-  face_subset = hb_subset_test_create_subset (face_fil, input);
+  face_subset = subset_test_create_subset (face_fil, input);
 
-  hb_subset_test_check (face_fi, face_subset, HB_TAG ('g','l','y','f'));
-  hb_subset_test_check (face_fi, face_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_fi, face_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_fi, face_subset, HB_TAG ('l','o','c', 'a'));
   check_maxp_num_glyphs(face_subset, 5, true);
 
-  hb_face_destroy (face_subset);
-  hb_face_destroy (face_fi);
-  hb_face_destroy (face_fil);
+  face_destroy (face_subset);
+  face_destroy (face_fi);
+  face_destroy (face_fil);
 }
 
 static void
 test_subset_glyf_without_gsub (void)
 {
-  hb_face_t *face_fil = hb_test_open_font_file ("fonts/Roboto-Regular.gsub.fil.ttf");
-  hb_face_t *face_fi = hb_test_open_font_file ("fonts/Roboto-Regular.nogsub.fi.ttf");
-  hb_subset_input_t *input;
-  hb_face_t *face_subset;
+  face_t *face_fil = test_open_font_file ("fonts/Roboto-Regular.gsub.fil.ttf");
+  face_t *face_fi = test_open_font_file ("fonts/Roboto-Regular.nogsub.fi.ttf");
+  subset_input_t *input;
+  face_t *face_subset;
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_set_add (codepoints, 102); // f
-  hb_set_add (codepoints, 105); // i
+  set_t *codepoints = set_create();
+  set_add (codepoints, 102); // f
+  set_add (codepoints, 105); // i
 
-  input = hb_subset_test_create_input (codepoints);
-  hb_set_destroy (codepoints);
-  hb_set_add (hb_subset_input_set (input, HB_SUBSET_SETS_DROP_TABLE_TAG), HB_TAG('G', 'S', 'U', 'B'));
-  hb_set_add (hb_subset_input_set (input, HB_SUBSET_SETS_DROP_TABLE_TAG), HB_TAG('G', 'P', 'O', 'S'));
-  hb_set_add (hb_subset_input_set (input, HB_SUBSET_SETS_DROP_TABLE_TAG), HB_TAG('G', 'D', 'E', 'F'));
+  input = subset_test_create_input (codepoints);
+  set_destroy (codepoints);
+  set_add (subset_input_set (input, HB_SUBSET_SETS_DROP_TABLE_TAG), HB_TAG('G', 'S', 'U', 'B'));
+  set_add (subset_input_set (input, HB_SUBSET_SETS_DROP_TABLE_TAG), HB_TAG('G', 'P', 'O', 'S'));
+  set_add (subset_input_set (input, HB_SUBSET_SETS_DROP_TABLE_TAG), HB_TAG('G', 'D', 'E', 'F'));
 
-  face_subset = hb_subset_test_create_subset (face_fil, input);
+  face_subset = subset_test_create_subset (face_fil, input);
 
-  hb_subset_test_check (face_fi, face_subset, HB_TAG ('g','l','y','f'));
-  hb_subset_test_check (face_fi, face_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_fi, face_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_fi, face_subset, HB_TAG ('l','o','c', 'a'));
   check_maxp_num_glyphs(face_subset, 3, true);
 
-  hb_face_destroy (face_subset);
-  hb_face_destroy (face_fi);
-  hb_face_destroy (face_fil);
+  face_destroy (face_subset);
+  face_destroy (face_fi);
+  face_destroy (face_fil);
 }
 
 static void
 test_subset_glyf_noop (void)
 {
-  hb_face_t *face_abc = hb_test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
+  face_t *face_abc = test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_face_t *face_abc_subset;
-  hb_set_add (codepoints, 97);
-  hb_set_add (codepoints, 98);
-  hb_set_add (codepoints, 99);
-  face_abc_subset = hb_subset_test_create_subset (face_abc, hb_subset_test_create_input (codepoints));
-  hb_set_destroy (codepoints);
+  set_t *codepoints = set_create();
+  face_t *face_abc_subset;
+  set_add (codepoints, 97);
+  set_add (codepoints, 98);
+  set_add (codepoints, 99);
+  face_abc_subset = subset_test_create_subset (face_abc, subset_test_create_input (codepoints));
+  set_destroy (codepoints);
 
   check_maxp_num_glyphs(face_abc_subset, 4, true);
-  hb_subset_test_check (face_abc, face_abc_subset, HB_TAG ('l','o','c', 'a'));
-  hb_subset_test_check (face_abc, face_abc_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_abc, face_abc_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_abc, face_abc_subset, HB_TAG ('g','l','y','f'));
 
-  hb_face_destroy (face_abc_subset);
-  hb_face_destroy (face_abc);
+  face_destroy (face_abc_subset);
+  face_destroy (face_abc);
 }
 
 static void
 test_subset_glyf_strip_hints_simple (void)
 {
-  hb_face_t *face_abc = hb_test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
-  hb_face_t *face_ac = hb_test_open_font_file ("fonts/Roboto-Regular.ac.nohints.ttf");
+  face_t *face_abc = test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
+  face_t *face_ac = test_open_font_file ("fonts/Roboto-Regular.ac.nohints.ttf");
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_subset_input_t *input;
-  hb_face_t *face_abc_subset;
-  hb_set_add (codepoints, 'a');
-  hb_set_add (codepoints, 'c');
-  input = hb_subset_test_create_input (codepoints);
-  hb_subset_input_set_flags (input, HB_SUBSET_FLAGS_NO_HINTING);
-  face_abc_subset = hb_subset_test_create_subset (face_abc, input);
-  hb_set_destroy (codepoints);
+  set_t *codepoints = set_create();
+  subset_input_t *input;
+  face_t *face_abc_subset;
+  set_add (codepoints, 'a');
+  set_add (codepoints, 'c');
+  input = subset_test_create_input (codepoints);
+  subset_input_set_flags (input, HB_SUBSET_FLAGS_NO_HINTING);
+  face_abc_subset = subset_test_create_subset (face_abc, input);
+  set_destroy (codepoints);
 
   check_maxp_num_glyphs(face_abc_subset, 3, false);
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('l','o','c', 'a'));
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','l','y','f'));
 
-  hb_face_destroy (face_abc_subset);
-  hb_face_destroy (face_abc);
-  hb_face_destroy (face_ac);
+  face_destroy (face_abc_subset);
+  face_destroy (face_abc);
+  face_destroy (face_ac);
 }
 
 static void
 test_subset_glyf_strip_hints_composite (void)
 {
-  hb_face_t *face_components = hb_test_open_font_file ("fonts/Roboto-Regular.components.ttf");
-  hb_face_t *face_subset = hb_test_open_font_file ("fonts/Roboto-Regular.components.1fc.nohints.ttf");
+  face_t *face_components = test_open_font_file ("fonts/Roboto-Regular.components.ttf");
+  face_t *face_subset = test_open_font_file ("fonts/Roboto-Regular.components.1fc.nohints.ttf");
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_subset_input_t *input;
-  hb_face_t *face_generated_subset;
-  hb_set_add (codepoints, 0x1fc);
-  input = hb_subset_test_create_input (codepoints);
-  hb_subset_input_set_flags (input, HB_SUBSET_FLAGS_NO_HINTING);
+  set_t *codepoints = set_create();
+  subset_input_t *input;
+  face_t *face_generated_subset;
+  set_add (codepoints, 0x1fc);
+  input = subset_test_create_input (codepoints);
+  subset_input_set_flags (input, HB_SUBSET_FLAGS_NO_HINTING);
 
-  face_generated_subset = hb_subset_test_create_subset (face_components, input);
-  hb_set_destroy (codepoints);
+  face_generated_subset = subset_test_create_subset (face_components, input);
+  set_destroy (codepoints);
 
   check_maxp_num_glyphs(face_generated_subset, 4, false);
-  hb_subset_test_check (face_subset, face_generated_subset, HB_TAG ('l','o','c', 'a'));
-  hb_subset_test_check (face_subset, face_generated_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_subset, face_generated_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_subset, face_generated_subset, HB_TAG ('g','l','y','f'));
 
-  hb_face_destroy (face_generated_subset);
-  hb_face_destroy (face_subset);
-  hb_face_destroy (face_components);
+  face_destroy (face_generated_subset);
+  face_destroy (face_subset);
+  face_destroy (face_components);
 }
 
 static void
 test_subset_glyf_strip_hints_invalid (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("../fuzzing/fonts/oom-ccc61c92d589f895174cdef6ff2e3b20e9999a1a");
+  face_t *face = test_open_font_file ("../fuzzing/fonts/oom-ccc61c92d589f895174cdef6ff2e3b20e9999a1a");
 
-  hb_set_t *codepoints = hb_set_create();
-  const hb_codepoint_t text[] =
+  set_t *codepoints = set_create();
+  const codepoint_t text[] =
   {
     'A', 'B', 'C', 'D', 'E', 'X', 'Y', 'Z', '1', '2',
     '3', '@', '_', '%', '&', ')', '*', '$', '!'
   };
   unsigned int i;
-  hb_subset_input_t *input;
-  hb_face_t *face_subset;
+  subset_input_t *input;
+  face_t *face_subset;
 
-  for (i = 0; i < sizeof (text) / sizeof (hb_codepoint_t); i++)
+  for (i = 0; i < sizeof (text) / sizeof (codepoint_t); i++)
   {
-    hb_set_add (codepoints, text[i]);
+    set_add (codepoints, text[i]);
   }
 
-  input = hb_subset_test_create_input (codepoints);
-  hb_subset_input_set_flags (input, HB_SUBSET_FLAGS_NO_HINTING);
-  hb_set_destroy (codepoints);
+  input = subset_test_create_input (codepoints);
+  subset_input_set_flags (input, HB_SUBSET_FLAGS_NO_HINTING);
+  set_destroy (codepoints);
 
-  face_subset = hb_subset_or_fail (face, input);
+  face_subset = subset_or_fail (face, input);
   g_assert (!face_subset);
 
-  hb_subset_input_destroy (input);
-  hb_face_destroy (face);
+  subset_input_destroy (input);
+  face_destroy (face);
 }
 
 static void
 test_subset_glyf_retain_gids (void)
 {
-  hb_face_t *face_abc = hb_test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
-  hb_face_t *face_ac = hb_test_open_font_file ("fonts/Roboto-Regular.ac.retaingids.ttf");
+  face_t *face_abc = test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
+  face_t *face_ac = test_open_font_file ("fonts/Roboto-Regular.ac.retaingids.ttf");
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_face_t *face_abc_subset;
-  hb_set_add (codepoints, 97);
-  hb_set_add (codepoints, 99);
+  set_t *codepoints = set_create();
+  face_t *face_abc_subset;
+  set_add (codepoints, 97);
+  set_add (codepoints, 99);
 
-  hb_subset_input_t *input = hb_subset_test_create_input (codepoints);
-  hb_subset_input_set_flags (input, HB_SUBSET_FLAGS_RETAIN_GIDS);
-  face_abc_subset = hb_subset_test_create_subset (face_abc, input);
-  hb_set_destroy (codepoints);
+  subset_input_t *input = subset_test_create_input (codepoints);
+  subset_input_set_flags (input, HB_SUBSET_FLAGS_RETAIN_GIDS);
+  face_abc_subset = subset_test_create_subset (face_abc, input);
+  set_destroy (codepoints);
 
   check_maxp_num_glyphs(face_abc_subset, 4, true);
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('l','o','c', 'a'));
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','l','y','f'));
 
-  hb_face_destroy (face_abc_subset);
-  hb_face_destroy (face_abc);
-  hb_face_destroy (face_ac);
+  face_destroy (face_abc_subset);
+  face_destroy (face_abc);
+  face_destroy (face_ac);
 }
 
 static void
 test_subset_glyf_retain_gids_truncates (void)
 {
-  hb_face_t *face_abc = hb_test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
-  hb_face_t *face_a = hb_test_open_font_file ("fonts/Roboto-Regular.a.retaingids.ttf");
+  face_t *face_abc = test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
+  face_t *face_a = test_open_font_file ("fonts/Roboto-Regular.a.retaingids.ttf");
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_face_t *face_abc_subset;
-  hb_set_add (codepoints, 97);
+  set_t *codepoints = set_create();
+  face_t *face_abc_subset;
+  set_add (codepoints, 97);
 
-  hb_subset_input_t *input = hb_subset_test_create_input (codepoints);
-  hb_subset_input_set_flags (input, HB_SUBSET_FLAGS_RETAIN_GIDS);
-  face_abc_subset = hb_subset_test_create_subset (face_abc, input);
-  hb_set_destroy (codepoints);
+  subset_input_t *input = subset_test_create_input (codepoints);
+  subset_input_set_flags (input, HB_SUBSET_FLAGS_RETAIN_GIDS);
+  face_abc_subset = subset_test_create_subset (face_abc, input);
+  set_destroy (codepoints);
 
   check_maxp_num_glyphs(face_abc_subset, 2, true);
-  hb_subset_test_check (face_a, face_abc_subset, HB_TAG ('l','o','c', 'a'));
-  hb_subset_test_check (face_a, face_abc_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_a, face_abc_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_a, face_abc_subset, HB_TAG ('g','l','y','f'));
 
-  hb_face_destroy (face_abc_subset);
-  hb_face_destroy (face_abc);
-  hb_face_destroy (face_a);
+  face_destroy (face_abc_subset);
+  face_destroy (face_abc);
+  face_destroy (face_a);
 }
 
 #ifdef HB_EXPERIMENTAL_API
 static void
 test_subset_glyf_iftb_requirements (void)
 {
-  hb_face_t *face_abc = hb_test_open_font_file ("fonts/Roboto-Variable.abc.ttf");
-  hb_face_t *face_long_loca = hb_test_open_font_file ("fonts/Roboto-Variable.abc.long_loca.ttf");
+  face_t *face_abc = test_open_font_file ("fonts/Roboto-Variable.abc.ttf");
+  face_t *face_long_loca = test_open_font_file ("fonts/Roboto-Variable.abc.long_loca.ttf");
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_face_t *face_abc_subset;
-  hb_set_add (codepoints, 97);
-  hb_set_add (codepoints, 98);
-  hb_set_add (codepoints, 99);
+  set_t *codepoints = set_create();
+  face_t *face_abc_subset;
+  set_add (codepoints, 97);
+  set_add (codepoints, 98);
+  set_add (codepoints, 99);
 
-  hb_subset_input_t *input = hb_subset_test_create_input (codepoints);
-  hb_subset_input_set_flags (input, HB_SUBSET_FLAGS_IFTB_REQUIREMENTS);
-  face_abc_subset = hb_subset_test_create_subset (face_abc, input);
-  hb_set_destroy (codepoints);
+  subset_input_t *input = subset_test_create_input (codepoints);
+  subset_input_set_flags (input, HB_SUBSET_FLAGS_IFTB_REQUIREMENTS);
+  face_abc_subset = subset_test_create_subset (face_abc, input);
+  set_destroy (codepoints);
 
-  hb_subset_test_check (face_long_loca, face_abc_subset, HB_TAG ('l','o','c', 'a'));
-  hb_subset_test_check (face_long_loca, face_abc_subset, HB_TAG ('g','l','y','f'));
-  hb_subset_test_check (face_long_loca, face_abc_subset, HB_TAG ('g','v','a','r'));
+  subset_test_check (face_long_loca, face_abc_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_long_loca, face_abc_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_long_loca, face_abc_subset, HB_TAG ('g','v','a','r'));
 
-  hb_face_destroy (face_abc_subset);
-  hb_face_destroy (face_abc);
-  hb_face_destroy (face_long_loca);
+  face_destroy (face_abc_subset);
+  face_destroy (face_abc);
+  face_destroy (face_long_loca);
 
 }
 #endif
@@ -391,24 +391,24 @@ test_subset_glyf_iftb_requirements (void)
 int
 main (int argc, char **argv)
 {
-  hb_test_init (&argc, &argv);
+  test_init (&argc, &argv);
 
-  hb_test_add (test_subset_glyf_noop);
-  hb_test_add (test_subset_glyf);
-  hb_test_add (test_subset_glyf_set_overlaps_flag);
-  hb_test_add (test_subset_glyf_with_input_glyphs);
-  hb_test_add (test_subset_glyf_strip_hints_simple);
-  hb_test_add (test_subset_glyf_strip_hints_composite);
-  hb_test_add (test_subset_glyf_strip_hints_invalid);
-  hb_test_add (test_subset_glyf_with_components);
-  hb_test_add (test_subset_glyf_with_gsub);
-  hb_test_add (test_subset_glyf_without_gsub);
-  hb_test_add (test_subset_glyf_retain_gids);
-  hb_test_add (test_subset_glyf_retain_gids_truncates);
+  test_add (test_subset_glyf_noop);
+  test_add (test_subset_glyf);
+  test_add (test_subset_glyf_set_overlaps_flag);
+  test_add (test_subset_glyf_with_input_glyphs);
+  test_add (test_subset_glyf_strip_hints_simple);
+  test_add (test_subset_glyf_strip_hints_composite);
+  test_add (test_subset_glyf_strip_hints_invalid);
+  test_add (test_subset_glyf_with_components);
+  test_add (test_subset_glyf_with_gsub);
+  test_add (test_subset_glyf_without_gsub);
+  test_add (test_subset_glyf_retain_gids);
+  test_add (test_subset_glyf_retain_gids_truncates);
 
 #ifdef HB_EXPERIMENTAL_API
-  hb_test_add (test_subset_glyf_iftb_requirements);
+  test_add (test_subset_glyf_iftb_requirements);
 #endif
 
-  return hb_test_run();
+  return test_run();
 }

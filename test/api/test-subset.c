@@ -32,215 +32,215 @@
 static void
 test_subset_32_tables (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("../fuzzing/fonts/oom-6ef8c96d3710262511bcc730dce9c00e722cb653");
+  face_t *face = test_open_font_file ("../fuzzing/fonts/oom-6ef8c96d3710262511bcc730dce9c00e722cb653");
 
-  hb_subset_input_t *input = hb_subset_input_create_or_fail ();
-  hb_set_t *codepoints = hb_subset_input_unicode_set (input);
-  hb_face_t *subset;
+  subset_input_t *input = subset_input_create_or_fail ();
+  set_t *codepoints = subset_input_unicode_set (input);
+  face_t *subset;
 
-  hb_set_add (codepoints, 'a');
-  hb_set_add (codepoints, 'b');
-  hb_set_add (codepoints, 'c');
+  set_add (codepoints, 'a');
+  set_add (codepoints, 'b');
+  set_add (codepoints, 'c');
 
-  subset = hb_subset_or_fail (face, input);
+  subset = subset_or_fail (face, input);
   g_assert (subset);
-  g_assert (subset != hb_face_get_empty ());
+  g_assert (subset != face_get_empty ());
 
-  hb_subset_input_destroy (input);
-  hb_face_destroy (subset);
-  hb_face_destroy (face);
+  subset_input_destroy (input);
+  face_destroy (subset);
+  face_destroy (face);
 }
 
 static void
 test_subset_no_inf_loop (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("../fuzzing/fonts/clusterfuzz-testcase-minimized-hb-subset-fuzzer-5521982557782016");
+  face_t *face = test_open_font_file ("../fuzzing/fonts/clusterfuzz-testcase-minimized-hb-subset-fuzzer-5521982557782016");
 
-  hb_subset_input_t *input = hb_subset_input_create_or_fail ();
-  hb_set_t *codepoints = hb_subset_input_unicode_set (input);
-  hb_face_t *subset;
+  subset_input_t *input = subset_input_create_or_fail ();
+  set_t *codepoints = subset_input_unicode_set (input);
+  face_t *subset;
 
-  hb_set_add (codepoints, 'a');
-  hb_set_add (codepoints, 'b');
-  hb_set_add (codepoints, 'c');
+  set_add (codepoints, 'a');
+  set_add (codepoints, 'b');
+  set_add (codepoints, 'c');
 
-  subset = hb_subset_or_fail (face, input);
+  subset = subset_or_fail (face, input);
   g_assert (!subset);
 
-  hb_subset_input_destroy (input);
-  hb_face_destroy (subset);
-  hb_face_destroy (face);
+  subset_input_destroy (input);
+  face_destroy (subset);
+  face_destroy (face);
 }
 
 static void
 test_subset_crash (void)
 {
-  hb_face_t *face = hb_test_open_font_file ("../fuzzing/fonts/crash-4b60576767ee4d9fe1cc10959d89baf73d4e8249");
+  face_t *face = test_open_font_file ("../fuzzing/fonts/crash-4b60576767ee4d9fe1cc10959d89baf73d4e8249");
 
-  hb_subset_input_t *input = hb_subset_input_create_or_fail ();
-  hb_set_t *codepoints = hb_subset_input_unicode_set (input);
-  hb_face_t *subset;
+  subset_input_t *input = subset_input_create_or_fail ();
+  set_t *codepoints = subset_input_unicode_set (input);
+  face_t *subset;
 
-  hb_set_add (codepoints, 'a');
-  hb_set_add (codepoints, 'b');
-  hb_set_add (codepoints, 'c');
+  set_add (codepoints, 'a');
+  set_add (codepoints, 'b');
+  set_add (codepoints, 'c');
 
-  subset = hb_subset_or_fail (face, input);
+  subset = subset_or_fail (face, input);
   g_assert (!subset);
 
-  hb_subset_input_destroy (input);
-  hb_face_destroy (subset);
-  hb_face_destroy (face);
+  subset_input_destroy (input);
+  face_destroy (subset);
+  face_destroy (face);
 }
 
 static void
 test_subset_set_flags (void)
 {
-  hb_subset_input_t *input = hb_subset_input_create_or_fail ();
+  subset_input_t *input = subset_input_create_or_fail ();
 
-  g_assert (hb_subset_input_get_flags (input) == HB_SUBSET_FLAGS_DEFAULT);
+  g_assert (subset_input_get_flags (input) == HB_SUBSET_FLAGS_DEFAULT);
 
-  hb_subset_input_set_flags (input,
+  subset_input_set_flags (input,
                              HB_SUBSET_FLAGS_NAME_LEGACY |
                              HB_SUBSET_FLAGS_NOTDEF_OUTLINE |
                              HB_SUBSET_FLAGS_GLYPH_NAMES);
 
-  g_assert (hb_subset_input_get_flags (input) ==
-            (hb_subset_flags_t) (
+  g_assert (subset_input_get_flags (input) ==
+            (subset_flags_t) (
             HB_SUBSET_FLAGS_NAME_LEGACY |
             HB_SUBSET_FLAGS_NOTDEF_OUTLINE |
             HB_SUBSET_FLAGS_GLYPH_NAMES));
 
-  hb_subset_input_set_flags (input,
+  subset_input_set_flags (input,
                              HB_SUBSET_FLAGS_NAME_LEGACY |
                              HB_SUBSET_FLAGS_NOTDEF_OUTLINE |
                              HB_SUBSET_FLAGS_NO_PRUNE_UNICODE_RANGES);
 
-  g_assert (hb_subset_input_get_flags (input) ==
-            (hb_subset_flags_t) (
+  g_assert (subset_input_get_flags (input) ==
+            (subset_flags_t) (
             HB_SUBSET_FLAGS_NAME_LEGACY |
             HB_SUBSET_FLAGS_NOTDEF_OUTLINE |
             HB_SUBSET_FLAGS_NO_PRUNE_UNICODE_RANGES));
 
 
-  hb_subset_input_destroy (input);
+  subset_input_destroy (input);
 }
 
 
 static void
 test_subset_sets (void)
 {
-  hb_subset_input_t *input = hb_subset_input_create_or_fail ();
-  hb_set_t* set = hb_set_create ();
+  subset_input_t *input = subset_input_create_or_fail ();
+  set_t* set = set_create ();
 
-  hb_set_add (hb_subset_input_set (input, HB_SUBSET_SETS_GLYPH_INDEX), 83);
-  hb_set_add (hb_subset_input_set (input, HB_SUBSET_SETS_UNICODE), 85);
+  set_add (subset_input_set (input, HB_SUBSET_SETS_GLYPH_INDEX), 83);
+  set_add (subset_input_set (input, HB_SUBSET_SETS_UNICODE), 85);
 
-  hb_set_clear (hb_subset_input_set (input, HB_SUBSET_SETS_LAYOUT_FEATURE_TAG));
-  hb_set_add (hb_subset_input_set (input, HB_SUBSET_SETS_LAYOUT_FEATURE_TAG), 87);
+  set_clear (subset_input_set (input, HB_SUBSET_SETS_LAYOUT_FEATURE_TAG));
+  set_add (subset_input_set (input, HB_SUBSET_SETS_LAYOUT_FEATURE_TAG), 87);
 
-  hb_set_add (set, 83);
-  g_assert (hb_set_is_equal (hb_subset_input_glyph_set (input), set));
-  hb_set_clear (set);
+  set_add (set, 83);
+  g_assert (set_is_equal (subset_input_glyph_set (input), set));
+  set_clear (set);
 
-  hb_set_add (set, 85);
-  g_assert (hb_set_is_equal (hb_subset_input_unicode_set (input), set));
-  hb_set_clear (set);
+  set_add (set, 85);
+  g_assert (set_is_equal (subset_input_unicode_set (input), set));
+  set_clear (set);
 
-  hb_set_add (set, 87);
-  g_assert (hb_set_is_equal (hb_subset_input_set (input, HB_SUBSET_SETS_LAYOUT_FEATURE_TAG), set));
-  hb_set_clear (set);
+  set_add (set, 87);
+  g_assert (set_is_equal (subset_input_set (input, HB_SUBSET_SETS_LAYOUT_FEATURE_TAG), set));
+  set_clear (set);
 
-  hb_set_destroy (set);
-  hb_subset_input_destroy (input);
+  set_destroy (set);
+  subset_input_destroy (input);
 }
 
 static void
 test_subset_plan (void)
 {
-  hb_face_t *face_abc = hb_test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
-  hb_face_t *face_ac = hb_test_open_font_file ("fonts/Roboto-Regular.ac.ttf");
+  face_t *face_abc = test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
+  face_t *face_ac = test_open_font_file ("fonts/Roboto-Regular.ac.ttf");
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_set_add (codepoints, 97);
-  hb_set_add (codepoints, 99);
-  hb_subset_input_t* input = hb_subset_test_create_input (codepoints);
-  hb_set_destroy (codepoints);
+  set_t *codepoints = set_create();
+  set_add (codepoints, 97);
+  set_add (codepoints, 99);
+  subset_input_t* input = subset_test_create_input (codepoints);
+  set_destroy (codepoints);
 
-  hb_subset_plan_t* plan = hb_subset_plan_create_or_fail (face_abc, input);
+  subset_plan_t* plan = subset_plan_create_or_fail (face_abc, input);
   g_assert (plan);
 
-  const hb_map_t* mapping = hb_subset_plan_old_to_new_glyph_mapping (plan);
-  g_assert (hb_map_get (mapping, 1) == 1);
-  g_assert (hb_map_get (mapping, 3) == 2);
+  const map_t* mapping = subset_plan_old_to_new_glyph_mapping (plan);
+  g_assert (map_get (mapping, 1) == 1);
+  g_assert (map_get (mapping, 3) == 2);
 
-  mapping = hb_subset_plan_new_to_old_glyph_mapping (plan);
-  g_assert (hb_map_get (mapping, 1) == 1);
-  g_assert (hb_map_get (mapping, 2) == 3);
+  mapping = subset_plan_new_to_old_glyph_mapping (plan);
+  g_assert (map_get (mapping, 1) == 1);
+  g_assert (map_get (mapping, 2) == 3);
 
-  mapping = hb_subset_plan_unicode_to_old_glyph_mapping (plan);
-  g_assert (hb_map_get (mapping, 0x63) == 3);
+  mapping = subset_plan_unicode_to_old_glyph_mapping (plan);
+  g_assert (map_get (mapping, 0x63) == 3);
 
-  hb_face_t* face_abc_subset = hb_subset_plan_execute_or_fail (plan);
+  face_t* face_abc_subset = subset_plan_execute_or_fail (plan);
 
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('l','o','c', 'a'));
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','l','y','f'));
 
-  hb_subset_input_destroy (input);
-  hb_subset_plan_destroy (plan);
-  hb_face_destroy (face_abc_subset);
-  hb_face_destroy (face_abc);
-  hb_face_destroy (face_ac);
+  subset_input_destroy (input);
+  subset_plan_destroy (plan);
+  face_destroy (face_abc_subset);
+  face_destroy (face_abc);
+  face_destroy (face_ac);
 }
 
-static hb_blob_t*
-_ref_table (hb_face_t *face, hb_tag_t tag, void *user_data)
+static blob_t*
+_ref_table (face_t *face, tag_t tag, void *user_data)
 {
-  return hb_face_reference_table ((hb_face_t*) user_data, tag);
+  return face_reference_table ((face_t*) user_data, tag);
 }
 
 static void
 test_subset_create_for_tables_face (void)
 {
-  hb_face_t *face_abc = hb_test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
-  hb_face_t *face_ac = hb_test_open_font_file ("fonts/Roboto-Regular.ac.ttf");
-  hb_face_t *face_create_for_tables = hb_face_create_for_tables (
+  face_t *face_abc = test_open_font_file ("fonts/Roboto-Regular.abc.ttf");
+  face_t *face_ac = test_open_font_file ("fonts/Roboto-Regular.ac.ttf");
+  face_t *face_create_for_tables = face_create_for_tables (
       _ref_table,
       face_abc,
       NULL);
 
-  hb_set_t *codepoints = hb_set_create();
-  hb_set_add (codepoints, 97);
-  hb_set_add (codepoints, 99);
+  set_t *codepoints = set_create();
+  set_add (codepoints, 97);
+  set_add (codepoints, 99);
 
-  hb_subset_input_t* input = hb_subset_test_create_input (codepoints);
-  hb_set_destroy (codepoints);
+  subset_input_t* input = subset_test_create_input (codepoints);
+  set_destroy (codepoints);
 
-  hb_face_t* face_abc_subset = hb_subset_or_fail (face_create_for_tables, input);
+  face_t* face_abc_subset = subset_or_fail (face_create_for_tables, input);
 
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('l','o','c', 'a'));
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','l','y','f'));
-  hb_subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','a','s','p'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('l','o','c', 'a'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','l','y','f'));
+  subset_test_check (face_ac, face_abc_subset, HB_TAG ('g','a','s','p'));
 
-  hb_subset_input_destroy (input);
-  hb_face_destroy (face_abc_subset);
-  hb_face_destroy (face_create_for_tables);
-  hb_face_destroy (face_abc);
-  hb_face_destroy (face_ac);
+  subset_input_destroy (input);
+  face_destroy (face_abc_subset);
+  face_destroy (face_create_for_tables);
+  face_destroy (face_abc);
+  face_destroy (face_ac);
 }
 
 int
 main (int argc, char **argv)
 {
-  hb_test_init (&argc, &argv);
+  test_init (&argc, &argv);
 
-  hb_test_add (test_subset_32_tables);
-  hb_test_add (test_subset_no_inf_loop);
-  hb_test_add (test_subset_crash);
-  hb_test_add (test_subset_set_flags);
-  hb_test_add (test_subset_sets);
-  hb_test_add (test_subset_plan);
-  hb_test_add (test_subset_create_for_tables_face);
+  test_add (test_subset_32_tables);
+  test_add (test_subset_no_inf_loop);
+  test_add (test_subset_crash);
+  test_add (test_subset_set_flags);
+  test_add (test_subset_sets);
+  test_add (test_subset_plan);
+  test_add (test_subset_create_for_tables_face);
 
-  return hb_test_run();
+  return test_run();
 }

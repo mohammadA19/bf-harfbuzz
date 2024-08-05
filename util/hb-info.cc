@@ -39,21 +39,21 @@ const unsigned DEFAULT_FONT_SIZE = FONT_SIZE_UPEM;
 const unsigned SUBPIXEL_BITS = 0;
 
 static void
-_hb_ot_name_get_utf8 (hb_face_t       *face,
-		      hb_ot_name_id_t  name_id,
-		      hb_language_t    language,
+_ot_name_get_utf8 (face_t       *face,
+		      ot_name_id_t  name_id,
+		      language_t    language,
 		      unsigned int    *text_size /* IN/OUT */,
 		      char            *text      /* OUT */)
 {
-  static hb_language_t en = hb_language_from_string ("en", -1);
+  static language_t en = language_from_string ("en", -1);
 
   unsigned len = *text_size;
-  if (!hb_ot_name_get_utf8 (face, name_id,
+  if (!ot_name_get_utf8 (face, name_id,
 			    language,
 			    &len, text))
   {
     len = *text_size;
-    hb_ot_name_get_utf8 (face, name_id,
+    ot_name_get_utf8 (face, name_id,
 			 en,
 			 &len, text);
   }
@@ -171,33 +171,33 @@ struct info_t :
 
   protected:
 
-  hb_bool_t verbose = true;
-  hb_bool_t first_item = true;
+  bool_t verbose = true;
+  bool_t first_item = true;
 
   char *direction_str = nullptr;
   char *script_str = nullptr;
   char *language_str = nullptr;
-  hb_direction_t direction = HB_DIRECTION_LTR;
-  hb_script_t script = HB_SCRIPT_INVALID;
-  hb_language_t language = HB_LANGUAGE_INVALID;
+  direction_t direction = HB_DIRECTION_LTR;
+  script_t script = HB_SCRIPT_INVALID;
+  language_t language = HB_LANGUAGE_INVALID;
   char *ot_script_str = nullptr;
   char *ot_language_str = nullptr;
 
-  hb_bool_t all = false;
+  bool_t all = false;
 
-  hb_bool_t show_all = false;
-  hb_bool_t show_face_count = false;
-  hb_bool_t show_family = false;
-  hb_bool_t show_subfamily = false;
-  hb_bool_t show_unique_name = false;
-  hb_bool_t show_full_name = false;
-  hb_bool_t show_postscript_name = false;
-  hb_bool_t show_version = false;
-  hb_bool_t show_technology = false;
-  hb_bool_t show_unicode_count = false;
-  hb_bool_t show_glyph_count = false;
-  hb_bool_t show_upem = false;
-  hb_bool_t show_extents = false;
+  bool_t show_all = false;
+  bool_t show_face_count = false;
+  bool_t show_family = false;
+  bool_t show_subfamily = false;
+  bool_t show_unique_name = false;
+  bool_t show_full_name = false;
+  bool_t show_postscript_name = false;
+  bool_t show_version = false;
+  bool_t show_technology = false;
+  bool_t show_unicode_count = false;
+  bool_t show_glyph_count = false;
+  bool_t show_upem = false;
+  bool_t show_extents = false;
 
   char **get_name = nullptr;
   char **get_style = nullptr;
@@ -206,23 +206,23 @@ struct info_t :
   char **get_meta = nullptr;
   char *get_table = nullptr;
 
-  hb_bool_t list_all = false;
-  hb_bool_t list_names = false;
+  bool_t list_all = false;
+  bool_t list_names = false;
 #ifdef HB_HAS_GOBJECT
-  hb_bool_t list_style = false;
-  hb_bool_t list_metrics = false;
-  hb_bool_t list_baselines = false;
+  bool_t list_style = false;
+  bool_t list_metrics = false;
+  bool_t list_baselines = false;
 #endif
-  hb_bool_t list_tables = false;
-  hb_bool_t list_unicodes = false;
-  hb_bool_t list_glyphs = false;
-  hb_bool_t list_scripts = false;
-  hb_bool_t list_features = false;
+  bool_t list_tables = false;
+  bool_t list_unicodes = false;
+  bool_t list_glyphs = false;
+  bool_t list_scripts = false;
+  bool_t list_features = false;
 #ifndef HB_NO_VAR
-  hb_bool_t list_variations = false;
+  bool_t list_variations = false;
 #endif
-  hb_bool_t list_palettes = false;
-  hb_bool_t list_meta = false;
+  bool_t list_palettes = false;
+  bool_t list_meta = false;
 
   public:
 
@@ -230,12 +230,12 @@ struct info_t :
   post_parse (GError **error)
   {
     if (direction_str)
-      direction = hb_direction_from_string (direction_str, -1);
+      direction = direction_from_string (direction_str, -1);
     if (script_str)
-      script = hb_script_from_string (script_str, -1);
-    language = hb_language_get_default ();
+      script = script_from_string (script_str, -1);
+    language = language_get_default ();
     if (language_str)
-      language = hb_language_from_string (language_str, -1);
+      language = language_from_string (language_str, -1);
   }
 
   int
@@ -349,11 +349,11 @@ struct info_t :
   void
   _show_face_count ()
   {
-    printf ("Face count: %u\n", hb_face_count (blob));
+    printf ("Face count: %u\n", face_count (blob));
   }
 
   void
-  _show_name (const char *label, hb_ot_name_id_t name_id)
+  _show_name (const char *label, ot_name_id_t name_id)
   {
     if (verbose)
     {
@@ -362,7 +362,7 @@ struct info_t :
 
     char name[16384];
     unsigned name_len = sizeof name;
-    _hb_ot_name_get_utf8 (face, name_id,
+    _ot_name_get_utf8 (face, name_id,
 			  language,
 			  &name_len, name);
 
@@ -371,11 +371,11 @@ struct info_t :
   void _show_family ()		{ _show_name ("Family", 1); }
   void _show_subfamily ()
   {
-    hb_ot_name_id_t name_id = 2;
+    ot_name_id_t name_id = 2;
 
-    unsigned named_instance = hb_font_get_var_named_instance (font);
+    unsigned named_instance = font_get_var_named_instance (font);
     if (named_instance != HB_FONT_NO_VAR_NAMED_INSTANCE)
-      name_id = hb_ot_var_named_instance_get_subfamily_name_id (face, named_instance);
+      name_id = ot_var_named_instance_get_subfamily_name_id (face, named_instance);
 
     _show_name ("Subfamily", name_id);
   }
@@ -383,22 +383,22 @@ struct info_t :
   void _show_full_name ()	{ _show_name ("Full name", 4); }
   void _show_postscript_name ()
   {
-    hb_ot_name_id_t name_id = 6;
+    ot_name_id_t name_id = 6;
 
-    unsigned named_instance = hb_font_get_var_named_instance (font);
+    unsigned named_instance = font_get_var_named_instance (font);
     if (named_instance != HB_FONT_NO_VAR_NAMED_INSTANCE)
-      name_id = hb_ot_var_named_instance_get_postscript_name_id (face, named_instance);
+      name_id = ot_var_named_instance_get_postscript_name_id (face, named_instance);
 
 
     _show_name ("Postscript name", name_id);
   }
   void _show_version ()		{ _show_name ("Version", 5); }
 
-  bool _has_blob (hb_tag_t tag)
+  bool _has_blob (tag_t tag)
   {
-    hb_blob_t *blob = hb_face_reference_table (face, tag);
-    bool ret = hb_blob_get_length (blob);
-    hb_blob_destroy (blob);
+    blob_t *blob = face_reference_table (face, tag);
+    bool ret = blob_get_length (blob);
+    blob_destroy (blob);
     return ret;
   }
 
@@ -441,12 +441,12 @@ struct info_t :
       printf ("Unicode count: ");
     }
 
-    hb_set_t *unicodes = hb_set_create ();
-    hb_face_collect_unicodes (face, unicodes);
+    set_t *unicodes = set_create ();
+    face_collect_unicodes (face, unicodes);
 
-    printf ("%u\n", hb_set_get_population (unicodes));
+    printf ("%u\n", set_get_population (unicodes));
 
-    hb_set_destroy (unicodes);
+    set_destroy (unicodes);
   }
 
   void _show_glyph_count ()
@@ -456,7 +456,7 @@ struct info_t :
       printf ("Glyph count: ");
     }
 
-    printf ("%u\n", hb_face_get_glyph_count (face));
+    printf ("%u\n", face_get_glyph_count (face));
   }
 
   void _show_upem ()
@@ -466,13 +466,13 @@ struct info_t :
       printf ("Units-Per-EM: ");
     }
 
-    printf ("%u\n", hb_face_get_upem (face));
+    printf ("%u\n", face_get_upem (face));
   }
 
   void _show_extents ()
   {
-    hb_font_extents_t extents;
-    hb_font_get_extents_for_direction (font, direction, &extents);
+    font_extents_t extents;
+    font_get_extents_for_direction (font, direction, &extents);
 
     if (verbose) printf ("Ascender: ");
     printf ("%d\n", extents.ascender);
@@ -488,7 +488,7 @@ struct info_t :
   {
     for (char **p = get_name; *p; p++)
     {
-      hb_ot_name_id_t name_id = (hb_ot_name_id_t) atoi (*p);
+      ot_name_id_t name_id = (ot_name_id_t) atoi (*p);
       _show_name (*p, name_id);
     }
   }
@@ -497,12 +497,12 @@ struct info_t :
   {
     for (char **p = get_style; *p; p++)
     {
-      hb_style_tag_t tag = (hb_style_tag_t) hb_tag_from_string (*p, -1);
+      style_tag_t tag = (style_tag_t) tag_from_string (*p, -1);
 
       if (verbose)
 	printf ("Style %c%c%c%c: ", HB_UNTAG (tag));
 
-      float v = hb_style_get_value (font, tag);
+      float v = style_get_value (font, tag);
       printf ("%g\n", (double) v);
     }
   }
@@ -512,17 +512,17 @@ struct info_t :
     bool fallback = false;
     for (char **p = get_metric; *p; p++)
     {
-      hb_ot_metrics_tag_t tag = (hb_ot_metrics_tag_t) hb_tag_from_string (*p, -1);
-      hb_position_t position;
+      ot_metrics_tag_t tag = (ot_metrics_tag_t) tag_from_string (*p, -1);
+      position_t position;
 
       if (verbose)
 	printf ("Metric %c%c%c%c: ", HB_UNTAG (tag));
 
-      if (hb_ot_metrics_get_position (font, tag, &position))
+      if (ot_metrics_get_position (font, tag, &position))
 	printf ("%d	\n", position);
       else
       {
-	hb_ot_metrics_get_position_with_fallback (font, tag, &position);
+	ot_metrics_get_position_with_fallback (font, tag, &position);
 	printf ("%d	*\n", position);
 	fallback = true;
       }
@@ -536,38 +536,38 @@ struct info_t :
 
   void _get_baseline ()
   {
-    hb_tag_t script_tags[HB_OT_MAX_TAGS_PER_SCRIPT];
-    hb_tag_t language_tags[HB_OT_MAX_TAGS_PER_LANGUAGE];
+    tag_t script_tags[HB_OT_MAX_TAGS_PER_SCRIPT];
+    tag_t language_tags[HB_OT_MAX_TAGS_PER_LANGUAGE];
     unsigned script_count = HB_OT_MAX_TAGS_PER_SCRIPT;
     unsigned language_count = HB_OT_MAX_TAGS_PER_LANGUAGE;
 
-    hb_ot_tags_from_script_and_language (script, language,
+    ot_tags_from_script_and_language (script, language,
 					 &script_count, script_tags,
 					 &language_count, language_tags);
 
-    hb_tag_t script_tag = script_count ? script_tags[script_count - 1] : HB_TAG_NONE;
-    hb_tag_t language_tag = language_count ? language_tags[0] : HB_TAG_NONE;
+    tag_t script_tag = script_count ? script_tags[script_count - 1] : HB_TAG_NONE;
+    tag_t language_tag = language_count ? language_tags[0] : HB_TAG_NONE;
 
     if (ot_script_str)
-      script_tag = hb_tag_from_string (ot_script_str, -1);
+      script_tag = tag_from_string (ot_script_str, -1);
     if (ot_language_str)
-      language_tag = hb_tag_from_string (ot_language_str, -1);
+      language_tag = tag_from_string (ot_language_str, -1);
 
 
     bool fallback = false;
     for (char **p = get_baseline; *p; p++)
     {
-      hb_ot_layout_baseline_tag_t tag = (hb_ot_layout_baseline_tag_t) hb_tag_from_string (*p, -1);
-      hb_position_t position;
+      ot_layout_baseline_tag_t tag = (ot_layout_baseline_tag_t) tag_from_string (*p, -1);
+      position_t position;
 
       if (verbose)
 	printf ("Baseline %c%c%c%c: ", HB_UNTAG (tag));
 
-      if (hb_ot_layout_get_baseline (font, tag, direction, script_tag, language_tag, &position))
+      if (ot_layout_get_baseline (font, tag, direction, script_tag, language_tag, &position))
 	printf ("%d	\n", position);
       else
       {
-	hb_ot_layout_get_baseline_with_fallback (font, tag, direction, script_tag, language_tag, &position);
+	ot_layout_get_baseline_with_fallback (font, tag, direction, script_tag, language_tag, &position);
 	printf ("%d	*\n", position);
 	fallback = true;
       }
@@ -583,29 +583,29 @@ struct info_t :
   {
     for (char **p = get_meta; *p; p++)
     {
-      hb_ot_meta_tag_t tag = (hb_ot_meta_tag_t) hb_tag_from_string (*p, -1);
+      ot_meta_tag_t tag = (ot_meta_tag_t) tag_from_string (*p, -1);
 
-      hb_blob_t *blob = hb_ot_meta_reference_entry (face, tag);
+      blob_t *blob = ot_meta_reference_entry (face, tag);
 
       if (verbose)
 	printf ("Meta %c%c%c%c: ", HB_UNTAG (tag));
 
       printf ("%.*s\n",
-	      (int) hb_blob_get_length (blob),
-	      hb_blob_get_data (blob, nullptr));
+	      (int) blob_get_length (blob),
+	      blob_get_data (blob, nullptr));
 
-      hb_blob_destroy (blob);
+      blob_destroy (blob);
     }
   }
 
   void
   _get_table ()
   {
-    hb_blob_t *blob = hb_face_reference_table (face, hb_tag_from_string (get_table, -1));
+    blob_t *blob = face_reference_table (face, tag_from_string (get_table, -1));
     unsigned count = 0;
-    const char *data = hb_blob_get_data (blob, &count);
+    const char *data = blob_get_data (blob, &count);
     fwrite (data, 1, count, stdout);
-    hb_blob_destroy (blob);
+    blob_destroy (blob);
   }
 
   void _list_names ()
@@ -622,12 +622,12 @@ struct info_t :
 #endif
 
     unsigned count;
-    const auto *entries = hb_ot_name_list_names (face, &count);
+    const auto *entries = ot_name_list_names (face, &count);
     for (unsigned i = 0; i < count; i++)
     {
       char name[16384];
       unsigned name_len = sizeof name;
-      _hb_ot_name_get_utf8 (face, entries[i].name_id,
+      _ot_name_get_utf8 (face, entries[i].name_id,
 			    language,
 			    &name_len, name);
 
@@ -659,7 +659,7 @@ struct info_t :
     const auto *entries = enum_class->values;
     for (unsigned i = 0; i < count; i++)
     {
-	float v = hb_style_get_value (font, (hb_style_tag_t) entries[i].value);
+	float v = style_get_value (font, (style_tag_t) entries[i].value);
 	printf ("%c%c%c%c", HB_UNTAG(entries[i].value));
 	if (verbose)
 	  printf (": %-33s", entries[i].value_nick);
@@ -685,13 +685,13 @@ struct info_t :
     for (unsigned i = 0; i < count; i++)
     {
 	bool fallback = false;
-	hb_position_t v;
-	if (!hb_ot_metrics_get_position (font,
-					(hb_ot_metrics_tag_t) entries[i].value,
+	position_t v;
+	if (!ot_metrics_get_position (font,
+					(ot_metrics_tag_t) entries[i].value,
 					&v))
 	{
-	  hb_ot_metrics_get_position_with_fallback (font,
-						    (hb_ot_metrics_tag_t) entries[i].value,
+	  ot_metrics_get_position_with_fallback (font,
+						    (ot_metrics_tag_t) entries[i].value,
 						    &v);
 	  any_fallback = fallback = true;
 	}
@@ -713,22 +713,22 @@ struct info_t :
 
   void _list_baselines ()
   {
-    hb_tag_t script_tags[HB_OT_MAX_TAGS_PER_SCRIPT];
-    hb_tag_t language_tags[HB_OT_MAX_TAGS_PER_LANGUAGE];
+    tag_t script_tags[HB_OT_MAX_TAGS_PER_SCRIPT];
+    tag_t language_tags[HB_OT_MAX_TAGS_PER_LANGUAGE];
     unsigned script_count = HB_OT_MAX_TAGS_PER_SCRIPT;
     unsigned language_count = HB_OT_MAX_TAGS_PER_LANGUAGE;
 
-    hb_ot_tags_from_script_and_language (script, language,
+    ot_tags_from_script_and_language (script, language,
 					 &script_count, script_tags,
 					 &language_count, language_tags);
 
-    hb_tag_t script_tag = script_count ? script_tags[script_count - 1] : HB_TAG_NONE;
-    hb_tag_t language_tag = language_count ? language_tags[0] : HB_TAG_NONE;
+    tag_t script_tag = script_count ? script_tags[script_count - 1] : HB_TAG_NONE;
+    tag_t language_tag = language_count ? language_tags[0] : HB_TAG_NONE;
 
     if (ot_script_str)
-      script_tag = hb_tag_from_string (ot_script_str, -1);
+      script_tag = tag_from_string (ot_script_str, -1);
     if (ot_language_str)
-      language_tag = hb_tag_from_string (ot_language_str, -1);
+      language_tag = tag_from_string (ot_language_str, -1);
 
 
     if (verbose)
@@ -747,12 +747,12 @@ struct info_t :
     for (unsigned i = 0; i < count; i++)
     {
 	bool fallback = false;
-	hb_position_t v;
-	if (!hb_ot_layout_get_baseline (font, (hb_ot_layout_baseline_tag_t) entries[i].value,
+	position_t v;
+	if (!ot_layout_get_baseline (font, (ot_layout_baseline_tag_t) entries[i].value,
 					direction, script_tag, language_tag,
 					&v))
 	{
-	  hb_ot_layout_get_baseline_with_fallback (font, (hb_ot_layout_baseline_tag_t) entries[i].value,
+	  ot_layout_get_baseline_with_fallback (font, (ot_layout_baseline_tag_t) entries[i].value,
 						   direction, script_tag, language_tag,
 						   &v);
 	  any_fallback = fallback = true;
@@ -783,19 +783,19 @@ struct info_t :
       printf ("Tag	Size\n------------\n");
     }
 
-    unsigned count = hb_face_get_table_tags (face, 0, nullptr, nullptr);
-    hb_tag_t *tags = (hb_tag_t *) calloc (count, sizeof (hb_tag_t));
-    hb_face_get_table_tags (face, 0, &count, tags);
+    unsigned count = face_get_table_tags (face, 0, nullptr, nullptr);
+    tag_t *tags = (tag_t *) calloc (count, sizeof (tag_t));
+    face_get_table_tags (face, 0, &count, tags);
 
     for (unsigned i = 0; i < count; i++)
     {
-      hb_tag_t tag = tags[i];
+      tag_t tag = tags[i];
 
-      hb_blob_t *blob = hb_face_reference_table (face, tag);
+      blob_t *blob = face_reference_table (face, tag);
 
-      printf ("%c%c%c%c %8u bytes\n", HB_UNTAG (tag), hb_blob_get_length (blob));
+      printf ("%c%c%c%c %8u bytes\n", HB_UNTAG (tag), blob_get_length (blob));
 
-      hb_blob_destroy (blob);
+      blob_destroy (blob);
     }
 
     free (tags);
@@ -811,54 +811,54 @@ struct info_t :
       printf ("Unicode	Glyph name\n------------------\n");
     }
 
-    hb_set_t *unicodes = hb_set_create ();
-    hb_map_t *cmap = hb_map_create ();
+    set_t *unicodes = set_create ();
+    map_t *cmap = map_create ();
 
-    hb_face_collect_nominal_glyph_mapping (face, cmap, unicodes);
+    face_collect_nominal_glyph_mapping (face, cmap, unicodes);
 
-    for (hb_codepoint_t u = HB_SET_VALUE_INVALID;
-	 hb_set_next (unicodes, &u);)
+    for (codepoint_t u = HB_SET_VALUE_INVALID;
+	 set_next (unicodes, &u);)
     {
-      hb_codepoint_t gid = hb_map_get (cmap, u);
+      codepoint_t gid = map_get (cmap, u);
 
       char glyphname[128];
-      hb_font_glyph_to_string (font, gid,
+      font_glyph_to_string (font, gid,
 			       glyphname, sizeof glyphname);
 
       printf ("U+%04X	%s\n", u, glyphname);
     }
 
-    hb_map_destroy (cmap);
+    map_destroy (cmap);
 
 
     /* List variation-selector sequences. */
-    hb_set_t *vars = hb_set_create ();
+    set_t *vars = set_create ();
 
-    hb_face_collect_variation_selectors (face, vars);
+    face_collect_variation_selectors (face, vars);
 
-    for (hb_codepoint_t vs = HB_SET_VALUE_INVALID;
-	 hb_set_next (vars, &vs);)
+    for (codepoint_t vs = HB_SET_VALUE_INVALID;
+	 set_next (vars, &vs);)
     {
-      hb_set_clear (unicodes);
-      hb_face_collect_variation_unicodes (face, vs, unicodes);
+      set_clear (unicodes);
+      face_collect_variation_unicodes (face, vs, unicodes);
 
-      for (hb_codepoint_t u = HB_SET_VALUE_INVALID;
-	   hb_set_next (unicodes, &u);)
+      for (codepoint_t u = HB_SET_VALUE_INVALID;
+	   set_next (unicodes, &u);)
       {
-	hb_codepoint_t gid = 0;
-	HB_UNUSED bool b = hb_font_get_variation_glyph (font, u, vs, &gid);
+	codepoint_t gid = 0;
+	HB_UNUSED bool b = font_get_variation_glyph (font, u, vs, &gid);
 	assert (b);
 
 	char glyphname[128];
-	hb_font_glyph_to_string (font, gid,
+	font_glyph_to_string (font, gid,
 				 glyphname, sizeof glyphname);
 
 	printf ("U+%04X,U+%04X	%s\n", vs, u, glyphname);
       }
     }
 
-    hb_set_destroy (vars);
-    hb_set_destroy (unicodes);
+    set_destroy (vars);
+    set_destroy (unicodes);
   }
 
   void
@@ -871,12 +871,12 @@ struct info_t :
       printf ("GlyphID	Glyph name\n------------------\n");
     }
 
-    unsigned num_glyphs = hb_face_get_glyph_count (face);
+    unsigned num_glyphs = face_get_glyph_count (face);
 
-    for (hb_codepoint_t gid = 0; gid < num_glyphs; gid++)
+    for (codepoint_t gid = 0; gid < num_glyphs; gid++)
     {
       char glyphname[128];
-      hb_font_glyph_to_string (font, gid,
+      font_glyph_to_string (font, gid,
 			       glyphname, sizeof glyphname);
 
       printf ("%u	%s\n", gid, glyphname);
@@ -892,19 +892,19 @@ struct info_t :
       printf ("Layout script information:\n\n");
     }
 
-    hb_tag_t table_tags[] = {HB_OT_TAG_GSUB, HB_OT_TAG_GPOS, HB_TAG_NONE};
+    tag_t table_tags[] = {HB_OT_TAG_GSUB, HB_OT_TAG_GPOS, HB_TAG_NONE};
 
     for (unsigned int i = 0; table_tags[i]; i++)
     {
       if (verbose) printf ("Table: ");
       printf ("%c%c%c%c\n", HB_UNTAG (table_tags[i]));
 
-      hb_tag_t script_array[32];
+      tag_t script_array[32];
       unsigned script_count = sizeof script_array / sizeof script_array[0];
       unsigned script_offset = 0;
       do
       {
-	hb_ot_layout_table_get_script_tags (face, table_tags[i],
+	ot_layout_table_get_script_tags (face, table_tags[i],
 					    script_offset,
 					    &script_count,
 					    script_array);
@@ -914,20 +914,20 @@ struct info_t :
 	  printf ("	");
 	  if (verbose) printf ("Script: ");
 
-	  hb_tag_t hb_sc = hb_script_to_iso15924_tag (hb_ot_tag_to_script (script_array[script_index]));
+	  tag_t sc = script_to_iso15924_tag (ot_tag_to_script (script_array[script_index]));
 	  if (script_array[script_index] == HB_TAG ('D','F','L','T'))
-	    hb_sc = HB_SCRIPT_COMMON;
+	    sc = HB_SCRIPT_COMMON;
 
 	  printf ("%c%c%c%c (%c%c%c%c)\n",
-		  HB_UNTAG (hb_sc),
+		  HB_UNTAG (sc),
 		  HB_UNTAG (script_array[script_index]));
 
-	  hb_tag_t language_array[32];
+	  tag_t language_array[32];
 	  unsigned language_count = sizeof language_array / sizeof language_array[0];
 	  unsigned language_offset = 0;
 	  do
 	  {
-	    hb_ot_layout_script_get_language_tags (face, table_tags[i],
+	    ot_layout_script_get_language_tags (face, table_tags[i],
 						   script_offset + script_index,
 						   language_offset,
 						   &language_count,
@@ -938,7 +938,7 @@ struct info_t :
 	      printf ("		");
 	      if (verbose) printf ("Language: ");
 	      printf ("%s (%c%c%c%c)\n",
-		      hb_language_to_string (hb_ot_tag_to_language (language_array[language_index])),
+		      language_to_string (ot_tag_to_language (language_array[language_index])),
 		      HB_UNTAG (language_array[language_index]));
 	    }
 
@@ -963,35 +963,35 @@ struct info_t :
       printf ("Showing all font features with duplicates removed.\n\n");
     }
 
-    hb_tag_t table_tags[] = {HB_OT_TAG_GSUB, HB_OT_TAG_GPOS, HB_TAG_NONE};
+    tag_t table_tags[] = {HB_OT_TAG_GSUB, HB_OT_TAG_GPOS, HB_TAG_NONE};
 
-    hb_set_t *features = hb_set_create ();
+    set_t *features = set_create ();
 
     for (unsigned int i = 0; table_tags[i]; i++)
     {
       if (verbose) printf ("Table: ");
       printf ("%c%c%c%c\n", HB_UNTAG (table_tags[i]));
 
-      hb_set_clear (features);
-      hb_tag_t feature_array[32];
+      set_clear (features);
+      tag_t feature_array[32];
       unsigned feature_count = sizeof feature_array / sizeof feature_array[0];
       unsigned feature_offset = 0;
       do
       {
-	hb_ot_layout_table_get_feature_tags (face, table_tags[i],
+	ot_layout_table_get_feature_tags (face, table_tags[i],
 					     feature_offset,
 					     &feature_count,
 					     feature_array);
 
 	for (unsigned feature_index = 0; feature_index < feature_count; feature_index++)
 	{
-	  if (hb_set_has (features, feature_array[feature_index]))
+	  if (set_has (features, feature_array[feature_index]))
 	    continue;
-	  hb_set_add (features, feature_array[feature_index]);
+	  set_add (features, feature_array[feature_index]);
 
-	  hb_ot_name_id_t label_id;
+	  ot_name_id_t label_id;
 
-	  hb_ot_layout_feature_get_name_ids (face,
+	  ot_layout_feature_get_name_ids (face,
 					     table_tags[i],
 					     feature_offset + feature_index,
 					     &label_id,
@@ -1003,7 +1003,7 @@ struct info_t :
 	  char name[128];
 	  unsigned name_len = sizeof name;
 
-	  _hb_ot_name_get_utf8 (face, label_id,
+	  _ot_name_get_utf8 (face, label_id,
 				language,
 				&name_len, name);
 
@@ -1022,7 +1022,7 @@ struct info_t :
       while (feature_count == sizeof feature_array / sizeof feature_array[0]);
     }
 
-    hb_set_destroy (features);
+    set_destroy (features);
   }
 
   void
@@ -1034,7 +1034,7 @@ struct info_t :
       printf ("Layout features information:\n\n");
     }
 
-    hb_tag_t table_tags[] = {HB_OT_TAG_GSUB, HB_OT_TAG_GPOS, HB_TAG_NONE};
+    tag_t table_tags[] = {HB_OT_TAG_GSUB, HB_OT_TAG_GPOS, HB_TAG_NONE};
 
     if (script == HB_SCRIPT_INVALID && !ot_script_str)
     {
@@ -1049,35 +1049,35 @@ struct info_t :
 
       auto table_tag = table_tags[i];
 
-      hb_tag_t script_tags[HB_OT_MAX_TAGS_PER_SCRIPT];
-      hb_tag_t language_tags[HB_OT_MAX_TAGS_PER_LANGUAGE];
+      tag_t script_tags[HB_OT_MAX_TAGS_PER_SCRIPT];
+      tag_t language_tags[HB_OT_MAX_TAGS_PER_LANGUAGE];
       unsigned script_count = HB_OT_MAX_TAGS_PER_SCRIPT;
       unsigned language_count = HB_OT_MAX_TAGS_PER_LANGUAGE;
 
-      hb_ot_tags_from_script_and_language (script, language,
+      ot_tags_from_script_and_language (script, language,
 					   &script_count, script_tags,
 					   &language_count, language_tags);
 
       if (ot_script_str)
       {
-	script_tags[0] = hb_tag_from_string (ot_script_str, -1);
+	script_tags[0] = tag_from_string (ot_script_str, -1);
 	script_count = 1;
       }
       if (ot_language_str)
       {
-	language_tags[0] = hb_tag_from_string (ot_language_str, -1);
+	language_tags[0] = tag_from_string (ot_language_str, -1);
 	language_count = 1;
       }
 
       unsigned script_index;
-      hb_tag_t chosen_script;
-      hb_ot_layout_table_select_script (face, table_tag,
+      tag_t chosen_script;
+      ot_layout_table_select_script (face, table_tag,
 					script_count, script_tags,
 					&script_index, &chosen_script);
 
       unsigned language_index;
-      hb_tag_t chosen_language;
-      hb_ot_layout_script_select_language2 (face, table_tag,
+      tag_t chosen_language;
+      ot_layout_script_select_language2 (face, table_tag,
 					   script_index,
 					   language_count, language_tags,
 					   &language_index, &chosen_language);
@@ -1099,7 +1099,7 @@ struct info_t :
       unsigned feature_offset = 0;
       do
       {
-	hb_ot_layout_language_get_feature_indexes (face, table_tag,
+	ot_layout_language_get_feature_indexes (face, table_tag,
 						   script_index, language_index,
 						   feature_offset,
 						   &feature_count,
@@ -1107,9 +1107,9 @@ struct info_t :
 
 	for (unsigned feature_index = 0; feature_index < feature_count; feature_index++)
 	{
-	  hb_ot_name_id_t label_id;
+	  ot_name_id_t label_id;
 
-	  hb_ot_layout_feature_get_name_ids (face,
+	  ot_layout_feature_get_name_ids (face,
 					     table_tags[i],
 					     feature_array[feature_index],
 					     &label_id,
@@ -1121,15 +1121,15 @@ struct info_t :
 	  char name[128];
 	  unsigned name_len = sizeof name;
 
-	  _hb_ot_name_get_utf8 (face, label_id,
+	  _ot_name_get_utf8 (face, label_id,
 				language,
 				&name_len, name);
 
 	  printf ("	");
 	  if (verbose) printf ("Feature: ");
-	  hb_tag_t feature_tag;
+	  tag_t feature_tag;
 	  unsigned f_count = 1;
-	  hb_ot_layout_table_get_feature_tags (face, table_tag,
+	  ot_layout_table_get_feature_tags (face, table_tag,
 					       feature_array[feature_index],
 					       &f_count, &feature_tag);
 	  printf ("%c%c%c%c", HB_UNTAG (feature_tag));
@@ -1156,11 +1156,11 @@ struct info_t :
       printf ("Variations information:\n\n");
     }
 
-    hb_ot_var_axis_info_t *axes;
+    ot_var_axis_info_t *axes;
 
-    unsigned count = hb_ot_var_get_axis_infos (face, 0, nullptr, nullptr);
-    axes = (hb_ot_var_axis_info_t *) calloc (count, sizeof (hb_ot_var_axis_info_t));
-    hb_ot_var_get_axis_infos (face, 0, &count, axes);
+    unsigned count = ot_var_get_axis_infos (face, 0, nullptr, nullptr);
+    axes = (ot_var_axis_info_t *) calloc (count, sizeof (ot_var_axis_info_t));
+    ot_var_get_axis_infos (face, 0, &count, axes);
 
     bool has_hidden = false;
 
@@ -1178,7 +1178,7 @@ struct info_t :
       char name[128];
       unsigned name_len = sizeof name;
 
-      _hb_ot_name_get_utf8 (face, axis.name_id,
+      _ot_name_get_utf8 (face, axis.name_id,
 			    language,
 			    &name_len, name);
 
@@ -1196,7 +1196,7 @@ struct info_t :
     free (axes);
     axes = nullptr;
 
-    count = hb_ot_var_get_named_instance_count (face);
+    count = ot_var_get_named_instance_count (face);
     if (count)
     {
       if (verbose)
@@ -1210,15 +1210,15 @@ struct info_t :
 	char name[128];
 	unsigned name_len = sizeof name;
 
-	hb_ot_name_id_t name_id = hb_ot_var_named_instance_get_subfamily_name_id (face, i);
-	_hb_ot_name_get_utf8 (face, name_id,
+	ot_name_id_t name_id = ot_var_named_instance_get_subfamily_name_id (face, i);
+	_ot_name_get_utf8 (face, name_id,
 			      language,
 			      &name_len, name);
 
-	unsigned coords_count = hb_ot_var_named_instance_get_design_coords (face, i, nullptr, nullptr);
+	unsigned coords_count = ot_var_named_instance_get_design_coords (face, i, nullptr, nullptr);
 	float* coords;
 	coords = (float *) calloc (coords_count, sizeof (float));
-	hb_ot_var_named_instance_get_design_coords (face, i, &coords_count, coords);
+	ot_var_named_instance_get_design_coords (face, i, &coords_count, coords);
 
 	printf ("%u	%-32s", i, name);
 	for (unsigned j = 0; j < coords_count; j++)
@@ -1235,15 +1235,15 @@ struct info_t :
   GString *
   _palette_chafa_str (unsigned palette_index)
   {
-    unsigned count = hb_ot_color_palette_get_colors (face, palette_index, 0,
+    unsigned count = ot_color_palette_get_colors (face, palette_index, 0,
 						     nullptr, nullptr);
 
-    hb_color_t *palette = (hb_color_t *) malloc (count * sizeof (hb_color_t));
-    hb_ot_color_palette_get_colors (face, palette_index, 0,
+    color_t *palette = (color_t *) malloc (count * sizeof (color_t));
+    ot_color_palette_get_colors (face, palette_index, 0,
 				    &count, palette);
 
 #define REPEAT 16
-    hb_color_t *data = (hb_color_t *) malloc (count * REPEAT * sizeof (hb_color_t));
+    color_t *data = (color_t *) malloc (count * REPEAT * sizeof (color_t));
     for (unsigned i = 0; i < count; i++)
       for (unsigned j = 0; j < REPEAT; j++)
 	data[i * REPEAT + j] = palette[i];
@@ -1290,7 +1290,7 @@ struct info_t :
 				  (const guint8 *) data,
 				  count * REPEAT,
 				  1,
-				  sizeof (hb_color_t));
+				  sizeof (color_t));
 
     free (data);
 
@@ -1321,16 +1321,16 @@ struct info_t :
 	printf ("\nPalettes:\n\n");
 	printf ("Index	Flags	Name\n--------------------\n");
       }
-      unsigned count = hb_ot_color_palette_get_count (face);
+      unsigned count = ot_color_palette_get_count (face);
       for (unsigned i = 0; i < count; i++)
       {
-	hb_ot_name_id_t name_id = hb_ot_color_palette_get_name_id (face, i);
-	hb_ot_color_palette_flags_t flags = hb_ot_color_palette_get_flags (face, i);
+	ot_name_id_t name_id = ot_color_palette_get_name_id (face, i);
+	ot_color_palette_flags_t flags = ot_color_palette_get_flags (face, i);
 
 	char name[128];
 	unsigned name_len = sizeof name;
 
-	_hb_ot_name_get_utf8 (face, name_id,
+	_ot_name_get_utf8 (face, name_id,
 			      language,
 			      &name_len, name);
         const char *type = "";
@@ -1370,14 +1370,14 @@ struct info_t :
 	printf ("\nColors:\n\n");
 	printf ("Index	Name\n------------\n");
       }
-      unsigned count = hb_ot_color_palette_get_colors (face, 0, 0, nullptr, nullptr);
+      unsigned count = ot_color_palette_get_colors (face, 0, 0, nullptr, nullptr);
       for (unsigned i = 0; i < count; i++)
       {
-	hb_ot_name_id_t name_id = hb_ot_color_palette_color_get_name_id (face, i);
+	ot_name_id_t name_id = ot_color_palette_color_get_name_id (face, i);
 
 	char name[128];
 	unsigned name_len = sizeof name;
-	_hb_ot_name_get_utf8 (face, name_id,
+	_ot_name_get_utf8 (face, name_id,
 			      language,
 			      &name_len, name);
 
@@ -1400,20 +1400,20 @@ struct info_t :
       {
 	printf ("\nTag	Data\n------------\n");
       }
-      unsigned count = hb_ot_meta_get_entry_tags (face, 0, nullptr, nullptr);
+      unsigned count = ot_meta_get_entry_tags (face, 0, nullptr, nullptr);
       for (unsigned i = 0; i < count; i++)
       {
-	hb_ot_meta_tag_t tag;
+	ot_meta_tag_t tag;
 	unsigned len = 1;
-	hb_ot_meta_get_entry_tags (face, i, &len, &tag);
+	ot_meta_get_entry_tags (face, i, &len, &tag);
 
-	hb_blob_t *blob = hb_ot_meta_reference_entry (face, tag);
+	blob_t *blob = ot_meta_reference_entry (face, tag);
 
 	printf ("%c%c%c%c	%.*s\n", HB_UNTAG (tag),
-		(int) hb_blob_get_length (blob),
-		hb_blob_get_data (blob, nullptr));
+		(int) blob_get_length (blob),
+		blob_get_data (blob, nullptr));
 
-	hb_blob_destroy (blob);
+	blob_destroy (blob);
       }
     }
   }

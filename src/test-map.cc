@@ -33,9 +33,9 @@ main (int argc, char **argv)
 
   /* Test copy constructor. */
   {
-    hb_map_t v1;
+    map_t v1;
     v1.set (1, 2);
-    hb_map_t v2 {v1};
+    map_t v2 {v1};
     assert (v1.get_population () == 1);
     assert (v2.get_population () == 1);
     assert (v1[1] == 2);
@@ -44,9 +44,9 @@ main (int argc, char **argv)
 
   /* Test copy assignment. */
   {
-    hb_map_t v1;
+    map_t v1;
     v1.set (1, 2);
-    hb_map_t v2 = v1;
+    map_t v2 = v1;
     assert (v1.get_population () == 1);
     assert (v2.get_population () == 1);
     assert (v1[1] == 2);
@@ -55,18 +55,18 @@ main (int argc, char **argv)
 
   /* Test move constructor. */
   {
-    hb_map_t s {};
+    map_t s {};
     s.set (1, 2);
-    hb_map_t v (std::move (s));
+    map_t v (std::move (s));
     assert (s.get_population () == 0);
     assert (v.get_population () == 1);
   }
 
   /* Test move assignment. */
   {
-    hb_map_t s {};
+    map_t s {};
     s.set (1, 2);
-    hb_map_t v;
+    map_t v;
     v = std::move (s);
     assert (s.get_population () == 0);
     assert (v.get_population () == 1);
@@ -74,15 +74,15 @@ main (int argc, char **argv)
 
   /* Test initializing from iterable. */
   {
-    hb_map_t s;
+    map_t s;
 
     s.set (1, 2);
     s.set (3, 4);
 
-    hb_vector_t<hb_codepoint_pair_t> v (s);
-    hb_map_t v0 (v);
-    hb_map_t v1 (s);
-    hb_map_t v2 (std::move (s));
+    vector_t<codepoint_pair_t> v (s);
+    map_t v0 (v);
+    map_t v1 (s);
+    map_t v2 (std::move (s));
 
     assert (s.get_population () == 0);
     assert (v0.get_population () == 2);
@@ -92,7 +92,7 @@ main (int argc, char **argv)
 
   /* Test call fini() twice. */
   {
-    hb_map_t s;
+    map_t s;
     for (int i = 0; i < 16; i++)
       s.set(i, i+1);
     s.fini();
@@ -100,41 +100,41 @@ main (int argc, char **argv)
 
   /* Test initializing from iterator. */
   {
-    hb_map_t s;
+    map_t s;
 
     s.set (1, 2);
     s.set (3, 4);
 
-    hb_map_t v (hb_iter (s));
+    map_t v (iter (s));
 
     assert (v.get_population () == 2);
   }
 
   /* Test initializing from initializer list and swapping. */
   {
-    using pair_t = hb_codepoint_pair_t;
-    hb_map_t v1 {pair_t{1,2}, pair_t{4,5}};
-    hb_map_t v2 {pair_t{3,4}};
-    hb_swap (v1, v2);
+    using pair_t = codepoint_pair_t;
+    map_t v1 {pair_t{1,2}, pair_t{4,5}};
+    map_t v2 {pair_t{3,4}};
+    swap (v1, v2);
     assert (v1.get_population () == 1);
     assert (v2.get_population () == 2);
   }
 
   /* Test class key / value types. */
   {
-    hb_hashmap_t<hb_bytes_t, int> m1;
-    hb_hashmap_t<int, hb_bytes_t> m2;
-    hb_hashmap_t<hb_bytes_t, hb_bytes_t> m3;
+    hashmap_t<bytes_t, int> m1;
+    hashmap_t<int, bytes_t> m2;
+    hashmap_t<bytes_t, bytes_t> m3;
     assert (m1.get_population () == 0);
     assert (m2.get_population () == 0);
     assert (m3.get_population () == 0);
   }
 
   {
-    hb_hashmap_t<int, int> m0;
-    hb_hashmap_t<std::string, int> m1;
-    hb_hashmap_t<int, std::string> m2;
-    hb_hashmap_t<std::string, std::string> m3;
+    hashmap_t<int, int> m0;
+    hashmap_t<std::string, int> m1;
+    hashmap_t<int, std::string> m2;
+    hashmap_t<std::string, std::string> m3;
 
     std::string s;
     for (unsigned i = 1; i < 1000; i++)
@@ -149,40 +149,40 @@ main (int argc, char **argv)
 
   /* Test hashing maps. */
   {
-    using pair = hb_codepoint_pair_t;
+    using pair = codepoint_pair_t;
 
-    hb_hashmap_t<hb_map_t, hb_map_t> m1;
+    hashmap_t<map_t, map_t> m1;
 
-    m1.set (hb_map_t (), hb_map_t {});
-    m1.set (hb_map_t (), hb_map_t {pair (1u, 2u)});
-    m1.set (hb_map_t {pair (1u, 2u)}, hb_map_t {pair (2u, 3u)});
+    m1.set (map_t (), map_t {});
+    m1.set (map_t (), map_t {pair (1u, 2u)});
+    m1.set (map_t {pair (1u, 2u)}, map_t {pair (2u, 3u)});
 
-    assert (m1.get (hb_map_t ()) == hb_map_t {pair (1u, 2u)});
-    assert (m1.get (hb_map_t {pair (1u, 2u)}) == hb_map_t {pair (2u, 3u)});
+    assert (m1.get (map_t ()) == map_t {pair (1u, 2u)});
+    assert (m1.get (map_t {pair (1u, 2u)}) == map_t {pair (2u, 3u)});
   }
 
   /* Test hashing sets. */
   {
-    hb_hashmap_t<hb_set_t, hb_set_t> m1;
+    hashmap_t<set_t, set_t> m1;
 
-    m1.set (hb_set_t (), hb_set_t ());
-    m1.set (hb_set_t (), hb_set_t {1});
-    m1.set (hb_set_t {1, 1000}, hb_set_t {2});
+    m1.set (set_t (), set_t ());
+    m1.set (set_t (), set_t {1});
+    m1.set (set_t {1, 1000}, set_t {2});
 
-    assert (m1.get (hb_set_t ()) == hb_set_t {1});
-    assert (m1.get (hb_set_t {1000, 1}) == hb_set_t {2});
+    assert (m1.get (set_t ()) == set_t {1});
+    assert (m1.get (set_t {1000, 1}) == set_t {2});
   }
 
   /* Test hashing vectors. */
   {
-    using vector_t = hb_vector_t<unsigned>;
+    using vector_t = vector_t<unsigned>;
 
-    hb_hashmap_t<vector_t, vector_t> m1;
+    hashmap_t<vector_t, vector_t> m1;
 
     m1.set (vector_t (), vector_t {1});
     m1.set (vector_t {1}, vector_t {2});
 
-    m1 << hb_pair_t<vector_t, vector_t> {vector_t {2}, vector_t ()};
+    m1 << pair_t<vector_t, vector_t> {vector_t {2}, vector_t ()};
 
     assert (m1.get (vector_t ()) == vector_t {1});
     assert (m1.get (vector_t {1}) == vector_t {2});
@@ -190,19 +190,19 @@ main (int argc, char **argv)
 
   /* Test moving values */
   {
-    using vector_t = hb_vector_t<unsigned>;
+    using vector_t = vector_t<unsigned>;
 
-    hb_hashmap_t<vector_t, vector_t> m1;
+    hashmap_t<vector_t, vector_t> m1;
     vector_t v {3};
     assert (v.length == 1);
-    m1 << hb_pair_t<vector_t, vector_t> {vector_t {3}, v};
+    m1 << pair_t<vector_t, vector_t> {vector_t {3}, v};
     assert (v.length == 1);
-    m1 << hb_pair_t<vector_t, vector_t&&> {vector_t {4}, std::move (v)};
+    m1 << pair_t<vector_t, vector_t&&> {vector_t {4}, std::move (v)};
     assert (v.length == 0);
-    m1 << hb_pair_t<vector_t&&, vector_t> {vector_t {4}, vector_t {5}};
-    m1 << hb_pair_t<vector_t&&, vector_t&&> {vector_t {4}, vector_t {5}};
+    m1 << pair_t<vector_t&&, vector_t> {vector_t {4}, vector_t {5}};
+    m1 << pair_t<vector_t&&, vector_t&&> {vector_t {4}, vector_t {5}};
 
-    hb_hashmap_t<vector_t, vector_t> m2;
+    hashmap_t<vector_t, vector_t> m2;
     vector_t v2 {3};
     m2.set (vector_t {4}, v2);
     assert (v2.length == 1);
@@ -212,11 +212,11 @@ main (int argc, char **argv)
 
   /* Test hb::shared_ptr. */
   {
-    hb_hashmap_t<hb::shared_ptr<hb_set_t>, hb::shared_ptr<hb_set_t>> m;
+    hashmap_t<hb::shared_ptr<set_t>, hb::shared_ptr<set_t>> m;
 
-    m.set (hb::shared_ptr<hb_set_t> (hb_set_get_empty ()),
-	   hb::shared_ptr<hb_set_t> (hb_set_get_empty ()));
-    m.get (hb::shared_ptr<hb_set_t> (hb_set_get_empty ()));
+    m.set (hb::shared_ptr<set_t> (set_get_empty ()),
+	   hb::shared_ptr<set_t> (set_get_empty ()));
+    m.get (hb::shared_ptr<set_t> (set_get_empty ()));
     m.iter ();
     m.keys ();
     m.values ();
@@ -226,28 +226,28 @@ main (int argc, char **argv)
   }
   /* Test hb::unique_ptr. */
   {
-    hb_hashmap_t<hb::unique_ptr<hb_set_t>, hb::unique_ptr<hb_set_t>> m;
+    hashmap_t<hb::unique_ptr<set_t>, hb::unique_ptr<set_t>> m;
 
-    m.set (hb::unique_ptr<hb_set_t> (hb_set_get_empty ()),
-           hb::unique_ptr<hb_set_t> (hb_set_get_empty ()));
-    m.get (hb::unique_ptr<hb_set_t> (hb_set_get_empty ()));
-    hb::unique_ptr<hb_set_t> *v;
-    m.has (hb::unique_ptr<hb_set_t> (hb_set_get_empty ()), &v);
+    m.set (hb::unique_ptr<set_t> (set_get_empty ()),
+           hb::unique_ptr<set_t> (set_get_empty ()));
+    m.get (hb::unique_ptr<set_t> (set_get_empty ()));
+    hb::unique_ptr<set_t> *v;
+    m.has (hb::unique_ptr<set_t> (set_get_empty ()), &v);
     m.iter_ref ();
     m.keys_ref ();
     m.values_ref ();
   }
   /* Test hashmap with complex shared_ptrs as keys. */
   {
-    hb_hashmap_t<hb::shared_ptr<hb_map_t>, unsigned> m;
+    hashmap_t<hb::shared_ptr<map_t>, unsigned> m;
 
-    hb_map_t *m1 = hb_map_create ();
-    hb_map_t *m2 = hb_map_create ();
+    map_t *m1 = map_create ();
+    map_t *m2 = map_create ();
     m1->set (1,3);
     m2->set (1,3);
 
-    hb::shared_ptr<hb_map_t> p1 {m1};
-    hb::shared_ptr<hb_map_t> p2 {m2};
+    hb::shared_ptr<map_t> p1 {m1};
+    hb::shared_ptr<map_t> p2 {m2};
     m.set (p1,1);
 
     assert (m.has (p2));
@@ -255,19 +255,19 @@ main (int argc, char **argv)
     m1->set (2,4);
     assert (!m.has (p2));
   }
-  /* Test value type with hb_bytes_t. */
+  /* Test value type with bytes_t. */
   {
-    hb_hashmap_t<int, hb_bytes_t> m;
+    hashmap_t<int, bytes_t> m;
     char c_str[] = "Test";
-    hb_bytes_t bytes (c_str);
+    bytes_t bytes (c_str);
 
     m.set (1, bytes);
     assert (m.has (1));
-    assert (m.get (1) == hb_bytes_t {"Test"});
+    assert (m.get (1) == bytes_t {"Test"});
   }
   /* Test operators. */
   {
-    hb_map_t m1, m2, m3;
+    map_t m1, m2, m3;
     m1.set (1, 2);
     m1.set (2, 4);
     m2.set (1, 2);
@@ -288,13 +288,13 @@ main (int argc, char **argv)
   }
   /* Test reset. */
   {
-    hb_hashmap_t<int, hb_set_t> m;
-    m.set (1, hb_set_t {1, 2, 3});
+    hashmap_t<int, set_t> m;
+    m.set (1, set_t {1, 2, 3});
     m.reset ();
   }
   /* Test iteration. */
   {
-    hb_map_t m;
+    map_t m;
     m.set (1, 1);
     m.set (4, 3);
     m.set (5, 5);
@@ -302,8 +302,8 @@ main (int argc, char **argv)
     m.set (3, 2);
     m.set (6, 8);
 
-    hb_codepoint_t k;
-    hb_codepoint_t v;
+    codepoint_t k;
+    codepoint_t v;
     unsigned pop = 0;
     for (signed i = -1;
 	 m.next (&i, &k, &v);)
@@ -321,7 +321,7 @@ main (int argc, char **argv)
   }
   /* Test update */
   {
-    hb_map_t m1, m2;
+    map_t m1, m2;
     m1.set (1, 2);
     m1.set (2, 4);
     m2.set (1, 3);
@@ -333,7 +333,7 @@ main (int argc, char **argv)
   }
   /* Test keys / values */
   {
-    hb_map_t m;
+    map_t m;
     m.set (1, 1);
     m.set (4, 3);
     m.set (5, 5);
@@ -341,17 +341,17 @@ main (int argc, char **argv)
     m.set (3, 2);
     m.set (6, 8);
 
-    hb_set_t keys;
-    hb_set_t values;
+    set_t keys;
+    set_t values;
 
-    hb_copy (m.keys (), keys);
-    hb_copy (m.values (), values);
+    copy (m.keys (), keys);
+    copy (m.values (), values);
 
-    assert (keys.is_equal (hb_set_t ({1, 2, 3, 4, 5, 6})));
-    assert (values.is_equal (hb_set_t ({1, 1, 2, 3, 5, 8})));
+    assert (keys.is_equal (set_t ({1, 2, 3, 4, 5, 6})));
+    assert (values.is_equal (set_t ({1, 1, 2, 3, 5, 8})));
 
-    assert (keys.is_equal (hb_set_t (m.keys ())));
-    assert (values.is_equal (hb_set_t (m.values ())));
+    assert (keys.is_equal (set_t (m.keys ())));
+    assert (values.is_equal (set_t (m.values ())));
   }
 
   return 0;

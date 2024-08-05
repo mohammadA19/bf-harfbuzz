@@ -32,38 +32,38 @@
 static void
 test_subset_sbix_noop (void)
 {
-  hb_face_t *face_XY = hb_test_open_font_file ("fonts/sbix.ttf");
+  face_t *face_XY = test_open_font_file ("fonts/sbix.ttf");
 
-  hb_set_t *codepoints = hb_set_create ();
-  hb_face_t *face_XY_subset;
-  hb_set_add (codepoints, 88);
-  hb_set_add (codepoints, 89);
-  face_XY_subset = hb_subset_test_create_subset (face_XY, hb_subset_test_create_input (codepoints));
-  hb_set_destroy (codepoints);
+  set_t *codepoints = set_create ();
+  face_t *face_XY_subset;
+  set_add (codepoints, 88);
+  set_add (codepoints, 89);
+  face_XY_subset = subset_test_create_subset (face_XY, subset_test_create_input (codepoints));
+  set_destroy (codepoints);
 
-  hb_subset_test_check (face_XY, face_XY_subset, HB_TAG ('s','b','i','x'));
+  subset_test_check (face_XY, face_XY_subset, HB_TAG ('s','b','i','x'));
 
-  hb_face_destroy (face_XY_subset);
-  hb_face_destroy (face_XY);
+  face_destroy (face_XY_subset);
+  face_destroy (face_XY);
 }
 
 static void
 test_subset_sbix_keep_one (void)
 {
-  hb_face_t *face_XY = hb_test_open_font_file ("fonts/sbix.ttf");
-  hb_face_t *face_X = hb_test_open_font_file ("fonts/sbix_X.ttf");
+  face_t *face_XY = test_open_font_file ("fonts/sbix.ttf");
+  face_t *face_X = test_open_font_file ("fonts/sbix_X.ttf");
 
-  hb_set_t *codepoints = hb_set_create ();
-  hb_face_t *face_X_subset;
-  hb_set_add (codepoints, 88);
-  face_X_subset = hb_subset_test_create_subset (face_XY, hb_subset_test_create_input (codepoints));
-  hb_set_destroy (codepoints);
+  set_t *codepoints = set_create ();
+  face_t *face_X_subset;
+  set_add (codepoints, 88);
+  face_X_subset = subset_test_create_subset (face_XY, subset_test_create_input (codepoints));
+  set_destroy (codepoints);
 
-  hb_subset_test_check (face_X, face_X_subset, HB_TAG ('s','b','i','x'));
+  subset_test_check (face_X, face_X_subset, HB_TAG ('s','b','i','x'));
 
-  hb_face_destroy (face_X_subset);
-  hb_face_destroy (face_XY);
-  hb_face_destroy (face_X);
+  face_destroy (face_X_subset);
+  face_destroy (face_XY);
+  face_destroy (face_X);
 }
 
 // TODO: add a test that doesn't use contiguous codepoints.
@@ -72,10 +72,10 @@ test_subset_sbix_keep_one (void)
 int
 main (int argc, char **argv)
 {
-  hb_test_init (&argc, &argv);
+  test_init (&argc, &argv);
 
-  hb_test_add (test_subset_sbix_noop);
-  hb_test_add (test_subset_sbix_keep_one);
+  test_add (test_subset_sbix_noop);
+  test_add (test_subset_sbix_keep_one);
 
-  return hb_test_run();
+  return test_run();
 }

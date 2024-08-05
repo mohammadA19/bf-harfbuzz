@@ -51,7 +51,7 @@ HB_BEGIN_DECLS
 
 
 /**
- * hb_unicode_general_category_t:
+ * unicode_general_category_t:
  * @HB_UNICODE_GENERAL_CATEGORY_CONTROL:              [Cc]
  * @HB_UNICODE_GENERAL_CATEGORY_FORMAT:		      [Cf]
  * @HB_UNICODE_GENERAL_CATEGORY_UNASSIGNED:	      [Cn]
@@ -120,10 +120,10 @@ typedef enum
   HB_UNICODE_GENERAL_CATEGORY_LINE_SEPARATOR,		/* Zl */
   HB_UNICODE_GENERAL_CATEGORY_PARAGRAPH_SEPARATOR,	/* Zp */
   HB_UNICODE_GENERAL_CATEGORY_SPACE_SEPARATOR		/* Zs */
-} hb_unicode_general_category_t;
+} unicode_general_category_t;
 
 /**
- * hb_unicode_combining_class_t:
+ * unicode_combining_class_t:
  * @HB_UNICODE_COMBINING_CLASS_NOT_REORDERED: Spacing and enclosing marks; also many vowel and consonant signs, even if nonspacing
  * @HB_UNICODE_COMBINING_CLASS_OVERLAY: Marks which overlay a base letter or symbol
  * @HB_UNICODE_COMBINING_CLASS_NUKTA: Diacritic nukta marks in Brahmi-derived scripts
@@ -187,7 +187,7 @@ typedef enum
  *
  * <note>Note: newer versions of Unicode may add new values.
  * Client programs should be ready to handle any value in the 0..254 range
- * being returned from hb_unicode_combining_class().</note>
+ * being returned from unicode_combining_class().</note>
  *
  **/
 typedef enum
@@ -267,68 +267,68 @@ typedef enum
   HB_UNICODE_COMBINING_CLASS_IOTA_SUBSCRIPT		= 240,
 
   HB_UNICODE_COMBINING_CLASS_INVALID	= 255
-} hb_unicode_combining_class_t;
+} unicode_combining_class_t;
 
 
 /*
- * hb_unicode_funcs_t
+ * unicode_funcs_t
  */
 
 /**
- * hb_unicode_funcs_t:
+ * unicode_funcs_t:
  *
  * Data type containing a set of virtual methods used for
  * accessing various Unicode character properties.
  *
  * HarfBuzz provides a default function for each of the
- * methods in #hb_unicode_funcs_t. Client programs can implement
+ * methods in #unicode_funcs_t. Client programs can implement
  * their own replacements for the individual Unicode functions, as
  * needed, and replace the default by calling the setter for a
  * method.
  **/
-typedef struct hb_unicode_funcs_t hb_unicode_funcs_t;
+typedef struct unicode_funcs_t unicode_funcs_t;
 
 
 /*
  * just give me the best implementation you've got there.
  */
-HB_EXTERN hb_unicode_funcs_t *
-hb_unicode_funcs_get_default (void);
+HB_EXTERN unicode_funcs_t *
+unicode_funcs_get_default (void);
 
 
-HB_EXTERN hb_unicode_funcs_t *
-hb_unicode_funcs_create (hb_unicode_funcs_t *parent);
+HB_EXTERN unicode_funcs_t *
+unicode_funcs_create (unicode_funcs_t *parent);
 
-HB_EXTERN hb_unicode_funcs_t *
-hb_unicode_funcs_get_empty (void);
+HB_EXTERN unicode_funcs_t *
+unicode_funcs_get_empty (void);
 
-HB_EXTERN hb_unicode_funcs_t *
-hb_unicode_funcs_reference (hb_unicode_funcs_t *ufuncs);
+HB_EXTERN unicode_funcs_t *
+unicode_funcs_reference (unicode_funcs_t *ufuncs);
 
 HB_EXTERN void
-hb_unicode_funcs_destroy (hb_unicode_funcs_t *ufuncs);
+unicode_funcs_destroy (unicode_funcs_t *ufuncs);
 
-HB_EXTERN hb_bool_t
-hb_unicode_funcs_set_user_data (hb_unicode_funcs_t *ufuncs,
-				hb_user_data_key_t *key,
+HB_EXTERN bool_t
+unicode_funcs_set_user_data (unicode_funcs_t *ufuncs,
+				user_data_key_t *key,
 				void *              data,
-				hb_destroy_func_t   destroy,
-				hb_bool_t           replace);
+				destroy_func_t   destroy,
+				bool_t           replace);
 
 
 HB_EXTERN void *
-hb_unicode_funcs_get_user_data (const hb_unicode_funcs_t *ufuncs,
-				hb_user_data_key_t       *key);
+unicode_funcs_get_user_data (const unicode_funcs_t *ufuncs,
+				user_data_key_t       *key);
 
 
 HB_EXTERN void
-hb_unicode_funcs_make_immutable (hb_unicode_funcs_t *ufuncs);
+unicode_funcs_make_immutable (unicode_funcs_t *ufuncs);
 
-HB_EXTERN hb_bool_t
-hb_unicode_funcs_is_immutable (hb_unicode_funcs_t *ufuncs);
+HB_EXTERN bool_t
+unicode_funcs_is_immutable (unicode_funcs_t *ufuncs);
 
-HB_EXTERN hb_unicode_funcs_t *
-hb_unicode_funcs_get_parent (hb_unicode_funcs_t *ufuncs);
+HB_EXTERN unicode_funcs_t *
+unicode_funcs_get_parent (unicode_funcs_t *ufuncs);
 
 
 /*
@@ -338,48 +338,48 @@ hb_unicode_funcs_get_parent (hb_unicode_funcs_t *ufuncs);
 /* typedefs */
 
 /**
- * hb_unicode_combining_class_func_t:
+ * unicode_combining_class_func_t:
  * @ufuncs: A Unicode-functions structure
  * @unicode: The code point to query
  * @user_data: User data pointer passed by the caller
  *
- * A virtual method for the #hb_unicode_funcs_t structure.
+ * A virtual method for the #unicode_funcs_t structure.
  *
  * This method should retrieve the Canonical Combining Class (ccc)
  * property for a specified Unicode code point. 
  *
- * Return value: The #hb_unicode_combining_class_t of @unicode
+ * Return value: The #unicode_combining_class_t of @unicode
  * 
  **/
-typedef hb_unicode_combining_class_t	(*hb_unicode_combining_class_func_t)	(hb_unicode_funcs_t *ufuncs,
-										 hb_codepoint_t      unicode,
+typedef unicode_combining_class_t	(*unicode_combining_class_func_t)	(unicode_funcs_t *ufuncs,
+										 codepoint_t      unicode,
 										 void               *user_data);
 
 /**
- * hb_unicode_general_category_func_t:
+ * unicode_general_category_func_t:
  * @ufuncs: A Unicode-functions structure
  * @unicode: The code point to query
  * @user_data: User data pointer passed by the caller
  *
- * A virtual method for the #hb_unicode_funcs_t structure.
+ * A virtual method for the #unicode_funcs_t structure.
  *
  * This method should retrieve the General Category property for
  * a specified Unicode code point.
  * 
- * Return value: The #hb_unicode_general_category_t of @unicode
+ * Return value: The #unicode_general_category_t of @unicode
  *
  **/
-typedef hb_unicode_general_category_t	(*hb_unicode_general_category_func_t)	(hb_unicode_funcs_t *ufuncs,
-										 hb_codepoint_t      unicode,
+typedef unicode_general_category_t	(*unicode_general_category_func_t)	(unicode_funcs_t *ufuncs,
+										 codepoint_t      unicode,
 										 void               *user_data);
 
 /**
- * hb_unicode_mirroring_func_t:
+ * unicode_mirroring_func_t:
  * @ufuncs: A Unicode-functions structure
  * @unicode: The code point to query
  * @user_data: User data pointer passed by the caller
  *
- * A virtual method for the #hb_unicode_funcs_t structure.
+ * A virtual method for the #unicode_funcs_t structure.
  *
  * This method should retrieve the Bi-Directional Mirroring Glyph
  * code point for a specified Unicode code point.
@@ -388,255 +388,255 @@ typedef hb_unicode_general_category_t	(*hb_unicode_general_category_func_t)	(hb_
  * Bi-Directional Mirroring Glyph defined, the method should
  * return the original code point.</note>
  * 
- * Return value: The #hb_codepoint_t of the Mirroring Glyph for @unicode
+ * Return value: The #codepoint_t of the Mirroring Glyph for @unicode
  *
  **/
-typedef hb_codepoint_t			(*hb_unicode_mirroring_func_t)		(hb_unicode_funcs_t *ufuncs,
-										 hb_codepoint_t      unicode,
+typedef codepoint_t			(*unicode_mirroring_func_t)		(unicode_funcs_t *ufuncs,
+										 codepoint_t      unicode,
 										 void               *user_data);
 
 /**
- * hb_unicode_script_func_t:
+ * unicode_script_func_t:
  * @ufuncs: A Unicode-functions structure
  * @unicode: The code point to query
  * @user_data: User data pointer passed by the caller
  *
- * A virtual method for the #hb_unicode_funcs_t structure.
+ * A virtual method for the #unicode_funcs_t structure.
  *
  * This method should retrieve the Script property for a 
  * specified Unicode code point.
  *
- * Return value: The #hb_script_t of @unicode
+ * Return value: The #script_t of @unicode
  * 
  **/
-typedef hb_script_t			(*hb_unicode_script_func_t)		(hb_unicode_funcs_t *ufuncs,
-										 hb_codepoint_t      unicode,
+typedef script_t			(*unicode_script_func_t)		(unicode_funcs_t *ufuncs,
+										 codepoint_t      unicode,
 										 void               *user_data);
 
 /**
- * hb_unicode_compose_func_t:
+ * unicode_compose_func_t:
  * @ufuncs: A Unicode-functions structure
  * @a: The first code point to compose
  * @b: The second code point to compose
  * @ab: (out): The composed code point
  * @user_data: user data pointer passed by the caller
  *
- * A virtual method for the #hb_unicode_funcs_t structure.
+ * A virtual method for the #unicode_funcs_t structure.
  *
  * This method should compose a sequence of two input Unicode code
  * points by canonical equivalence, returning the composed code
- * point in a #hb_codepoint_t output parameter (if successful).
- * The method must return an #hb_bool_t indicating the success
+ * point in a #codepoint_t output parameter (if successful).
+ * The method must return an #bool_t indicating the success
  * of the composition.
  * 
  * Return value: `true` is @a,@b composed, `false` otherwise
  *
  **/
-typedef hb_bool_t			(*hb_unicode_compose_func_t)		(hb_unicode_funcs_t *ufuncs,
-										 hb_codepoint_t      a,
-										 hb_codepoint_t      b,
-										 hb_codepoint_t     *ab,
+typedef bool_t			(*unicode_compose_func_t)		(unicode_funcs_t *ufuncs,
+										 codepoint_t      a,
+										 codepoint_t      b,
+										 codepoint_t     *ab,
 										 void               *user_data);
 
 /**
- * hb_unicode_decompose_func_t:
+ * unicode_decompose_func_t:
  * @ufuncs: A Unicode-functions structure
  * @ab: The code point to decompose
  * @a: (out): The first decomposed code point
  * @b: (out): The second decomposed code point
  * @user_data: user data pointer passed by the caller
  *
- * A virtual method for the #hb_unicode_funcs_t structure.
+ * A virtual method for the #unicode_funcs_t structure.
  *
  * This method should decompose an input Unicode code point,
- * returning the two decomposed code points in #hb_codepoint_t
+ * returning the two decomposed code points in #codepoint_t
  * output parameters (if successful). The method must return an
- * #hb_bool_t indicating the success of the composition.
+ * #bool_t indicating the success of the composition.
  * 
  * Return value: `true` if @ab decomposed, `false` otherwise
  *
  **/
-typedef hb_bool_t			(*hb_unicode_decompose_func_t)		(hb_unicode_funcs_t *ufuncs,
-										 hb_codepoint_t      ab,
-										 hb_codepoint_t     *a,
-										 hb_codepoint_t     *b,
+typedef bool_t			(*unicode_decompose_func_t)		(unicode_funcs_t *ufuncs,
+										 codepoint_t      ab,
+										 codepoint_t     *a,
+										 codepoint_t     *b,
 										 void               *user_data);
 
 /* func setters */
 
 /**
- * hb_unicode_funcs_set_combining_class_func:
+ * unicode_funcs_set_combining_class_func:
  * @ufuncs: A Unicode-functions structure
  * @func: (closure user_data) (destroy destroy) (scope notified): The callback function to assign
  * @user_data: Data to pass to @func
  * @destroy: (nullable): The function to call when @user_data is not needed anymore
  *
- * Sets the implementation function for #hb_unicode_combining_class_func_t.
+ * Sets the implementation function for #unicode_combining_class_func_t.
  *
  * Since: 0.9.2
  **/
 HB_EXTERN void
-hb_unicode_funcs_set_combining_class_func (hb_unicode_funcs_t *ufuncs,
-					   hb_unicode_combining_class_func_t func,
-					   void *user_data, hb_destroy_func_t destroy);
+unicode_funcs_set_combining_class_func (unicode_funcs_t *ufuncs,
+					   unicode_combining_class_func_t func,
+					   void *user_data, destroy_func_t destroy);
 
 /**
- * hb_unicode_funcs_set_general_category_func:
+ * unicode_funcs_set_general_category_func:
  * @ufuncs: A Unicode-functions structure
  * @func: (closure user_data) (destroy destroy) (scope notified): The callback function to assign
  * @user_data: Data to pass to @func
  * @destroy: (nullable): The function to call when @user_data is not needed anymore
  *
- * Sets the implementation function for #hb_unicode_general_category_func_t.
+ * Sets the implementation function for #unicode_general_category_func_t.
  *
  * Since: 0.9.2
  **/
 HB_EXTERN void
-hb_unicode_funcs_set_general_category_func (hb_unicode_funcs_t *ufuncs,
-					    hb_unicode_general_category_func_t func,
-					    void *user_data, hb_destroy_func_t destroy);
+unicode_funcs_set_general_category_func (unicode_funcs_t *ufuncs,
+					    unicode_general_category_func_t func,
+					    void *user_data, destroy_func_t destroy);
 
 /**
- * hb_unicode_funcs_set_mirroring_func:
+ * unicode_funcs_set_mirroring_func:
  * @ufuncs: A Unicode-functions structure
  * @func: (closure user_data) (destroy destroy) (scope notified): The callback function to assign
  * @user_data: Data to pass to @func
  * @destroy: (nullable): The function to call when @user_data is not needed anymore
  *
- * Sets the implementation function for #hb_unicode_mirroring_func_t.
+ * Sets the implementation function for #unicode_mirroring_func_t.
  *
  * Since: 0.9.2
  **/
 HB_EXTERN void
-hb_unicode_funcs_set_mirroring_func (hb_unicode_funcs_t *ufuncs,
-				     hb_unicode_mirroring_func_t func,
-				     void *user_data, hb_destroy_func_t destroy);
+unicode_funcs_set_mirroring_func (unicode_funcs_t *ufuncs,
+				     unicode_mirroring_func_t func,
+				     void *user_data, destroy_func_t destroy);
 
 /**
- * hb_unicode_funcs_set_script_func:
+ * unicode_funcs_set_script_func:
  * @ufuncs: A Unicode-functions structure
  * @func: (closure user_data) (destroy destroy) (scope notified): The callback function to assign
  * @user_data: Data to pass to @func
  * @destroy: (nullable): The function to call when @user_data is not needed anymore
  *
- * Sets the implementation function for #hb_unicode_script_func_t.
+ * Sets the implementation function for #unicode_script_func_t.
  *
  * Since: 0.9.2
  **/
 HB_EXTERN void
-hb_unicode_funcs_set_script_func (hb_unicode_funcs_t *ufuncs,
-				  hb_unicode_script_func_t func,
-				  void *user_data, hb_destroy_func_t destroy);
+unicode_funcs_set_script_func (unicode_funcs_t *ufuncs,
+				  unicode_script_func_t func,
+				  void *user_data, destroy_func_t destroy);
 
 /**
- * hb_unicode_funcs_set_compose_func:
+ * unicode_funcs_set_compose_func:
  * @ufuncs: A Unicode-functions structure
  * @func: (closure user_data) (destroy destroy) (scope notified): The callback function to assign
  * @user_data: Data to pass to @func
  * @destroy: (nullable): The function to call when @user_data is not needed anymore
  *
- * Sets the implementation function for #hb_unicode_compose_func_t.
+ * Sets the implementation function for #unicode_compose_func_t.
  *
  * Since: 0.9.2
  **/
 HB_EXTERN void
-hb_unicode_funcs_set_compose_func (hb_unicode_funcs_t *ufuncs,
-				   hb_unicode_compose_func_t func,
-				   void *user_data, hb_destroy_func_t destroy);
+unicode_funcs_set_compose_func (unicode_funcs_t *ufuncs,
+				   unicode_compose_func_t func,
+				   void *user_data, destroy_func_t destroy);
 
 /**
- * hb_unicode_funcs_set_decompose_func:
+ * unicode_funcs_set_decompose_func:
  * @ufuncs: A Unicode-functions structure
  * @func: (closure user_data) (destroy destroy) (scope notified): The callback function to assign
  * @user_data: Data to pass to @func
  * @destroy: (nullable): The function to call when @user_data is not needed anymore
  *
- * Sets the implementation function for #hb_unicode_decompose_func_t.
+ * Sets the implementation function for #unicode_decompose_func_t.
  *
  * Since: 0.9.2
  **/
 HB_EXTERN void
-hb_unicode_funcs_set_decompose_func (hb_unicode_funcs_t *ufuncs,
-				     hb_unicode_decompose_func_t func,
-				     void *user_data, hb_destroy_func_t destroy);
+unicode_funcs_set_decompose_func (unicode_funcs_t *ufuncs,
+				     unicode_decompose_func_t func,
+				     void *user_data, destroy_func_t destroy);
 
 /* accessors */
 
 /**
- * hb_unicode_combining_class:
+ * unicode_combining_class:
  * @ufuncs: The Unicode-functions structure
  * @unicode: The code point to query
  *
  * Retrieves the Canonical Combining Class (ccc) property
  * of code point @unicode.
  *
- * Return value: The #hb_unicode_combining_class_t of @unicode
+ * Return value: The #unicode_combining_class_t of @unicode
  *
  * Since: 0.9.2
  **/
-HB_EXTERN hb_unicode_combining_class_t
-hb_unicode_combining_class (hb_unicode_funcs_t *ufuncs,
-			    hb_codepoint_t unicode);
+HB_EXTERN unicode_combining_class_t
+unicode_combining_class (unicode_funcs_t *ufuncs,
+			    codepoint_t unicode);
 
 /**
- * hb_unicode_general_category:
+ * unicode_general_category:
  * @ufuncs: The Unicode-functions structure
  * @unicode: The code point to query
  *
  * Retrieves the General Category (gc) property
  * of code point @unicode.
  *
- * Return value: The #hb_unicode_general_category_t of @unicode
+ * Return value: The #unicode_general_category_t of @unicode
  *
  * Since: 0.9.2
  **/
-HB_EXTERN hb_unicode_general_category_t
-hb_unicode_general_category (hb_unicode_funcs_t *ufuncs,
-			     hb_codepoint_t unicode);
+HB_EXTERN unicode_general_category_t
+unicode_general_category (unicode_funcs_t *ufuncs,
+			     codepoint_t unicode);
 
 /**
- * hb_unicode_mirroring:
+ * unicode_mirroring:
  * @ufuncs: The Unicode-functions structure
  * @unicode: The code point to query
  *
  * Retrieves the Bi-directional Mirroring Glyph code
  * point defined for code point @unicode.
  *
- * Return value: The #hb_codepoint_t of the Mirroring Glyph for @unicode
+ * Return value: The #codepoint_t of the Mirroring Glyph for @unicode
  *
  * Since: 0.9.2
  **/
-HB_EXTERN hb_codepoint_t
-hb_unicode_mirroring (hb_unicode_funcs_t *ufuncs,
-		      hb_codepoint_t unicode);
+HB_EXTERN codepoint_t
+unicode_mirroring (unicode_funcs_t *ufuncs,
+		      codepoint_t unicode);
 
 /**
- * hb_unicode_script:
+ * unicode_script:
  * @ufuncs: The Unicode-functions structure
  * @unicode: The code point to query
  *
- * Retrieves the #hb_script_t script to which code
+ * Retrieves the #script_t script to which code
  * point @unicode belongs.
  *
- * Return value: The #hb_script_t of @unicode
+ * Return value: The #script_t of @unicode
  *
  * Since: 0.9.2
  **/
-HB_EXTERN hb_script_t
-hb_unicode_script (hb_unicode_funcs_t *ufuncs,
-		   hb_codepoint_t unicode);
+HB_EXTERN script_t
+unicode_script (unicode_funcs_t *ufuncs,
+		   codepoint_t unicode);
 
-HB_EXTERN hb_bool_t
-hb_unicode_compose (hb_unicode_funcs_t *ufuncs,
-		    hb_codepoint_t      a,
-		    hb_codepoint_t      b,
-		    hb_codepoint_t     *ab);
+HB_EXTERN bool_t
+unicode_compose (unicode_funcs_t *ufuncs,
+		    codepoint_t      a,
+		    codepoint_t      b,
+		    codepoint_t     *ab);
 
-HB_EXTERN hb_bool_t
-hb_unicode_decompose (hb_unicode_funcs_t *ufuncs,
-		      hb_codepoint_t      ab,
-		      hb_codepoint_t     *a,
-		      hb_codepoint_t     *b);
+HB_EXTERN bool_t
+unicode_decompose (unicode_funcs_t *ufuncs,
+		      codepoint_t      ab,
+		      codepoint_t     *a,
+		      codepoint_t     *b);
 
 HB_END_DECLS
 

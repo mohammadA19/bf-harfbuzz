@@ -39,23 +39,23 @@
 #include <cstring>
 
 #ifdef HB_NO_OPEN
-#define hb_blob_create_from_file_or_fail(x)  hb_blob_get_empty ()
+#define blob_create_from_file_or_fail(x)  blob_get_empty ()
 #endif
 
 #if !defined(HB_NO_COLOR) && !defined(HB_NO_DRAW)
 static void
-svg_dump (hb_face_t *face, unsigned face_index)
+svg_dump (face_t *face, unsigned face_index)
 {
-  unsigned glyph_count = hb_face_get_glyph_count (face);
+  unsigned glyph_count = face_get_glyph_count (face);
 
   for (unsigned glyph_id = 0; glyph_id < glyph_count; ++glyph_id)
   {
-    hb_blob_t *blob = hb_ot_color_glyph_reference_svg (face, glyph_id);
+    blob_t *blob = ot_color_glyph_reference_svg (face, glyph_id);
 
-    if (hb_blob_get_length (blob) == 0) continue;
+    if (blob_get_length (blob) == 0) continue;
 
     unsigned length;
-    const char *data = hb_blob_get_data (blob, &length);
+    const char *data = blob_get_data (blob, &length);
 
     char output_path[255];
     snprintf (output_path, sizeof output_path,
@@ -69,48 +69,48 @@ svg_dump (hb_face_t *face, unsigned face_index)
     fwrite (data, 1, length, f);
     fclose (f);
 
-    hb_blob_destroy (blob);
+    blob_destroy (blob);
   }
 }
 
 /* _png API is so easy to use unlike the below code, don't get confused */
 static void
-png_dump (hb_face_t *face, unsigned face_index)
+png_dump (face_t *face, unsigned face_index)
 {
-  unsigned glyph_count = hb_face_get_glyph_count (face);
-  hb_font_t *font = hb_font_create (face);
+  unsigned glyph_count = face_get_glyph_count (face);
+  font_t *font = font_create (face);
 
   /* scans the font for strikes */
   unsigned sample_glyph_id;
   /* we don't care about different strikes for different glyphs at this point */
   for (sample_glyph_id = 0; sample_glyph_id < glyph_count; ++sample_glyph_id)
   {
-    hb_blob_t *blob = hb_ot_color_glyph_reference_png (font, sample_glyph_id);
-    unsigned blob_length = hb_blob_get_length (blob);
-    hb_blob_destroy (blob);
+    blob_t *blob = ot_color_glyph_reference_png (font, sample_glyph_id);
+    unsigned blob_length = blob_get_length (blob);
+    blob_destroy (blob);
     if (blob_length != 0)
       break;
   }
 
-  unsigned upem = hb_face_get_upem (face);
+  unsigned upem = face_get_upem (face);
   unsigned blob_length = 0;
   unsigned strike = 0;
   for (unsigned ppem = 1; ppem < upem; ++ppem)
   {
-    hb_font_set_ppem (font, ppem, ppem);
-    hb_blob_t *blob = hb_ot_color_glyph_reference_png (font, sample_glyph_id);
-    unsigned new_blob_length = hb_blob_get_length (blob);
-    hb_blob_destroy (blob);
+    font_set_ppem (font, ppem, ppem);
+    blob_t *blob = ot_color_glyph_reference_png (font, sample_glyph_id);
+    unsigned new_blob_length = blob_get_length (blob);
+    blob_destroy (blob);
     if (new_blob_length != blob_length)
     {
       for (unsigned glyph_id = 0; glyph_id < glyph_count; ++glyph_id)
       {
-	hb_blob_t *blob = hb_ot_color_glyph_reference_png (font, glyph_id);
+	blob_t *blob = ot_color_glyph_reference_png (font, glyph_id);
 
-	if (hb_blob_get_length (blob) == 0) continue;
+	if (blob_get_length (blob) == 0) continue;
 
 	unsigned length;
-	const char *data = hb_blob_get_data (blob, &length);
+	const char *data = blob_get_data (blob, &length);
 
 	char output_path[255];
 	snprintf (output_path, sizeof output_path, "out/png-%u-%u-%u.png", glyph_id, strike, face_index);
@@ -119,7 +119,7 @@ png_dump (hb_face_t *face, unsigned face_index)
 	fwrite (data, 1, length, f);
 	fclose (f);
 
-	hb_blob_destroy (blob);
+	blob_destroy (blob);
       }
 
       strike++;
@@ -127,18 +127,18 @@ png_dump (hb_face_t *face, unsigned face_index)
     }
   }
 
-  hb_font_destroy (font);
+  font_destroy (font);
 }
 
 struct draw_data_t
 {
   FILE *f;
-  hb_position_t ascender;
+  position_t ascender;
 };
 
 static void
-move_to (hb_draw_funcs_t *, draw_data_t *draw_data,
-	 hb_draw_state_t *,
+move_to (draw_funcs_t *, draw_data_t *draw_data,
+	 draw_state_t *,
 	 float to_x, float to_y,
 	 void *)
 {
@@ -146,8 +146,8 @@ move_to (hb_draw_funcs_t *, draw_data_t *draw_data,
 }
 
 static void
-line_to (hb_draw_funcs_t *, draw_data_t *draw_data,
-	 hb_draw_state_t *,
+line_to (draw_funcs_t *, draw_data_t *draw_data,
+	 draw_state_t *,
 	 float to_x, float to_y,
 	 void *)
 {
@@ -155,8 +155,8 @@ line_to (hb_draw_funcs_t *, draw_data_t *draw_data,
 }
 
 static void
-quadratic_to (hb_draw_funcs_t *, draw_data_t *draw_data,
-	      hb_draw_state_t *,
+quadratic_to (draw_funcs_t *, draw_data_t *draw_data,
+	      draw_state_t *,
 	      float control_x, float control_y,
 	      float to_x, float to_y,
 	      void *)
@@ -166,8 +166,8 @@ quadratic_to (hb_draw_funcs_t *, draw_data_t *draw_data,
 }
 
 static void
-cubic_to (hb_draw_funcs_t *, draw_data_t *draw_data,
-	  hb_draw_state_t *,
+cubic_to (draw_funcs_t *, draw_data_t *draw_data,
+	  draw_state_t *,
 	  float control1_x, float control1_y,
 	  float control2_x, float control2_y,
 	  float to_x, float to_y,
@@ -179,46 +179,46 @@ cubic_to (hb_draw_funcs_t *, draw_data_t *draw_data,
 }
 
 static void
-close_path (hb_draw_funcs_t *, draw_data_t *draw_data,
-	    hb_draw_state_t *,
+close_path (draw_funcs_t *, draw_data_t *draw_data,
+	    draw_state_t *,
 	    void *)
 {
   fprintf (draw_data->f, "Z");
 }
 
 static void
-layered_glyph_dump (hb_font_t *font, hb_draw_funcs_t *funcs, unsigned face_index)
+layered_glyph_dump (font_t *font, draw_funcs_t *funcs, unsigned face_index)
 {
-  hb_face_t *face = hb_font_get_face (font);
-  unsigned palette_count = hb_ot_color_palette_get_count (face);
+  face_t *face = font_get_face (font);
+  unsigned palette_count = ot_color_palette_get_count (face);
   for (unsigned palette = 0; palette < palette_count; ++palette)
   {
-    unsigned num_colors = hb_ot_color_palette_get_colors (face, palette, 0, nullptr, nullptr);
+    unsigned num_colors = ot_color_palette_get_colors (face, palette, 0, nullptr, nullptr);
     if (!num_colors) continue;
 
-    hb_color_t *colors = (hb_color_t*) calloc (num_colors, sizeof (hb_color_t));
-    hb_ot_color_palette_get_colors (face, palette, 0, &num_colors, colors);
+    color_t *colors = (color_t*) calloc (num_colors, sizeof (color_t));
+    ot_color_palette_get_colors (face, palette, 0, &num_colors, colors);
     if (!num_colors)
     {
       free (colors);
       continue;
     }
 
-    unsigned num_glyphs = hb_face_get_glyph_count (face);
-    for (hb_codepoint_t gid = 0; gid < num_glyphs; ++gid)
+    unsigned num_glyphs = face_get_glyph_count (face);
+    for (codepoint_t gid = 0; gid < num_glyphs; ++gid)
     {
-      unsigned num_layers = hb_ot_color_glyph_get_layers (face, gid, 0, nullptr, nullptr);
+      unsigned num_layers = ot_color_glyph_get_layers (face, gid, 0, nullptr, nullptr);
       if (!num_layers) continue;
 
-      hb_ot_color_layer_t *layers = (hb_ot_color_layer_t*) malloc (num_layers * sizeof (hb_ot_color_layer_t));
+      ot_color_layer_t *layers = (ot_color_layer_t*) malloc (num_layers * sizeof (ot_color_layer_t));
 
-      hb_ot_color_glyph_get_layers (face, gid, 0, &num_layers, layers);
+      ot_color_glyph_get_layers (face, gid, 0, &num_layers, layers);
       if (num_layers)
       {
-	hb_font_extents_t font_extents;
-	hb_font_get_extents_for_direction (font, HB_DIRECTION_LTR, &font_extents);
-	hb_glyph_extents_t extents = {0};
-	if (!hb_font_get_glyph_extents (font, gid, &extents))
+	font_extents_t font_extents;
+	font_get_extents_for_direction (font, HB_DIRECTION_LTR, &font_extents);
+	glyph_extents_t extents = {0};
+	if (!font_get_glyph_extents (font, gid, &extents))
 	{
 	  printf ("Skip gid: %u\n", gid);
 	  continue;
@@ -237,15 +237,15 @@ layered_glyph_dump (hb_font_t *font, hb_draw_funcs_t *funcs, unsigned face_index
 
 	for (unsigned layer = 0; layer < num_layers; ++layer)
 	{
-	  hb_color_t color = 0x000000FF;
+	  color_t color = 0x000000FF;
 	  if (layers[layer].color_index != 0xFFFF)
 	    color = colors[layers[layer].color_index];
 	  fprintf (f, "<path fill=\"#%02X%02X%02X\" ",
-		   hb_color_get_red (color), hb_color_get_green (color), hb_color_get_green (color));
-	  if (hb_color_get_alpha (color) != 255)
-	    fprintf (f, "fill-opacity=\"%.3f\"", (double) hb_color_get_alpha (color) / 255.);
+		   color_get_red (color), color_get_green (color), color_get_green (color));
+	  if (color_get_alpha (color) != 255)
+	    fprintf (f, "fill-opacity=\"%.3f\"", (double) color_get_alpha (color) / 255.);
 	  fprintf (f, "d=\"");
-	  hb_font_draw_glyph (font, layers[layer].glyph, funcs, &draw_data);
+	  font_draw_glyph (font, layers[layer].glyph, funcs, &draw_data);
 	  fprintf (f, "\"/>\n");
 	}
 
@@ -260,15 +260,15 @@ layered_glyph_dump (hb_font_t *font, hb_draw_funcs_t *funcs, unsigned face_index
 }
 
 static void
-dump_glyphs (hb_font_t *font, hb_draw_funcs_t *funcs, unsigned face_index)
+dump_glyphs (font_t *font, draw_funcs_t *funcs, unsigned face_index)
 {
-  unsigned num_glyphs = hb_face_get_glyph_count (hb_font_get_face (font));
+  unsigned num_glyphs = face_get_glyph_count (font_get_face (font));
   for (unsigned gid = 0; gid < num_glyphs; ++gid)
   {
-    hb_font_extents_t font_extents;
-    hb_font_get_extents_for_direction (font, HB_DIRECTION_LTR, &font_extents);
-    hb_glyph_extents_t extents = {0};
-    if (!hb_font_get_glyph_extents (font, gid, &extents))
+    font_extents_t font_extents;
+    font_get_extents_for_direction (font, HB_DIRECTION_LTR, &font_extents);
+    glyph_extents_t extents = {0};
+    if (!font_get_glyph_extents (font, gid, &extents))
     {
       printf ("Skip gid: %u\n", gid);
       continue;
@@ -284,14 +284,14 @@ dump_glyphs (hb_font_t *font, hb_draw_funcs_t *funcs, unsigned face_index)
     draw_data_t draw_data;
     draw_data.ascender = font_extents.ascender;
     draw_data.f = f;
-    hb_font_draw_glyph (font, gid, funcs, &draw_data);
+    font_draw_glyph (font, gid, funcs, &draw_data);
     fprintf (f, "\"/></svg>");
     fclose (f);
   }
 }
 
 static void
-dump_glyphs (hb_blob_t *blob, const char *font_name)
+dump_glyphs (blob_t *blob, const char *font_name)
 {
   FILE *font_name_file = fopen ("out/.dumped_font_name", "r");
   if (font_name_file)
@@ -310,38 +310,38 @@ dump_glyphs (hb_blob_t *blob, const char *font_name)
   fwrite (font_name, 1, strlen (font_name), font_name_file);
   fclose (font_name_file);
 
-  hb_draw_funcs_t *funcs = hb_draw_funcs_create ();
-  hb_draw_funcs_set_move_to_func (funcs, (hb_draw_move_to_func_t) move_to, nullptr, nullptr);
-  hb_draw_funcs_set_line_to_func (funcs, (hb_draw_line_to_func_t) line_to, nullptr, nullptr);
-  hb_draw_funcs_set_quadratic_to_func (funcs, (hb_draw_quadratic_to_func_t) quadratic_to, nullptr, nullptr);
-  hb_draw_funcs_set_cubic_to_func (funcs, (hb_draw_cubic_to_func_t) cubic_to, nullptr, nullptr);
-  hb_draw_funcs_set_close_path_func (funcs, (hb_draw_close_path_func_t) close_path, nullptr, nullptr);
+  draw_funcs_t *funcs = draw_funcs_create ();
+  draw_funcs_set_move_to_func (funcs, (draw_move_to_func_t) move_to, nullptr, nullptr);
+  draw_funcs_set_line_to_func (funcs, (draw_line_to_func_t) line_to, nullptr, nullptr);
+  draw_funcs_set_quadratic_to_func (funcs, (draw_quadratic_to_func_t) quadratic_to, nullptr, nullptr);
+  draw_funcs_set_cubic_to_func (funcs, (draw_cubic_to_func_t) cubic_to, nullptr, nullptr);
+  draw_funcs_set_close_path_func (funcs, (draw_close_path_func_t) close_path, nullptr, nullptr);
 
-  unsigned num_faces = hb_face_count (blob);
+  unsigned num_faces = face_count (blob);
   for (unsigned face_index = 0; face_index < num_faces; ++face_index)
   {
-    hb_face_t *face = hb_face_create (blob, face_index);
-    hb_font_t *font = hb_font_create (face);
+    face_t *face = face_create (blob, face_index);
+    font_t *font = font_create (face);
 
-    if (hb_ot_color_has_png (face))
+    if (ot_color_has_png (face))
       printf ("Dumping png (CBDT/sbix)...\n");
     png_dump (face, face_index);
 
-    if (hb_ot_color_has_svg (face))
+    if (ot_color_has_svg (face))
       printf ("Dumping svg (SVG )...\n");
     svg_dump (face, face_index);
 
-    if (hb_ot_color_has_layers (face) && hb_ot_color_has_palettes (face))
+    if (ot_color_has_layers (face) && ot_color_has_palettes (face))
       printf ("Dumping layered color glyphs (COLR/CPAL)...\n");
     layered_glyph_dump (font, funcs, face_index);
 
     dump_glyphs (font, funcs, face_index);
 
-    hb_font_destroy (font);
-    hb_face_destroy (face);
+    font_destroy (font);
+    face_destroy (face);
   }
 
-  hb_draw_funcs_destroy (funcs);
+  draw_funcs_destroy (funcs);
 }
 #endif
 
@@ -355,10 +355,10 @@ dump_glyphs (hb_blob_t *blob, const char *font_name)
 using namespace OT;
 
 static void
-print_layout_info_using_private_api (hb_blob_t *blob)
+print_layout_info_using_private_api (blob_t *blob)
 {
-  const char *font_data = hb_blob_get_data (blob, nullptr);
-  hb_blob_t *font_blob = hb_sanitize_context_t ().sanitize_blob<OpenTypeFontFile> (blob);
+  const char *font_data = blob_get_data (blob, nullptr);
+  blob_t *font_blob = sanitize_context_t ().sanitize_blob<OpenTypeFontFile> (blob);
   const OpenTypeFontFile* sanitized = font_blob->as<OpenTypeFontFile> ();
   if (!font_blob->data)
   {
@@ -392,7 +392,7 @@ print_layout_info_using_private_api (hb_blob_t *blob)
     break;
   }
 
-  unsigned num_faces = hb_face_count (blob);
+  unsigned num_faces = face_count (blob);
   printf ("%u font(s) found in file\n", num_faces);
   for (unsigned n_font = 0; n_font < num_faces; ++n_font)
   {
@@ -518,16 +518,16 @@ main (int argc, char **argv)
     exit (1);
   }
 
-  hb_blob_t *blob = hb_blob_create_from_file_or_fail (argv[1]);
+  blob_t *blob = blob_create_from_file_or_fail (argv[1]);
   assert (blob);
-  printf ("Opened font file %s: %u bytes long\n", argv[1], hb_blob_get_length (blob));
+  printf ("Opened font file %s: %u bytes long\n", argv[1], blob_get_length (blob));
 #ifndef MAIN_CC_NO_PRIVATE_API
   print_layout_info_using_private_api (blob);
 #endif
 #if !defined(HB_NO_COLOR) && !defined(HB_NO_DRAW)
   dump_glyphs (blob, argv[1]);
 #endif
-  hb_blob_destroy (blob);
+  blob_destroy (blob);
 
   return 0;
 }

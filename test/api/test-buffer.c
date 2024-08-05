@@ -53,16 +53,16 @@ static const char *buffer_names[] = {
 
 typedef struct
 {
-  hb_buffer_t *buffer;
+  buffer_t *buffer;
 } fixture_t;
 
 static void
 fixture_init (fixture_t *fixture, gconstpointer user_data)
 {
-  hb_buffer_t *b;
+  buffer_t *b;
   unsigned int i;
 
-  b = fixture->buffer = hb_buffer_create ();
+  b = fixture->buffer = buffer_create ();
 
   switch (GPOINTER_TO_INT (user_data))
   {
@@ -71,19 +71,19 @@ fixture_init (fixture_t *fixture, gconstpointer user_data)
 
     case BUFFER_ONE_BY_ONE:
       for (i = 1; i < G_N_ELEMENTS (utf32) - 1; i++)
-      hb_buffer_add (b, utf32[i], i);
+      buffer_add (b, utf32[i], i);
       break;
 
     case BUFFER_UTF32:
-      hb_buffer_add_utf32 (b, utf32, G_N_ELEMENTS (utf32), 1, G_N_ELEMENTS (utf32) - 2);
+      buffer_add_utf32 (b, utf32, G_N_ELEMENTS (utf32), 1, G_N_ELEMENTS (utf32) - 2);
       break;
 
     case BUFFER_UTF16:
-      hb_buffer_add_utf16 (b, utf16, G_N_ELEMENTS (utf16), 1, G_N_ELEMENTS (utf16) - 2);
+      buffer_add_utf16 (b, utf16, G_N_ELEMENTS (utf16), 1, G_N_ELEMENTS (utf16) - 2);
       break;
 
     case BUFFER_UTF8:
-      hb_buffer_add_utf8  (b, utf8,  G_N_ELEMENTS (utf8),  1, G_N_ELEMENTS (utf8)  - 2);
+      buffer_add_utf8  (b, utf8,  G_N_ELEMENTS (utf8),  1, G_N_ELEMENTS (utf8)  - 2);
       break;
 
     default:
@@ -94,104 +94,104 @@ fixture_init (fixture_t *fixture, gconstpointer user_data)
 static void
 fixture_finish (fixture_t *fixture, gconstpointer user_data HB_UNUSED)
 {
-  hb_buffer_destroy (fixture->buffer);
+  buffer_destroy (fixture->buffer);
 }
 
 
 static void
 test_buffer_properties (fixture_t *fixture, gconstpointer user_data HB_UNUSED)
 {
-  hb_buffer_t *b = fixture->buffer;
-  hb_unicode_funcs_t *ufuncs;
+  buffer_t *b = fixture->buffer;
+  unicode_funcs_t *ufuncs;
 
   /* test default properties */
 
-  g_assert (hb_buffer_get_unicode_funcs (b) == hb_unicode_funcs_get_default ());
-  g_assert (hb_buffer_get_direction (b) == HB_DIRECTION_INVALID);
-  g_assert (hb_buffer_get_script (b) == HB_SCRIPT_INVALID);
-  g_assert (hb_buffer_get_language (b) == NULL);
+  g_assert (buffer_get_unicode_funcs (b) == unicode_funcs_get_default ());
+  g_assert (buffer_get_direction (b) == HB_DIRECTION_INVALID);
+  g_assert (buffer_get_script (b) == HB_SCRIPT_INVALID);
+  g_assert (buffer_get_language (b) == NULL);
 
 
   /* test property changes are retained */
-  ufuncs = hb_unicode_funcs_create (NULL);
-  hb_buffer_set_unicode_funcs (b, ufuncs);
-  hb_unicode_funcs_destroy (ufuncs);
-  g_assert (hb_buffer_get_unicode_funcs (b) == ufuncs);
+  ufuncs = unicode_funcs_create (NULL);
+  buffer_set_unicode_funcs (b, ufuncs);
+  unicode_funcs_destroy (ufuncs);
+  g_assert (buffer_get_unicode_funcs (b) == ufuncs);
 
-  hb_buffer_set_direction (b, HB_DIRECTION_RTL);
-  g_assert (hb_buffer_get_direction (b) == HB_DIRECTION_RTL);
+  buffer_set_direction (b, HB_DIRECTION_RTL);
+  g_assert (buffer_get_direction (b) == HB_DIRECTION_RTL);
 
-  hb_buffer_set_script (b, HB_SCRIPT_ARABIC);
-  g_assert (hb_buffer_get_script (b) == HB_SCRIPT_ARABIC);
+  buffer_set_script (b, HB_SCRIPT_ARABIC);
+  g_assert (buffer_get_script (b) == HB_SCRIPT_ARABIC);
 
-  hb_buffer_set_language (b, hb_language_from_string ("fa", -1));
-  g_assert (hb_buffer_get_language (b) == hb_language_from_string ("Fa", -1));
+  buffer_set_language (b, language_from_string ("fa", -1));
+  g_assert (buffer_get_language (b) == language_from_string ("Fa", -1));
 
-  hb_buffer_set_flags (b, HB_BUFFER_FLAG_BOT);
-  g_assert (hb_buffer_get_flags (b) == HB_BUFFER_FLAG_BOT);
+  buffer_set_flags (b, HB_BUFFER_FLAG_BOT);
+  g_assert (buffer_get_flags (b) == HB_BUFFER_FLAG_BOT);
 
-  hb_buffer_set_replacement_codepoint (b, (unsigned int) -1);
-  g_assert (hb_buffer_get_replacement_codepoint (b) == (unsigned int) -1);
+  buffer_set_replacement_codepoint (b, (unsigned int) -1);
+  g_assert (buffer_get_replacement_codepoint (b) == (unsigned int) -1);
 
 
   /* test clear_contents clears all these properties: */
 
-  hb_buffer_clear_contents (b);
+  buffer_clear_contents (b);
 
-  g_assert (hb_buffer_get_unicode_funcs (b) == ufuncs);
-  g_assert (hb_buffer_get_direction (b) == HB_DIRECTION_INVALID);
-  g_assert (hb_buffer_get_script (b) == HB_SCRIPT_INVALID);
-  g_assert (hb_buffer_get_language (b) == NULL);
+  g_assert (buffer_get_unicode_funcs (b) == ufuncs);
+  g_assert (buffer_get_direction (b) == HB_DIRECTION_INVALID);
+  g_assert (buffer_get_script (b) == HB_SCRIPT_INVALID);
+  g_assert (buffer_get_language (b) == NULL);
 
   /* but not these: */
 
-  g_assert (hb_buffer_get_flags (b) != HB_BUFFER_FLAG_DEFAULT);
-  g_assert (hb_buffer_get_replacement_codepoint (b) != HB_BUFFER_REPLACEMENT_CODEPOINT_DEFAULT);
+  g_assert (buffer_get_flags (b) != HB_BUFFER_FLAG_DEFAULT);
+  g_assert (buffer_get_replacement_codepoint (b) != HB_BUFFER_REPLACEMENT_CODEPOINT_DEFAULT);
 
 
   /* test reset clears all properties */
 
-  hb_buffer_set_direction (b, HB_DIRECTION_RTL);
-  g_assert (hb_buffer_get_direction (b) == HB_DIRECTION_RTL);
+  buffer_set_direction (b, HB_DIRECTION_RTL);
+  g_assert (buffer_get_direction (b) == HB_DIRECTION_RTL);
 
-  hb_buffer_set_script (b, HB_SCRIPT_ARABIC);
-  g_assert (hb_buffer_get_script (b) == HB_SCRIPT_ARABIC);
+  buffer_set_script (b, HB_SCRIPT_ARABIC);
+  g_assert (buffer_get_script (b) == HB_SCRIPT_ARABIC);
 
-  hb_buffer_set_language (b, hb_language_from_string ("fa", -1));
-  g_assert (hb_buffer_get_language (b) == hb_language_from_string ("Fa", -1));
+  buffer_set_language (b, language_from_string ("fa", -1));
+  g_assert (buffer_get_language (b) == language_from_string ("Fa", -1));
 
-  hb_buffer_set_flags (b, HB_BUFFER_FLAG_BOT);
-  g_assert (hb_buffer_get_flags (b) == HB_BUFFER_FLAG_BOT);
+  buffer_set_flags (b, HB_BUFFER_FLAG_BOT);
+  g_assert (buffer_get_flags (b) == HB_BUFFER_FLAG_BOT);
 
-  hb_buffer_set_replacement_codepoint (b, (unsigned int) -1);
-  g_assert (hb_buffer_get_replacement_codepoint (b) == (unsigned int) -1);
+  buffer_set_replacement_codepoint (b, (unsigned int) -1);
+  g_assert (buffer_get_replacement_codepoint (b) == (unsigned int) -1);
 
-  hb_buffer_reset (b);
+  buffer_reset (b);
 
-  g_assert (hb_buffer_get_unicode_funcs (b) == hb_unicode_funcs_get_default ());
-  g_assert (hb_buffer_get_direction (b) == HB_DIRECTION_INVALID);
-  g_assert (hb_buffer_get_script (b) == HB_SCRIPT_INVALID);
-  g_assert (hb_buffer_get_language (b) == NULL);
-  g_assert (hb_buffer_get_flags (b) == HB_BUFFER_FLAG_DEFAULT);
-  g_assert (hb_buffer_get_replacement_codepoint (b) == HB_BUFFER_REPLACEMENT_CODEPOINT_DEFAULT);
+  g_assert (buffer_get_unicode_funcs (b) == unicode_funcs_get_default ());
+  g_assert (buffer_get_direction (b) == HB_DIRECTION_INVALID);
+  g_assert (buffer_get_script (b) == HB_SCRIPT_INVALID);
+  g_assert (buffer_get_language (b) == NULL);
+  g_assert (buffer_get_flags (b) == HB_BUFFER_FLAG_DEFAULT);
+  g_assert (buffer_get_replacement_codepoint (b) == HB_BUFFER_REPLACEMENT_CODEPOINT_DEFAULT);
 }
 
 static void
 test_buffer_contents (fixture_t *fixture, gconstpointer user_data)
 {
-  hb_buffer_t *b = fixture->buffer;
+  buffer_t *b = fixture->buffer;
   unsigned int i, len, len2;
   buffer_type_t buffer_type = GPOINTER_TO_INT (user_data);
-  hb_glyph_info_t *glyphs;
+  glyph_info_t *glyphs;
 
   if (buffer_type == BUFFER_EMPTY) {
-    g_assert_cmpint (hb_buffer_get_length (b), ==, 0);
+    g_assert_cmpint (buffer_get_length (b), ==, 0);
     return;
   }
 
-  len = hb_buffer_get_length (b);
-  hb_buffer_get_glyph_infos (b, NULL); /* test NULL */
-  glyphs = hb_buffer_get_glyph_infos (b, &len2);
+  len = buffer_get_length (b);
+  buffer_get_glyph_infos (b, NULL); /* test NULL */
+  glyphs = buffer_get_glyph_infos (b, &len2);
   g_assert_cmpint (len, ==, len2);
   g_assert_cmpint (len, ==, 5);
 
@@ -216,22 +216,22 @@ test_buffer_contents (fixture_t *fixture, gconstpointer user_data)
 
   /* reverse, test, and reverse back */
 
-  hb_buffer_reverse (b);
+  buffer_reverse (b);
   for (i = 0; i < len; i++)
     g_assert_cmphex (glyphs[i].codepoint, ==, utf32[len-i]);
 
-  hb_buffer_reverse (b);
+  buffer_reverse (b);
   for (i = 0; i < len; i++)
     g_assert_cmphex (glyphs[i].codepoint, ==, utf32[1+i]);
 
   /* reverse_clusters works same as reverse for now since each codepoint is
    * in its own cluster */
 
-  hb_buffer_reverse_clusters (b);
+  buffer_reverse_clusters (b);
   for (i = 0; i < len; i++)
     g_assert_cmphex (glyphs[i].codepoint, ==, utf32[len-i]);
 
-  hb_buffer_reverse_clusters (b);
+  buffer_reverse_clusters (b);
   for (i = 0; i < len; i++)
     g_assert_cmphex (glyphs[i].codepoint, ==, utf32[1+i]);
 
@@ -240,18 +240,18 @@ test_buffer_contents (fixture_t *fixture, gconstpointer user_data)
 
   /* reverse, test, and reverse back */
 
-  hb_buffer_reverse (b);
+  buffer_reverse (b);
   for (i = 0; i < len; i++)
     g_assert_cmphex (glyphs[i].codepoint, ==, utf32[len-i]);
 
-  hb_buffer_reverse (b);
+  buffer_reverse (b);
   for (i = 0; i < len; i++)
     g_assert_cmphex (glyphs[i].codepoint, ==, utf32[1+i]);
 
   /* reverse_clusters twice still should return the original string,
    * but when applied once, the 1-2 cluster should be retained. */
 
-  hb_buffer_reverse_clusters (b);
+  buffer_reverse_clusters (b);
   for (i = 0; i < len; i++) {
     unsigned int j = len-1-i;
     if (j == 1)
@@ -261,7 +261,7 @@ test_buffer_contents (fixture_t *fixture, gconstpointer user_data)
     g_assert_cmphex (glyphs[i].codepoint, ==, utf32[1+j]);
   }
 
-  hb_buffer_reverse_clusters (b);
+  buffer_reverse_clusters (b);
   for (i = 0; i < len; i++)
     g_assert_cmphex (glyphs[i].codepoint, ==, utf32[1+i]);
 
@@ -269,41 +269,41 @@ test_buffer_contents (fixture_t *fixture, gconstpointer user_data)
   /* test setting length */
 
   /* enlarge */
-  g_assert (hb_buffer_set_length (b, 10));
-  glyphs = hb_buffer_get_glyph_infos (b, NULL);
-  g_assert_cmpint (hb_buffer_get_length (b), ==, 10);
+  g_assert (buffer_set_length (b, 10));
+  glyphs = buffer_get_glyph_infos (b, NULL);
+  g_assert_cmpint (buffer_get_length (b), ==, 10);
   for (i = 0; i < 5; i++)
     g_assert_cmphex (glyphs[i].codepoint, ==, utf32[1+i]);
   for (i = 5; i < 10; i++)
     g_assert_cmphex (glyphs[i].codepoint, ==, 0);
   /* shrink */
-  g_assert (hb_buffer_set_length (b, 3));
-  glyphs = hb_buffer_get_glyph_infos (b, NULL);
-  g_assert_cmpint (hb_buffer_get_length (b), ==, 3);
+  g_assert (buffer_set_length (b, 3));
+  glyphs = buffer_get_glyph_infos (b, NULL);
+  g_assert_cmpint (buffer_get_length (b), ==, 3);
   for (i = 0; i < 3; i++)
     g_assert_cmphex (glyphs[i].codepoint, ==, utf32[1+i]);
 
 
-  g_assert (hb_buffer_allocation_successful (b));
+  g_assert (buffer_allocation_successful (b));
 
 
   /* test reset clears content */
 
-  hb_buffer_reset (b);
-  g_assert_cmpint (hb_buffer_get_length (b), ==, 0);
+  buffer_reset (b);
+  g_assert_cmpint (buffer_get_length (b), ==, 0);
 }
 
 static void
 test_buffer_positions (fixture_t *fixture, gconstpointer user_data HB_UNUSED)
 {
-  hb_buffer_t *b = fixture->buffer;
+  buffer_t *b = fixture->buffer;
   unsigned int i, len, len2;
-  hb_glyph_position_t *positions;
+  glyph_position_t *positions;
 
   /* Without shaping, positions should all be zero */
-  len = hb_buffer_get_length (b);
-  hb_buffer_get_glyph_positions (b, NULL); /* test NULL */
-  positions = hb_buffer_get_glyph_positions (b, &len2);
+  len = buffer_get_length (b);
+  buffer_get_glyph_positions (b, NULL); /* test NULL */
+  positions = buffer_get_glyph_positions (b, &len2);
   g_assert_cmpint (len, ==, len2);
   for (i = 0; i < len; i++) {
     g_assert_cmpint (0, ==, positions[i].x_advance);
@@ -314,51 +314,51 @@ test_buffer_positions (fixture_t *fixture, gconstpointer user_data HB_UNUSED)
   }
 
   /* test reset clears content */
-  hb_buffer_reset (b);
-  g_assert_cmpint (hb_buffer_get_length (b), ==, 0);
+  buffer_reset (b);
+  g_assert_cmpint (buffer_get_length (b), ==, 0);
 }
 
 static void
 test_buffer_allocation (fixture_t *fixture, gconstpointer user_data HB_UNUSED)
 {
-  hb_buffer_t *b = fixture->buffer;
+  buffer_t *b = fixture->buffer;
 
-  g_assert_cmpint (hb_buffer_get_length (b), ==, 0);
+  g_assert_cmpint (buffer_get_length (b), ==, 0);
 
-  g_assert (hb_buffer_pre_allocate (b, 100));
-  g_assert_cmpint (hb_buffer_get_length (b), ==, 0);
-  g_assert (hb_buffer_allocation_successful (b));
+  g_assert (buffer_pre_allocate (b, 100));
+  g_assert_cmpint (buffer_get_length (b), ==, 0);
+  g_assert (buffer_allocation_successful (b));
 
   /* lets try a huge allocation, make sure it fails */
-  g_assert (!hb_buffer_pre_allocate (b, (unsigned int) -1));
-  g_assert_cmpint (hb_buffer_get_length (b), ==, 0);
-  g_assert (!hb_buffer_allocation_successful (b));
+  g_assert (!buffer_pre_allocate (b, (unsigned int) -1));
+  g_assert_cmpint (buffer_get_length (b), ==, 0);
+  g_assert (!buffer_allocation_successful (b));
 
   /* small one again */
-  g_assert (hb_buffer_pre_allocate (b, 50));
-  g_assert_cmpint (hb_buffer_get_length (b), ==, 0);
-  g_assert (!hb_buffer_allocation_successful (b));
+  g_assert (buffer_pre_allocate (b, 50));
+  g_assert_cmpint (buffer_get_length (b), ==, 0);
+  g_assert (!buffer_allocation_successful (b));
 
-  hb_buffer_reset (b);
-  g_assert (hb_buffer_allocation_successful (b));
+  buffer_reset (b);
+  g_assert (buffer_allocation_successful (b));
 
   /* all allocation and size  */
-  g_assert (!hb_buffer_pre_allocate (b, ((unsigned int) -1) / 20 + 1));
-  g_assert (!hb_buffer_allocation_successful (b));
+  g_assert (!buffer_pre_allocate (b, ((unsigned int) -1) / 20 + 1));
+  g_assert (!buffer_allocation_successful (b));
 
-  hb_buffer_reset (b);
-  g_assert (hb_buffer_allocation_successful (b));
+  buffer_reset (b);
+  g_assert (buffer_allocation_successful (b));
 
   /* technically, this one can actually pass on 64bit machines, but
    * I'm doubtful that any malloc allows 4GB allocations at a time.
    * But let's only enable it on a 32-bit machine. */
   if (sizeof (long) == 4) {
-    g_assert (!hb_buffer_pre_allocate (b, ((unsigned int) -1) / 20 - 1));
-    g_assert (!hb_buffer_allocation_successful (b));
+    g_assert (!buffer_pre_allocate (b, ((unsigned int) -1) / 20 - 1));
+    g_assert (!buffer_allocation_successful (b));
   }
 
-  hb_buffer_reset (b);
-  g_assert (hb_buffer_allocation_successful (b));
+  buffer_reset (b);
+  g_assert (buffer_allocation_successful (b));
 }
 
 
@@ -369,25 +369,25 @@ typedef struct {
 
 /* note: we skip the first and last byte when adding to buffer */
 static const utf8_conversion_test_t utf8_conversion_tests[] = {
-  {"a\303\207", {(hb_codepoint_t) -1}},
+  {"a\303\207", {(codepoint_t) -1}},
   {"a\303\207b", {0xC7}},
-  {"ab\303cd", {'b', (hb_codepoint_t) -1, 'c'}},
-  {"ab\303\302\301cd", {'b', (hb_codepoint_t) -1, (hb_codepoint_t) -1, (hb_codepoint_t) -1, 'c'}}
+  {"ab\303cd", {'b', (codepoint_t) -1, 'c'}},
+  {"ab\303\302\301cd", {'b', (codepoint_t) -1, (codepoint_t) -1, (codepoint_t) -1, 'c'}}
 };
 
 static void
 test_buffer_utf8_conversion (void)
 {
-  hb_buffer_t *b;
+  buffer_t *b;
   unsigned int chars, i, j, len;
 
-  b = hb_buffer_create ();
-  hb_buffer_set_replacement_codepoint (b, (hb_codepoint_t) -1);
+  b = buffer_create ();
+  buffer_set_replacement_codepoint (b, (codepoint_t) -1);
 
   for (i = 0; i < G_N_ELEMENTS (utf8_conversion_tests); i++)
   {
     unsigned int bytes;
-    hb_glyph_info_t *glyphs;
+    glyph_info_t *glyphs;
     const utf8_conversion_test_t *test = &utf8_conversion_tests[i];
     char *escaped;
 
@@ -399,16 +399,16 @@ test_buffer_utf8_conversion (void)
     for (chars = 0; test->codepoints[chars]; chars++)
       ;
 
-    hb_buffer_clear_contents (b);
-    hb_buffer_add_utf8 (b, test->utf8, bytes,  1, bytes - 2);
+    buffer_clear_contents (b);
+    buffer_add_utf8 (b, test->utf8, bytes,  1, bytes - 2);
 
-    glyphs = hb_buffer_get_glyph_infos (b, &len);
+    glyphs = buffer_get_glyph_infos (b, &len);
     g_assert_cmpint (len, ==, chars);
     for (j = 0; j < chars; j++)
       g_assert_cmphex (glyphs[j].codepoint, ==, test->codepoints[j]);
   }
 
-  hb_buffer_destroy (b);
+  buffer_destroy (b);
 }
 
 
@@ -667,17 +667,17 @@ static const utf8_validity_test_t utf8_validity_tests[] = {
 static void
 test_buffer_utf8_validity (void)
 {
-  hb_buffer_t *b;
+  buffer_t *b;
   unsigned int i;
 
-  b = hb_buffer_create ();
-  hb_buffer_set_replacement_codepoint (b, (hb_codepoint_t) -1);
+  b = buffer_create ();
+  buffer_set_replacement_codepoint (b, (codepoint_t) -1);
 
   for (i = 0; i < G_N_ELEMENTS (utf8_validity_tests); i++)
   {
     const utf8_validity_test_t *test = &utf8_validity_tests[i];
     unsigned int text_bytes, segment_bytes, j, len;
-    hb_glyph_info_t *glyphs;
+    glyph_info_t *glyphs;
     char *escaped;
 
     escaped = g_strescape (test->utf8, NULL);
@@ -690,12 +690,12 @@ test_buffer_utf8_validity (void)
     else
       segment_bytes = test->max_len;
 
-    hb_buffer_clear_contents (b);
-    hb_buffer_add_utf8 (b, test->utf8, text_bytes,  0, segment_bytes);
+    buffer_clear_contents (b);
+    buffer_add_utf8 (b, test->utf8, text_bytes,  0, segment_bytes);
 
-    glyphs = hb_buffer_get_glyph_infos (b, &len);
+    glyphs = buffer_get_glyph_infos (b, &len);
     for (j = 0; j < len; j++)
-      if (glyphs[j].codepoint == (hb_codepoint_t) -1)
+      if (glyphs[j].codepoint == (codepoint_t) -1)
 	break;
 
     g_assert (test->valid ? j == len : j < len);
@@ -703,7 +703,7 @@ test_buffer_utf8_validity (void)
       g_assert (glyphs[j].cluster == test->offset);
   }
 
-  hb_buffer_destroy (b);
+  buffer_destroy (b);
 }
 
 
@@ -716,27 +716,27 @@ typedef struct {
 static const utf16_conversion_test_t utf16_conversion_tests[] = {
   {{0x41, 0x004D, 0x0430, 0x4E8C, 0xD800, 0xDF02, 0x61} , {0x004D, 0x0430, 0x4E8C, 0x10302}},
   {{0x41, 0xD800, 0xDF02, 0x61}, {0x10302}},
-  {{0x41, 0xD800, 0xDF02}, {(hb_codepoint_t) -1}},
-  {{0x41, 0x61, 0xD800, 0xDF02}, {0x61, (hb_codepoint_t) -1}},
-  {{0x41, 0xD800, 0x61, 0xDF02}, {(hb_codepoint_t) -1, 0x61}},
-  {{0x41, 0xDF00, 0x61}, {(hb_codepoint_t) -1}},
+  {{0x41, 0xD800, 0xDF02}, {(codepoint_t) -1}},
+  {{0x41, 0x61, 0xD800, 0xDF02}, {0x61, (codepoint_t) -1}},
+  {{0x41, 0xD800, 0x61, 0xDF02}, {(codepoint_t) -1, 0x61}},
+  {{0x41, 0xDF00, 0x61}, {(codepoint_t) -1}},
   {{0x41, 0x61}, {0}}
 };
 
 static void
 test_buffer_utf16_conversion (void)
 {
-  hb_buffer_t *b;
+  buffer_t *b;
   unsigned int i;
 
-  b = hb_buffer_create ();
-  hb_buffer_set_replacement_codepoint (b, (hb_codepoint_t) -1);
+  b = buffer_create ();
+  buffer_set_replacement_codepoint (b, (codepoint_t) -1);
 
   for (i = 0; i < G_N_ELEMENTS (utf16_conversion_tests); i++)
   {
     const utf16_conversion_test_t *test = &utf16_conversion_tests[i];
     unsigned int u_len, chars, j, len;
-    hb_glyph_info_t *glyphs;
+    glyph_info_t *glyphs;
 
     g_test_message ("UTF-16 test #%d", i);
 
@@ -745,16 +745,16 @@ test_buffer_utf16_conversion (void)
     for (chars = 0; test->codepoints[chars]; chars++)
       ;
 
-    hb_buffer_clear_contents (b);
-    hb_buffer_add_utf16 (b, test->utf16, u_len,  1, u_len - 2);
+    buffer_clear_contents (b);
+    buffer_add_utf16 (b, test->utf16, u_len,  1, u_len - 2);
 
-    glyphs = hb_buffer_get_glyph_infos (b, &len);
+    glyphs = buffer_get_glyph_infos (b, &len);
     g_assert_cmpint (len, ==, chars);
     for (j = 0; j < chars; j++)
       g_assert_cmphex (glyphs[j].codepoint, ==, test->codepoints[j]);
   }
 
-  hb_buffer_destroy (b);
+  buffer_destroy (b);
 }
 
 
@@ -765,32 +765,32 @@ typedef struct {
 
 /* note: we skip the first and last item from utf32 when adding to buffer */
 static const utf32_conversion_test_t utf32_conversion_tests[] = {
-  {{0x41, 0x004D, 0x0430, 0x4E8C, 0xD800, 0xDF02, 0x61} , {0x004D, 0x0430, 0x4E8C, (hb_codepoint_t) -3, (hb_codepoint_t) -3}},
+  {{0x41, 0x004D, 0x0430, 0x4E8C, 0xD800, 0xDF02, 0x61} , {0x004D, 0x0430, 0x4E8C, (codepoint_t) -3, (codepoint_t) -3}},
   {{0x41, 0x004D, 0x0430, 0x4E8C, 0x10302, 0x61} , {0x004D, 0x0430, 0x4E8C, 0x10302}},
-  {{0x41, 0xD800, 0xDF02, 0x61}, {(hb_codepoint_t) -3, (hb_codepoint_t) -3}},
-  {{0x41, 0xD800, 0xDF02}, {(hb_codepoint_t) -3}},
-  {{0x41, 0x61, 0xD800, 0xDF02}, {0x61, (hb_codepoint_t) -3}},
-  {{0x41, 0xD800, 0x61, 0xDF02}, {(hb_codepoint_t) -3, 0x61}},
-  {{0x41, 0xDF00, 0x61}, {(hb_codepoint_t) -3}},
+  {{0x41, 0xD800, 0xDF02, 0x61}, {(codepoint_t) -3, (codepoint_t) -3}},
+  {{0x41, 0xD800, 0xDF02}, {(codepoint_t) -3}},
+  {{0x41, 0x61, 0xD800, 0xDF02}, {0x61, (codepoint_t) -3}},
+  {{0x41, 0xD800, 0x61, 0xDF02}, {(codepoint_t) -3, 0x61}},
+  {{0x41, 0xDF00, 0x61}, {(codepoint_t) -3}},
   {{0x41, 0x10FFFF, 0x61}, {0x10FFFF}},
-  {{0x41, 0x110000, 0x61}, {(hb_codepoint_t) -3}},
+  {{0x41, 0x110000, 0x61}, {(codepoint_t) -3}},
   {{0x41, 0x61}, {0}}
 };
 
 static void
 test_buffer_utf32_conversion (void)
 {
-  hb_buffer_t *b;
+  buffer_t *b;
   unsigned int i;
 
-  b = hb_buffer_create ();
-  hb_buffer_set_replacement_codepoint (b, (hb_codepoint_t) -3);
+  b = buffer_create ();
+  buffer_set_replacement_codepoint (b, (codepoint_t) -3);
 
   for (i = 0; i < G_N_ELEMENTS (utf32_conversion_tests); i++)
   {
     const utf32_conversion_test_t *test = &utf32_conversion_tests[i];
     unsigned int u_len, chars, j, len;
-    hb_glyph_info_t *glyphs;
+    glyph_info_t *glyphs;
 
     g_test_message ("UTF-32 test #%d", i);
 
@@ -799,68 +799,68 @@ test_buffer_utf32_conversion (void)
     for (chars = 0; test->codepoints[chars]; chars++)
       ;
 
-    hb_buffer_clear_contents (b);
-    hb_buffer_add_utf32 (b, test->utf32, u_len,  1, u_len - 2);
+    buffer_clear_contents (b);
+    buffer_add_utf32 (b, test->utf32, u_len,  1, u_len - 2);
 
-    glyphs = hb_buffer_get_glyph_infos (b, &len);
+    glyphs = buffer_get_glyph_infos (b, &len);
     g_assert_cmpint (len, ==, chars);
     for (j = 0; j < chars; j++)
       g_assert_cmphex (glyphs[j].codepoint, ==, test->codepoints[j]);
   }
 
-  hb_buffer_destroy (b);
+  buffer_destroy (b);
 }
 
 
 static void
-test_empty (hb_buffer_t *b)
+test_empty (buffer_t *b)
 {
-  g_assert_cmpint (hb_buffer_get_length (b), ==, 0);
-  g_assert (!hb_buffer_get_glyph_infos (b, NULL));
-  g_assert (!hb_buffer_get_glyph_positions (b, NULL));
+  g_assert_cmpint (buffer_get_length (b), ==, 0);
+  g_assert (!buffer_get_glyph_infos (b, NULL));
+  g_assert (!buffer_get_glyph_positions (b, NULL));
 }
 
 static void
 test_buffer_empty (void)
 {
-  hb_buffer_t *b = hb_buffer_get_empty ();
+  buffer_t *b = buffer_get_empty ();
 
-  g_assert (hb_buffer_get_empty ());
-  g_assert (hb_buffer_get_empty () == b);
+  g_assert (buffer_get_empty ());
+  g_assert (buffer_get_empty () == b);
 
-  g_assert (!hb_buffer_allocation_successful (b));
-
-  test_empty (b);
-
-  hb_buffer_add_utf32 (b, utf32, G_N_ELEMENTS (utf32), 1, G_N_ELEMENTS (utf32) - 2);
+  g_assert (!buffer_allocation_successful (b));
 
   test_empty (b);
 
-  hb_buffer_reverse (b);
-  hb_buffer_reverse_clusters (b);
-
-  g_assert (!hb_buffer_set_length (b, 10));
+  buffer_add_utf32 (b, utf32, G_N_ELEMENTS (utf32), 1, G_N_ELEMENTS (utf32) - 2);
 
   test_empty (b);
 
-  g_assert (hb_buffer_set_length (b, 0));
+  buffer_reverse (b);
+  buffer_reverse_clusters (b);
+
+  g_assert (!buffer_set_length (b, 10));
 
   test_empty (b);
 
-  g_assert (!hb_buffer_allocation_successful (b));
-
-  hb_buffer_reset (b);
+  g_assert (buffer_set_length (b, 0));
 
   test_empty (b);
 
-  g_assert (!hb_buffer_allocation_successful (b));
+  g_assert (!buffer_allocation_successful (b));
+
+  buffer_reset (b);
+
+  test_empty (b);
+
+  g_assert (!buffer_allocation_successful (b));
 }
 
 typedef struct {
   const char *contents;
-  hb_buffer_serialize_format_t format;
+  buffer_serialize_format_t format;
   unsigned int num_items;
-  hb_bool_t success;
+  bool_t success;
 } serialization_test_t;
 
 static const serialization_test_t serialization_tests[] = {
@@ -875,7 +875,7 @@ static const serialization_test_t serialization_tests[] = {
 static void
 test_buffer_serialize_deserialize (void)
 {
-  hb_buffer_t *b;
+  buffer_t *b;
   unsigned int i;
 
   for (i = 0; i < G_N_ELEMENTS (serialization_tests); i++)
@@ -883,40 +883,40 @@ test_buffer_serialize_deserialize (void)
     unsigned int consumed;
     char round_trip[1024];
 
-    b = hb_buffer_create ();
-    hb_buffer_set_replacement_codepoint (b, (hb_codepoint_t) -1);
+    b = buffer_create ();
+    buffer_set_replacement_codepoint (b, (codepoint_t) -1);
 
     const serialization_test_t *test = &serialization_tests[i];
     g_test_message ("serialize test #%d", i);
 
-    (void) hb_buffer_deserialize_unicode (b, test->contents, -1, NULL, test->format);
+    (void) buffer_deserialize_unicode (b, test->contents, -1, NULL, test->format);
 
     // Expected parse failure, got one, don't round-trip
     if (test->success != 0)
     {
-      unsigned int num_glyphs = hb_buffer_get_length (b);
+      unsigned int num_glyphs = buffer_get_length (b);
       g_assert_cmpint (num_glyphs, ==, test->num_items);
 
-      hb_buffer_serialize_unicode (b, 0, num_glyphs, round_trip,
+      buffer_serialize_unicode (b, 0, num_glyphs, round_trip,
 				   sizeof(round_trip), &consumed, test->format,
 				   HB_BUFFER_SERIALIZE_FLAG_DEFAULT);
       g_assert_cmpstr (round_trip, ==, test->contents);
     }
 
-    hb_buffer_destroy (b);
+    buffer_destroy (b);
 
   }
 
   char test[1024];
   unsigned int consumed;
-  hb_buffer_t *indeterminate = hb_buffer_get_empty ();
-  hb_buffer_serialize (indeterminate, 0, (unsigned) -1,
+  buffer_t *indeterminate = buffer_get_empty ();
+  buffer_serialize (indeterminate, 0, (unsigned) -1,
 		       test, sizeof(test), &consumed, NULL,
 		       HB_BUFFER_SERIALIZE_FORMAT_JSON,
 		       HB_BUFFER_SERIALIZE_FLAG_DEFAULT);
   g_assert_cmpstr ( test, ==, "[]");
 
-  hb_buffer_serialize (indeterminate, 0, (unsigned) - 1,
+  buffer_serialize (indeterminate, 0, (unsigned) - 1,
 		       test, sizeof(test), &consumed, NULL,
 		       HB_BUFFER_SERIALIZE_FORMAT_TEXT,
 		       HB_BUFFER_SERIALIZE_FLAG_DEFAULT);
@@ -929,26 +929,26 @@ main (int argc, char **argv)
 {
   unsigned int i;
 
-  hb_test_init (&argc, &argv);
+  test_init (&argc, &argv);
 
   for (i = 0; i < BUFFER_NUM_TYPES; i++)
   {
     const void *buffer_type = GINT_TO_POINTER (i);
     const char *buffer_name = buffer_names[i];
 
-    hb_test_add_fixture_flavor (fixture, buffer_type, buffer_name, test_buffer_properties);
-    hb_test_add_fixture_flavor (fixture, buffer_type, buffer_name, test_buffer_contents);
-    hb_test_add_fixture_flavor (fixture, buffer_type, buffer_name, test_buffer_positions);
+    test_add_fixture_flavor (fixture, buffer_type, buffer_name, test_buffer_properties);
+    test_add_fixture_flavor (fixture, buffer_type, buffer_name, test_buffer_contents);
+    test_add_fixture_flavor (fixture, buffer_type, buffer_name, test_buffer_positions);
   }
 
-  hb_test_add_fixture (fixture, GINT_TO_POINTER (BUFFER_EMPTY), test_buffer_allocation);
+  test_add_fixture (fixture, GINT_TO_POINTER (BUFFER_EMPTY), test_buffer_allocation);
 
-  hb_test_add (test_buffer_utf8_conversion);
-  hb_test_add (test_buffer_utf8_validity);
-  hb_test_add (test_buffer_utf16_conversion);
-  hb_test_add (test_buffer_utf32_conversion);
-  hb_test_add (test_buffer_empty);
-  hb_test_add (test_buffer_serialize_deserialize);
+  test_add (test_buffer_utf8_conversion);
+  test_add (test_buffer_utf8_validity);
+  test_add (test_buffer_utf16_conversion);
+  test_add (test_buffer_utf32_conversion);
+  test_add (test_buffer_empty);
+  test_add (test_buffer_serialize_deserialize);
 
-  return hb_test_run();
+  return test_run();
 }

@@ -34,9 +34,9 @@
 
 #include <hb-subset.h>
 
-static hb_face_t* preprocess_face(hb_face_t* face)
+static face_t* preprocess_face(face_t* face)
 {
-  return hb_subset_preprocess (face);
+  return subset_preprocess (face);
 }
 
 /*
@@ -46,11 +46,11 @@ static hb_face_t* preprocess_face(hb_face_t* face)
 struct subset_main_t : option_parser_t, face_options_t, output_options_t<false>
 {
   subset_main_t ()
-  : input (hb_subset_input_create_or_fail ())
+  : input (subset_input_create_or_fail ())
   {}
   ~subset_main_t ()
   {
-    hb_subset_input_destroy (input);
+    subset_input_destroy (input);
   }
 
   void parse_face (int argc, const char * const *argv)
@@ -110,39 +110,39 @@ struct subset_main_t : option_parser_t, face_options_t, output_options_t<false>
   {
     parse (argc, argv);
 
-    hb_face_t* orig_face = face;
+    face_t* orig_face = face;
     if (preprocess)
       orig_face = preprocess_face (face);
 
-    hb_face_t *new_face = nullptr;
+    face_t *new_face = nullptr;
     for (unsigned i = 0; i < num_iterations; i++)
     {
-      hb_face_destroy (new_face);
-      new_face = hb_subset_or_fail (orig_face, input);
+      face_destroy (new_face);
+      new_face = subset_or_fail (orig_face, input);
     }
 
     bool success = new_face;
     if (success)
     {
-      hb_blob_t *result = hb_face_reference_blob (new_face);
+      blob_t *result = face_reference_blob (new_face);
       write_file (output_file, result);
-      hb_blob_destroy (result);
+      blob_destroy (result);
     }
 
-    hb_face_destroy (new_face);
+    face_destroy (new_face);
     if (preprocess)
-      hb_face_destroy (orig_face);
+      face_destroy (orig_face);
 
     return success ? 0 : 1;
   }
 
   bool
-  write_file (const char *output_file, hb_blob_t *blob)
+  write_file (const char *output_file, blob_t *blob)
   {
     assert (out_fp);
 
     unsigned int size;
-    const char* data = hb_blob_get_data (blob, &size);
+    const char* data = blob_get_data (blob, &size);
 
     while (size)
     {
@@ -174,7 +174,7 @@ struct subset_main_t : option_parser_t, face_options_t, output_options_t<false>
 
   unsigned num_iterations = 1;
   gboolean preprocess = false;
-  hb_subset_input_t *input = nullptr;
+  subset_input_t *input = nullptr;
 };
 
 static gboolean
@@ -184,17 +184,17 @@ parse_gids (const char *name G_GNUC_UNUSED,
 	    GError    **error)
 {
   subset_main_t *subset_main = (subset_main_t *) data;
-  hb_bool_t is_remove = (name[strlen (name) - 1] == '-');
-  hb_bool_t is_add = (name[strlen (name) - 1] == '+');
-  hb_set_t *gids = hb_subset_input_glyph_set (subset_main->input);
+  bool_t is_remove = (name[strlen (name) - 1] == '-');
+  bool_t is_add = (name[strlen (name) - 1] == '+');
+  set_t *gids = subset_input_glyph_set (subset_main->input);
 
-  if (!is_remove && !is_add) hb_set_clear (gids);
+  if (!is_remove && !is_add) set_clear (gids);
 
   if (0 == strcmp (arg, "*"))
   {
-    hb_set_clear (gids);
+    set_clear (gids);
     if (!is_remove)
-      hb_set_invert (gids);
+      set_invert (gids);
     return true;
   }
 
@@ -209,7 +209,7 @@ parse_gids (const char *name G_GNUC_UNUSED,
       break;
 
     errno = 0;
-    hb_codepoint_t start_code = strtoul (s, &p, 10);
+    codepoint_t start_code = strtoul (s, &p, 10);
     if (s[0] == '-' || errno || s == p)
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
@@ -220,7 +220,7 @@ parse_gids (const char *name G_GNUC_UNUSED,
     if (p && p[0] == '-') // ranges
     {
       s = ++p;
-      hb_codepoint_t end_code = strtoul (s, &p, 10);
+      codepoint_t end_code = strtoul (s, &p, 10);
       if (s[0] == '-' || errno || s == p)
       {
 	g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
@@ -235,16 +235,16 @@ parse_gids (const char *name G_GNUC_UNUSED,
 	return false;
       }
       if (!is_remove)
-        hb_set_add_range (gids, start_code, end_code);
+        set_add_range (gids, start_code, end_code);
       else
-        hb_set_del_range (gids, start_code, end_code);
+        set_del_range (gids, start_code, end_code);
     }
     else
     {
       if (!is_remove)
-        hb_set_add (gids, start_code);
+        set_add (gids, start_code);
       else
-        hb_set_del (gids, start_code);
+        set_del (gids, start_code);
     }
 
     s = p;
@@ -260,24 +260,24 @@ parse_glyphs (const char *name G_GNUC_UNUSED,
 	      GError    **error G_GNUC_UNUSED)
 {
   subset_main_t *subset_main = (subset_main_t *) data;
-  hb_bool_t is_remove = (name[strlen (name) - 1] == '-');
-  hb_bool_t is_add = (name[strlen (name) - 1] == '+');
-  hb_set_t *gids = hb_subset_input_glyph_set (subset_main->input);
+  bool_t is_remove = (name[strlen (name) - 1] == '-');
+  bool_t is_add = (name[strlen (name) - 1] == '+');
+  set_t *gids = subset_input_glyph_set (subset_main->input);
 
-  if (!is_remove && !is_add) hb_set_clear (gids);
+  if (!is_remove && !is_add) set_clear (gids);
 
   if (0 == strcmp (arg, "*"))
   {
-    hb_set_clear (gids);
+    set_clear (gids);
     if (!is_remove)
-      hb_set_invert (gids);
+      set_invert (gids);
     return true;
   }
 
   const char *p = arg;
   const char *p_end = arg + strlen (arg);
 
-  hb_font_t *font = hb_font_create (subset_main->face);
+  font_t *font = font_create (subset_main->face);
   while (p < p_end)
   {
     while (p < p_end && (*p == ' ' || *p == ','))
@@ -289,8 +289,8 @@ parse_glyphs (const char *name G_GNUC_UNUSED,
 
     if (p < end)
     {
-      hb_codepoint_t gid;
-      if (!hb_font_get_glyph_from_name (font, p, end - p, &gid))
+      codepoint_t gid;
+      if (!font_get_glyph_from_name (font, p, end - p, &gid))
       {
 	g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
 		     "Failed parsing glyph name: '%s'", p);
@@ -298,14 +298,14 @@ parse_glyphs (const char *name G_GNUC_UNUSED,
       }
 
       if (!is_remove)
-        hb_set_add (gids, gid);
+        set_add (gids, gid);
       else
-        hb_set_del (gids, gid);
+        set_del (gids, gid);
     }
 
     p = end + 1;
   }
-  hb_font_destroy (font);
+  font_destroy (font);
 
   return true;
 }
@@ -317,17 +317,17 @@ parse_text (const char *name G_GNUC_UNUSED,
 	    GError    **error G_GNUC_UNUSED)
 {
   subset_main_t *subset_main = (subset_main_t *) data;
-  hb_bool_t is_remove = (name[strlen (name) - 1] == '-');
-  hb_bool_t is_add = (name[strlen (name) - 1] == '+');
-  hb_set_t *unicodes = hb_subset_input_unicode_set (subset_main->input);
+  bool_t is_remove = (name[strlen (name) - 1] == '-');
+  bool_t is_add = (name[strlen (name) - 1] == '+');
+  set_t *unicodes = subset_input_unicode_set (subset_main->input);
 
-  if (!is_remove && !is_add) hb_set_clear (unicodes);
+  if (!is_remove && !is_add) set_clear (unicodes);
 
   if (0 == strcmp (arg, "*"))
   {
-    hb_set_clear (unicodes);
+    set_clear (unicodes);
     if (!is_remove)
-      hb_set_invert (unicodes);
+      set_invert (unicodes);
     return true;
   }
 
@@ -337,9 +337,9 @@ parse_text (const char *name G_GNUC_UNUSED,
   {
     gunichar cp = g_utf8_get_char(c);
     if (!is_remove)
-      hb_set_add (unicodes, cp);
+      set_add (unicodes, cp);
     else
-      hb_set_del (unicodes, cp);
+      set_del (unicodes, cp);
   }
   return true;
 }
@@ -351,17 +351,17 @@ parse_unicodes (const char *name G_GNUC_UNUSED,
 		GError    **error)
 {
   subset_main_t *subset_main = (subset_main_t *) data;
-  hb_bool_t is_remove = (name[strlen (name) - 1] == '-');
-  hb_bool_t is_add = (name[strlen (name) - 1] == '+');
-  hb_set_t *unicodes = hb_subset_input_unicode_set (subset_main->input);
+  bool_t is_remove = (name[strlen (name) - 1] == '-');
+  bool_t is_add = (name[strlen (name) - 1] == '+');
+  set_t *unicodes = subset_input_unicode_set (subset_main->input);
 
-  if (!is_remove && !is_add) hb_set_clear (unicodes);
+  if (!is_remove && !is_add) set_clear (unicodes);
 
   if (0 == strcmp (arg, "*"))
   {
-    hb_set_clear (unicodes);
+    set_clear (unicodes);
     if (!is_remove)
-      hb_set_invert (unicodes);
+      set_invert (unicodes);
     return true;
   }
 
@@ -379,7 +379,7 @@ parse_unicodes (const char *name G_GNUC_UNUSED,
       break;
 
     errno = 0;
-    hb_codepoint_t start_code = strtoul (s, &p, 16);
+    codepoint_t start_code = strtoul (s, &p, 16);
     if (errno || s == p)
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
@@ -390,7 +390,7 @@ parse_unicodes (const char *name G_GNUC_UNUSED,
     if (p && p[0] == '-') // ranges
     {
       s = ++p;
-      hb_codepoint_t end_code = strtoul (s, &p, 16);
+      codepoint_t end_code = strtoul (s, &p, 16);
       if (s[0] == '-' || errno || s == p)
       {
 	g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
@@ -405,16 +405,16 @@ parse_unicodes (const char *name G_GNUC_UNUSED,
 	return false;
       }
       if (!is_remove)
-        hb_set_add_range (unicodes, start_code, end_code);
+        set_add_range (unicodes, start_code, end_code);
       else
-        hb_set_del_range (unicodes, start_code, end_code);
+        set_del_range (unicodes, start_code, end_code);
     }
     else
     {
       if (!is_remove)
-        hb_set_add (unicodes, start_code);
+        set_add (unicodes, start_code);
       else
-        hb_set_del (unicodes, start_code);
+        set_del (unicodes, start_code);
     }
 
     s = p;
@@ -430,18 +430,18 @@ parse_nameids (const char *name,
 	       GError    **error)
 {
   subset_main_t *subset_main = (subset_main_t *) data;
-  hb_bool_t is_remove = (name[strlen (name) - 1] == '-');
-  hb_bool_t is_add = (name[strlen (name) - 1] == '+');
-  hb_set_t *name_ids = hb_subset_input_set (subset_main->input, HB_SUBSET_SETS_NAME_ID);
+  bool_t is_remove = (name[strlen (name) - 1] == '-');
+  bool_t is_add = (name[strlen (name) - 1] == '+');
+  set_t *name_ids = subset_input_set (subset_main->input, HB_SUBSET_SETS_NAME_ID);
 
 
-  if (!is_remove && !is_add) hb_set_clear (name_ids);
+  if (!is_remove && !is_add) set_clear (name_ids);
 
   if (0 == strcmp (arg, "*"))
   {
-    hb_set_clear (name_ids);
+    set_clear (name_ids);
     if (!is_remove)
-      hb_set_invert (name_ids);
+      set_invert (name_ids);
     return true;
   }
 
@@ -456,7 +456,7 @@ parse_nameids (const char *name,
       break;
 
     errno = 0;
-    hb_codepoint_t u = strtoul (s, &p, 10);
+    codepoint_t u = strtoul (s, &p, 10);
     if (errno || s == p)
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
@@ -466,9 +466,9 @@ parse_nameids (const char *name,
 
     if (!is_remove)
     {
-      hb_set_add (name_ids, u);
+      set_add (name_ids, u);
     } else {
-      hb_set_del (name_ids, u);
+      set_del (name_ids, u);
     }
 
     s = p;
@@ -484,17 +484,17 @@ parse_name_languages (const char *name,
 		      GError    **error)
 {
   subset_main_t *subset_main = (subset_main_t *) data;
-  hb_bool_t is_remove = (name[strlen (name) - 1] == '-');
-  hb_bool_t is_add = (name[strlen (name) - 1] == '+');
-  hb_set_t *name_languages = hb_subset_input_set (subset_main->input, HB_SUBSET_SETS_NAME_LANG_ID);
+  bool_t is_remove = (name[strlen (name) - 1] == '-');
+  bool_t is_add = (name[strlen (name) - 1] == '+');
+  set_t *name_languages = subset_input_set (subset_main->input, HB_SUBSET_SETS_NAME_LANG_ID);
 
-  if (!is_remove && !is_add) hb_set_clear (name_languages);
+  if (!is_remove && !is_add) set_clear (name_languages);
 
   if (0 == strcmp (arg, "*"))
   {
-    hb_set_clear (name_languages);
+    set_clear (name_languages);
     if (!is_remove)
-      hb_set_invert (name_languages);
+      set_invert (name_languages);
     return true;
   }
 
@@ -509,7 +509,7 @@ parse_name_languages (const char *name,
       break;
 
     errno = 0;
-    hb_codepoint_t u = strtoul (s, &p, 10);
+    codepoint_t u = strtoul (s, &p, 10);
     if (errno || s == p)
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
@@ -519,9 +519,9 @@ parse_name_languages (const char *name,
 
     if (!is_remove)
     {
-      hb_set_add (name_languages, u);
+      set_add (name_languages, u);
     } else {
-      hb_set_del (name_languages, u);
+      set_del (name_languages, u);
     }
 
     s = p;
@@ -538,12 +538,12 @@ _keep_everything (const char *name,
 {
   subset_main_t *subset_main = (subset_main_t *) data;
 
-  hb_subset_input_keep_everything (subset_main->input);
+  subset_input_keep_everything (subset_main->input);
 
   return true;
 }
 
-template <hb_subset_flags_t flag>
+template <subset_flags_t flag>
 static gboolean
 set_flag (const char *name,
 	  const char *arg,
@@ -552,31 +552,31 @@ set_flag (const char *name,
 {
   subset_main_t *subset_main = (subset_main_t *) data;
 
-  hb_subset_input_set_flags (subset_main->input,
-			     hb_subset_input_get_flags (subset_main->input) | flag);
+  subset_input_set_flags (subset_main->input,
+			     subset_input_get_flags (subset_main->input) | flag);
 
   return true;
 }
 
 static gboolean
-parse_layout_tag_list (hb_subset_sets_t set_type,
+parse_layout_tag_list (subset_sets_t set_type,
                        const char *name,
                        const char *arg,
                        gpointer    data,
                        GError    **error G_GNUC_UNUSED)
 {
   subset_main_t *subset_main = (subset_main_t *) data;
-  hb_bool_t is_remove = (name[strlen (name) - 1] == '-');
-  hb_bool_t is_add = (name[strlen (name) - 1] == '+');
-  hb_set_t *layout_tags = hb_subset_input_set (subset_main->input, set_type);
+  bool_t is_remove = (name[strlen (name) - 1] == '-');
+  bool_t is_add = (name[strlen (name) - 1] == '+');
+  set_t *layout_tags = subset_input_set (subset_main->input, set_type);
 
-  if (!is_remove && !is_add) hb_set_clear (layout_tags);
+  if (!is_remove && !is_add) set_clear (layout_tags);
 
   if (0 == strcmp (arg, "*"))
   {
-    hb_set_clear (layout_tags);
+    set_clear (layout_tags);
     if (!is_remove)
-      hb_set_invert (layout_tags);
+      set_invert (layout_tags);
     return true;
   }
 
@@ -590,12 +590,12 @@ parse_layout_tag_list (hb_subset_sets_t set_type,
       return false;
     }
 
-    hb_tag_t tag = hb_tag_from_string (s, strlen (s));
+    tag_t tag = tag_from_string (s, strlen (s));
 
     if (!is_remove)
-      hb_set_add (layout_tags, tag);
+      set_add (layout_tags, tag);
     else
-      hb_set_del (layout_tags, tag);
+      set_del (layout_tags, tag);
 
     s = strtok(nullptr, ", ");
   }
@@ -638,17 +638,17 @@ parse_drop_tables (const char *name,
 		   GError    **error)
 {
   subset_main_t *subset_main = (subset_main_t *) data;
-  hb_bool_t is_remove = (name[strlen (name) - 1] == '-');
-  hb_bool_t is_add = (name[strlen (name) - 1] == '+');
-  hb_set_t *drop_tables = hb_subset_input_set (subset_main->input, HB_SUBSET_SETS_DROP_TABLE_TAG);
+  bool_t is_remove = (name[strlen (name) - 1] == '-');
+  bool_t is_add = (name[strlen (name) - 1] == '+');
+  set_t *drop_tables = subset_input_set (subset_main->input, HB_SUBSET_SETS_DROP_TABLE_TAG);
 
-  if (!is_remove && !is_add) hb_set_clear (drop_tables);
+  if (!is_remove && !is_add) set_clear (drop_tables);
 
   if (0 == strcmp (arg, "*"))
   {
-    hb_set_clear (drop_tables);
+    set_clear (drop_tables);
     if (!is_remove)
-      hb_set_invert (drop_tables);
+      set_invert (drop_tables);
     return true;
   }
 
@@ -662,12 +662,12 @@ parse_drop_tables (const char *name,
       return false;
     }
 
-    hb_tag_t tag = hb_tag_from_string (s, strlen (s));
+    tag_t tag = tag_from_string (s, strlen (s));
 
     if (!is_remove)
-      hb_set_add (drop_tables, tag);
+      set_add (drop_tables, tag);
     else
-      hb_set_del (drop_tables, tag);
+      set_del (drop_tables, tag);
 
     s = strtok(nullptr, ", ");
   }
@@ -703,8 +703,8 @@ parse_glyph_map (const char *name,
   // <entry 1>,<entry 2>,...,<entry n>
   // <entry> = <old gid>:<new gid>
   subset_main_t *subset_main = (subset_main_t *) data;
-  hb_subset_input_t* input = subset_main->input;
-  hb_set_t *glyphs = hb_subset_input_glyph_set(input);
+  subset_input_t* input = subset_main->input;
+  set_t *glyphs = subset_input_glyph_set(input);
 
   char *s = (char *) arg;
   char *p;
@@ -717,7 +717,7 @@ parse_glyph_map (const char *name,
       break;
 
     errno = 0;
-    hb_codepoint_t start_code = strtoul (s, &p, 10);
+    codepoint_t start_code = strtoul (s, &p, 10);
     if (s[0] == '-' || errno || s == p)
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
@@ -733,7 +733,7 @@ parse_glyph_map (const char *name,
     }
 
     s = ++p;
-    hb_codepoint_t end_code = strtoul (s, &p, 10);
+    codepoint_t end_code = strtoul (s, &p, 10);
     if (s[0] == '-' || errno || s == p)
     {
       g_set_error (error, G_OPTION_ERROR, G_OPTION_ERROR_BAD_VALUE,
@@ -741,8 +741,8 @@ parse_glyph_map (const char *name,
       return false;
     }
 
-    hb_set_add(glyphs, start_code);
-    hb_map_set (hb_subset_input_old_to_new_glyph_mapping (input), start_code, end_code);
+    set_add(glyphs, start_code);
+    map_set (subset_input_old_to_new_glyph_mapping (input), start_code, end_code);
 
     s = p;
   }

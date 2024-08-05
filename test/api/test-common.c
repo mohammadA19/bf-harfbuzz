@@ -41,10 +41,10 @@ test_types_int (void)
   g_assert_cmpint (sizeof (int64_t), ==, 8);
   g_assert_cmpint (sizeof (uint64_t), ==, 8);
 
-  g_assert_cmpint (sizeof (hb_codepoint_t), ==, 4);
-  g_assert_cmpint (sizeof (hb_position_t), ==, 4);
-  g_assert_cmpint (sizeof (hb_mask_t), ==, 4);
-  g_assert_cmpint (sizeof (hb_var_int_t), ==, 4);
+  g_assert_cmpint (sizeof (codepoint_t), ==, 4);
+  g_assert_cmpint (sizeof (position_t), ==, 4);
+  g_assert_cmpint (sizeof (mask_t), ==, 4);
+  g_assert_cmpint (sizeof (var_int_t), ==, 4);
 }
 
 static void
@@ -82,7 +82,7 @@ test_types_direction (void)
   g_assert (HB_DIRECTION_IS_VALID (HB_DIRECTION_RTL));
   g_assert (HB_DIRECTION_IS_VALID (HB_DIRECTION_BTT));
   g_assert (!HB_DIRECTION_IS_VALID (HB_DIRECTION_INVALID));
-  g_assert (!HB_DIRECTION_IS_VALID ((hb_direction_t) 0x12345678));
+  g_assert (!HB_DIRECTION_IS_VALID ((direction_t) 0x12345678));
 
   g_assert_cmpint (HB_DIRECTION_REVERSE (HB_DIRECTION_LTR), ==, HB_DIRECTION_RTL);
   g_assert_cmpint (HB_DIRECTION_REVERSE (HB_DIRECTION_RTL), ==, HB_DIRECTION_LTR);
@@ -90,21 +90,21 @@ test_types_direction (void)
   g_assert_cmpint (HB_DIRECTION_REVERSE (HB_DIRECTION_BTT), ==, HB_DIRECTION_TTB);
   //g_assert_cmpint (HB_DIRECTION_REVERSE (HB_DIRECTION_INVALID), ==, HB_DIRECTION_INVALID);
 
-  g_assert_cmpint (HB_DIRECTION_INVALID, ==, hb_direction_from_string (NULL, -1));
-  g_assert_cmpint (HB_DIRECTION_INVALID, ==, hb_direction_from_string ("", -1));
-  g_assert_cmpint (HB_DIRECTION_INVALID, ==, hb_direction_from_string ("t", 0));
-  g_assert_cmpint (HB_DIRECTION_INVALID, ==, hb_direction_from_string ("x", -1));
-  g_assert_cmpint (HB_DIRECTION_RTL, ==, hb_direction_from_string ("r", -1));
-  g_assert_cmpint (HB_DIRECTION_RTL, ==, hb_direction_from_string ("rtl", -1));
-  g_assert_cmpint (HB_DIRECTION_RTL, ==, hb_direction_from_string ("RtL", -1));
-  g_assert_cmpint (HB_DIRECTION_RTL, ==, hb_direction_from_string ("right-to-left", -1));
-  g_assert_cmpint (HB_DIRECTION_TTB, ==, hb_direction_from_string ("ttb", -1));
+  g_assert_cmpint (HB_DIRECTION_INVALID, ==, direction_from_string (NULL, -1));
+  g_assert_cmpint (HB_DIRECTION_INVALID, ==, direction_from_string ("", -1));
+  g_assert_cmpint (HB_DIRECTION_INVALID, ==, direction_from_string ("t", 0));
+  g_assert_cmpint (HB_DIRECTION_INVALID, ==, direction_from_string ("x", -1));
+  g_assert_cmpint (HB_DIRECTION_RTL, ==, direction_from_string ("r", -1));
+  g_assert_cmpint (HB_DIRECTION_RTL, ==, direction_from_string ("rtl", -1));
+  g_assert_cmpint (HB_DIRECTION_RTL, ==, direction_from_string ("RtL", -1));
+  g_assert_cmpint (HB_DIRECTION_RTL, ==, direction_from_string ("right-to-left", -1));
+  g_assert_cmpint (HB_DIRECTION_TTB, ==, direction_from_string ("ttb", -1));
 
-  g_assert (0 == strcmp ("ltr", hb_direction_to_string (HB_DIRECTION_LTR)));
-  g_assert (0 == strcmp ("rtl", hb_direction_to_string (HB_DIRECTION_RTL)));
-  g_assert (0 == strcmp ("ttb", hb_direction_to_string (HB_DIRECTION_TTB)));
-  g_assert (0 == strcmp ("btt", hb_direction_to_string (HB_DIRECTION_BTT)));
-  g_assert (0 == strcmp ("invalid", hb_direction_to_string (HB_DIRECTION_INVALID)));
+  g_assert (0 == strcmp ("ltr", direction_to_string (HB_DIRECTION_LTR)));
+  g_assert (0 == strcmp ("rtl", direction_to_string (HB_DIRECTION_RTL)));
+  g_assert (0 == strcmp ("ttb", direction_to_string (HB_DIRECTION_TTB)));
+  g_assert (0 == strcmp ("btt", direction_to_string (HB_DIRECTION_BTT)));
+  g_assert (0 == strcmp ("invalid", direction_to_string (HB_DIRECTION_INVALID)));
 }
 
 static void
@@ -114,75 +114,75 @@ test_types_tag (void)
 
   g_assert_cmphex (HB_TAG ('a','B','c','D'), ==, 0x61426344);
 
-  g_assert_cmphex (hb_tag_from_string ("aBcDe", -1), ==, 0x61426344);
-  g_assert_cmphex (hb_tag_from_string ("aBcD", -1),  ==, 0x61426344);
-  g_assert_cmphex (hb_tag_from_string ("aBc", -1),   ==, 0x61426320);
-  g_assert_cmphex (hb_tag_from_string ("aB", -1),    ==, 0x61422020);
-  g_assert_cmphex (hb_tag_from_string ("a", -1),     ==, 0x61202020);
-  g_assert_cmphex (hb_tag_from_string ("aBcDe",  1), ==, 0x61202020);
-  g_assert_cmphex (hb_tag_from_string ("aBcDe",  2), ==, 0x61422020);
-  g_assert_cmphex (hb_tag_from_string ("aBcDe",  3), ==, 0x61426320);
-  g_assert_cmphex (hb_tag_from_string ("aBcDe",  4), ==, 0x61426344);
-  g_assert_cmphex (hb_tag_from_string ("aBcDe",  4), ==, 0x61426344);
+  g_assert_cmphex (tag_from_string ("aBcDe", -1), ==, 0x61426344);
+  g_assert_cmphex (tag_from_string ("aBcD", -1),  ==, 0x61426344);
+  g_assert_cmphex (tag_from_string ("aBc", -1),   ==, 0x61426320);
+  g_assert_cmphex (tag_from_string ("aB", -1),    ==, 0x61422020);
+  g_assert_cmphex (tag_from_string ("a", -1),     ==, 0x61202020);
+  g_assert_cmphex (tag_from_string ("aBcDe",  1), ==, 0x61202020);
+  g_assert_cmphex (tag_from_string ("aBcDe",  2), ==, 0x61422020);
+  g_assert_cmphex (tag_from_string ("aBcDe",  3), ==, 0x61426320);
+  g_assert_cmphex (tag_from_string ("aBcDe",  4), ==, 0x61426344);
+  g_assert_cmphex (tag_from_string ("aBcDe",  4), ==, 0x61426344);
 
-  g_assert_cmphex (hb_tag_from_string ("", -1),      ==, HB_TAG_NONE);
-  g_assert_cmphex (hb_tag_from_string ("x", 0),      ==, HB_TAG_NONE);
-  g_assert_cmphex (hb_tag_from_string (NULL, -1),    ==, HB_TAG_NONE);
+  g_assert_cmphex (tag_from_string ("", -1),      ==, HB_TAG_NONE);
+  g_assert_cmphex (tag_from_string ("x", 0),      ==, HB_TAG_NONE);
+  g_assert_cmphex (tag_from_string (NULL, -1),    ==, HB_TAG_NONE);
 }
 
 static void
 test_types_script (void)
 {
-  hb_tag_t arab = HB_TAG_CHAR4 ("arab");
-  hb_tag_t Arab = HB_TAG_CHAR4 ("Arab");
-  hb_tag_t ARAB = HB_TAG_CHAR4 ("ARAB");
+  tag_t arab = HB_TAG_CHAR4 ("arab");
+  tag_t Arab = HB_TAG_CHAR4 ("Arab");
+  tag_t ARAB = HB_TAG_CHAR4 ("ARAB");
 
-  hb_tag_t wWyZ = HB_TAG_CHAR4 ("wWyZ");
-  hb_tag_t Wwyz = HB_TAG_CHAR4 ("Wwyz");
+  tag_t wWyZ = HB_TAG_CHAR4 ("wWyZ");
+  tag_t Wwyz = HB_TAG_CHAR4 ("Wwyz");
 
-  hb_tag_t x123 = HB_TAG_CHAR4 ("x123");
+  tag_t x123 = HB_TAG_CHAR4 ("x123");
 
-  g_assert_cmpint (HB_SCRIPT_INVALID, ==, (hb_script_t) HB_TAG_NONE);
+  g_assert_cmpint (HB_SCRIPT_INVALID, ==, (script_t) HB_TAG_NONE);
   g_assert_cmphex (HB_SCRIPT_ARABIC, !=, HB_SCRIPT_LATIN);
 
-  g_assert_cmphex (HB_SCRIPT_INVALID, ==, hb_script_from_string (NULL, -1));
-  g_assert_cmphex (HB_SCRIPT_INVALID, ==, hb_script_from_string ("", -1));
-  g_assert_cmphex (HB_SCRIPT_INVALID, ==, hb_script_from_string ("x", 0));
-  g_assert_cmphex (HB_SCRIPT_UNKNOWN, ==, hb_script_from_string ("x", -1));
+  g_assert_cmphex (HB_SCRIPT_INVALID, ==, script_from_string (NULL, -1));
+  g_assert_cmphex (HB_SCRIPT_INVALID, ==, script_from_string ("", -1));
+  g_assert_cmphex (HB_SCRIPT_INVALID, ==, script_from_string ("x", 0));
+  g_assert_cmphex (HB_SCRIPT_UNKNOWN, ==, script_from_string ("x", -1));
 
-  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, hb_script_from_string ("arab", -1));
-  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, hb_script_from_string ("Arab", -1));
-  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, hb_script_from_string ("ARAB", -1));
-  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, hb_script_from_string ("Arabic", 6));
-  g_assert_cmphex (HB_SCRIPT_ARABIC, !=, hb_script_from_string ("Arabic", 3));
+  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, script_from_string ("arab", -1));
+  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, script_from_string ("Arab", -1));
+  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, script_from_string ("ARAB", -1));
+  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, script_from_string ("Arabic", 6));
+  g_assert_cmphex (HB_SCRIPT_ARABIC, !=, script_from_string ("Arabic", 3));
 
-  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, hb_script_from_iso15924_tag (arab));
-  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, hb_script_from_iso15924_tag (Arab));
-  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, hb_script_from_iso15924_tag (ARAB));
+  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, script_from_iso15924_tag (arab));
+  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, script_from_iso15924_tag (Arab));
+  g_assert_cmphex (HB_SCRIPT_ARABIC, ==, script_from_iso15924_tag (ARAB));
 
   /* Arbitrary tags that look like may be valid ISO 15924 should be preserved. */
-  g_assert_cmphex (HB_SCRIPT_UNKNOWN, !=, hb_script_from_string ("wWyZ", -1));
-  g_assert_cmphex (HB_SCRIPT_UNKNOWN, !=, hb_script_from_iso15924_tag (wWyZ));
+  g_assert_cmphex (HB_SCRIPT_UNKNOWN, !=, script_from_string ("wWyZ", -1));
+  g_assert_cmphex (HB_SCRIPT_UNKNOWN, !=, script_from_iso15924_tag (wWyZ));
   /* Otherwise, UNKNOWN should be returned. */
-  g_assert_cmphex (HB_SCRIPT_UNKNOWN, ==, hb_script_from_string ("x123", -1));
-  g_assert_cmphex (HB_SCRIPT_UNKNOWN, ==, hb_script_from_iso15924_tag (x123));
+  g_assert_cmphex (HB_SCRIPT_UNKNOWN, ==, script_from_string ("x123", -1));
+  g_assert_cmphex (HB_SCRIPT_UNKNOWN, ==, script_from_iso15924_tag (x123));
 
-  g_assert_cmphex (hb_script_to_iso15924_tag (HB_SCRIPT_ARABIC), ==, Arab);
-  g_assert_cmphex (hb_script_to_iso15924_tag (hb_script_from_iso15924_tag (wWyZ)), ==, Wwyz);
+  g_assert_cmphex (script_to_iso15924_tag (HB_SCRIPT_ARABIC), ==, Arab);
+  g_assert_cmphex (script_to_iso15924_tag (script_from_iso15924_tag (wWyZ)), ==, Wwyz);
 
-  g_assert_cmpint (hb_script_get_horizontal_direction (HB_SCRIPT_LATIN), ==, HB_DIRECTION_LTR);
-  g_assert_cmpint (hb_script_get_horizontal_direction (HB_SCRIPT_ARABIC), ==, HB_DIRECTION_RTL);
-  g_assert_cmpint (hb_script_get_horizontal_direction (HB_SCRIPT_OLD_ITALIC), ==, HB_DIRECTION_INVALID);
-  g_assert_cmpint (hb_script_get_horizontal_direction (hb_script_from_iso15924_tag (wWyZ)), ==, HB_DIRECTION_LTR);
+  g_assert_cmpint (script_get_horizontal_direction (HB_SCRIPT_LATIN), ==, HB_DIRECTION_LTR);
+  g_assert_cmpint (script_get_horizontal_direction (HB_SCRIPT_ARABIC), ==, HB_DIRECTION_RTL);
+  g_assert_cmpint (script_get_horizontal_direction (HB_SCRIPT_OLD_ITALIC), ==, HB_DIRECTION_INVALID);
+  g_assert_cmpint (script_get_horizontal_direction (script_from_iso15924_tag (wWyZ)), ==, HB_DIRECTION_LTR);
 }
 
 static void
 test_types_language (void)
 {
-  hb_language_t fa = hb_language_from_string ("fa", -1);
-  hb_language_t fa_IR = hb_language_from_string ("fa_IR", -1);
-  hb_language_t fa_ir = hb_language_from_string ("fa-ir", -1);
-  hb_language_t en = hb_language_from_string ("en", -1);
+  language_t fa = language_from_string ("fa", -1);
+  language_t fa_IR = language_from_string ("fa_IR", -1);
+  language_t fa_ir = language_from_string ("fa-ir", -1);
+  language_t en = language_from_string ("en", -1);
 
   g_assert (HB_LANGUAGE_INVALID == NULL);
 
@@ -194,140 +194,140 @@ test_types_language (void)
   g_assert (en != fa);
 
   /* Test recall */
-  g_assert (en == hb_language_from_string ("en", -1));
-  g_assert (en == hb_language_from_string ("eN", -1));
-  g_assert (en == hb_language_from_string ("Enx", 2));
+  g_assert (en == language_from_string ("en", -1));
+  g_assert (en == language_from_string ("eN", -1));
+  g_assert (en == language_from_string ("Enx", 2));
 
-  g_assert (HB_LANGUAGE_INVALID == hb_language_from_string (NULL, -1));
-  g_assert (HB_LANGUAGE_INVALID == hb_language_from_string ("", -1));
-  g_assert (HB_LANGUAGE_INVALID == hb_language_from_string ("en", 0));
-  g_assert (HB_LANGUAGE_INVALID != hb_language_from_string ("en", 1));
-  g_assert (NULL == hb_language_to_string (HB_LANGUAGE_INVALID));
+  g_assert (HB_LANGUAGE_INVALID == language_from_string (NULL, -1));
+  g_assert (HB_LANGUAGE_INVALID == language_from_string ("", -1));
+  g_assert (HB_LANGUAGE_INVALID == language_from_string ("en", 0));
+  g_assert (HB_LANGUAGE_INVALID != language_from_string ("en", 1));
+  g_assert (NULL == language_to_string (HB_LANGUAGE_INVALID));
 
   /* Not sure how to test this better.  Setting env vars
    * here doesn't sound like the right approach, and I'm
    * not sure that it even works. */
-  g_assert (HB_LANGUAGE_INVALID != hb_language_get_default ());
+  g_assert (HB_LANGUAGE_INVALID != language_get_default ());
 }
 
 static void
 test_types_feature (void)
 {
-  hb_feature_t feature;
+  feature_t feature;
   char buf[100];
 
-  g_assert (hb_feature_from_string ("abcd", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd", buf));
 
-  g_assert (hb_feature_from_string ("abcd=1", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd=1", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd", buf));
 
-  g_assert (hb_feature_from_string ("+abcd", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("+abcd", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd", buf));
 
-  g_assert (hb_feature_from_string ("abcd=0", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd=0", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("-abcd", buf));
 
-  g_assert (hb_feature_from_string ("-abcd", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("-abcd", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("-abcd", buf));
 
-  g_assert (hb_feature_from_string ("abcd=2", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd=2", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd=2", buf));
 
-  g_assert (hb_feature_from_string ("+abcd=2", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("+abcd=2", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd=2", buf));
 
-  g_assert (hb_feature_from_string ("-abcd=2", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("-abcd=2", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd=2", buf));
 
-  g_assert (hb_feature_from_string ("\"abcd\" on", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("\"abcd\" on", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd", buf));
 
-  g_assert (hb_feature_from_string ("\"abcd\" off", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("\"abcd\" off", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("-abcd", buf));
 
-  g_assert (hb_feature_from_string ("\"abcd\" 1", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("\"abcd\" 1", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd", buf));
 
-  g_assert (hb_feature_from_string ("\"abcd\" 0", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("\"abcd\" 0", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("-abcd", buf));
 
-  g_assert (hb_feature_from_string ("\"abcd\" 2", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("\"abcd\" 2", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd=2", buf));
 
-  g_assert (hb_feature_from_string ("abcd[0]", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd[0]", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd[]", buf));
 
-  g_assert (hb_feature_from_string ("abcd[1]", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd[1]", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd[1]", buf));
 
-  g_assert (hb_feature_from_string ("abcd[1]=1", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd[1]=1", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd[1]", buf));
 
-  g_assert (hb_feature_from_string ("abcd[1]=2", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd[1]=2", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd[1]=2", buf));
 
-  g_assert (hb_feature_from_string ("abcd[1]=0", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd[1]=0", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("-abcd[1]", buf));
 
-  g_assert (hb_feature_from_string ("abcd[]", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd[]", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd", buf));
 
-  g_assert (hb_feature_from_string ("abcd[:]", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd[:]", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd", buf));
 
-  g_assert (hb_feature_from_string ("abcd[1:]", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd[1:]", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd[1:]", buf));
 
-  g_assert (hb_feature_from_string ("abcd[:1]", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd[:1]", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd[]", buf));
 
-  g_assert (hb_feature_from_string ("abcd[1:3]", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd[1:3]", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd[1:3]", buf));
 
-  g_assert (hb_feature_from_string ("abcd[1:2]=1", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd[1:2]=1", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd[1]", buf));
 
-  g_assert (hb_feature_from_string ("abcd[1:4]=2", -1, &feature));
-  hb_feature_to_string (&feature, buf, 100);
+  g_assert (feature_from_string ("abcd[1:4]=2", -1, &feature));
+  feature_to_string (&feature, buf, 100);
   g_assert (0 == strcmp ("abcd[1:4]=2", buf));
 }
 
 int
 main (int argc, char **argv)
 {
-  hb_test_init (&argc, &argv);
+  test_init (&argc, &argv);
 
-  hb_test_add (test_types_int);
-  hb_test_add (test_types_direction);
-  hb_test_add (test_types_tag);
-  hb_test_add (test_types_script);
-  hb_test_add (test_types_language);
-  hb_test_add (test_types_feature);
+  test_add (test_types_int);
+  test_add (test_types_direction);
+  test_add (test_types_tag);
+  test_add (test_types_script);
+  test_add (test_types_language);
+  test_add (test_types_feature);
 
-  return hb_test_run();
+  return test_run();
 }

@@ -35,7 +35,7 @@
 #endif
 #endif
 
-static inline hb_bool_t
+static inline bool_t
 have_ft_colrv1 (void)
 {
 #if (FREETYPE_MAJOR*10000 + FREETYPE_MINOR*100 + FREETYPE_PATCH) >= 21300
@@ -73,7 +73,7 @@ print (paint_data_t *data,
 }
 
 static void
-push_transform (hb_paint_funcs_t *funcs,
+push_transform (paint_funcs_t *funcs,
                 void *paint_data,
                 float xx, float yx,
                 float xy, float yy,
@@ -87,7 +87,7 @@ push_transform (hb_paint_funcs_t *funcs,
 }
 
 static void
-pop_transform (hb_paint_funcs_t *funcs,
+pop_transform (paint_funcs_t *funcs,
                void *paint_data,
                void *user_data)
 {
@@ -97,11 +97,11 @@ pop_transform (hb_paint_funcs_t *funcs,
   print (data, "end transform");
 }
 
-static hb_bool_t
-paint_color_glyph (hb_paint_funcs_t *funcs,
+static bool_t
+paint_color_glyph (paint_funcs_t *funcs,
                    void *paint_data,
-                   hb_codepoint_t glyph,
-                   hb_font_t *font,
+                   codepoint_t glyph,
+                   font_t *font,
                    void *user_data)
 {
   paint_data_t *data = paint_data;
@@ -112,10 +112,10 @@ paint_color_glyph (hb_paint_funcs_t *funcs,
 }
 
 static void
-push_clip_glyph (hb_paint_funcs_t *funcs,
+push_clip_glyph (paint_funcs_t *funcs,
                  void *paint_data,
-                 hb_codepoint_t glyph,
-                 hb_font_t *font,
+                 codepoint_t glyph,
+                 font_t *font,
                  void *user_data)
 {
   paint_data_t *data = paint_data;
@@ -125,7 +125,7 @@ push_clip_glyph (hb_paint_funcs_t *funcs,
 }
 
 static void
-push_clip_rectangle (hb_paint_funcs_t *funcs,
+push_clip_rectangle (paint_funcs_t *funcs,
                      void *paint_data,
                      float xmin, float ymin, float xmax, float ymax,
                      void *user_data)
@@ -137,7 +137,7 @@ push_clip_rectangle (hb_paint_funcs_t *funcs,
 }
 
 static void
-pop_clip (hb_paint_funcs_t *funcs,
+pop_clip (paint_funcs_t *funcs,
           void *paint_data,
           void *user_data)
 {
@@ -148,36 +148,36 @@ pop_clip (hb_paint_funcs_t *funcs,
 }
 
 static void
-paint_color (hb_paint_funcs_t *funcs,
+paint_color (paint_funcs_t *funcs,
              void *paint_data,
-             hb_bool_t use_foreground,
-             hb_color_t color,
+             bool_t use_foreground,
+             color_t color,
              void *user_data)
 {
   paint_data_t *data = paint_data;
 
   print (data, "solid %d %d %d %d",
-         hb_color_get_red (color),
-         hb_color_get_green (color),
-         hb_color_get_blue (color),
-         hb_color_get_alpha (color));
+         color_get_red (color),
+         color_get_green (color),
+         color_get_blue (color),
+         color_get_alpha (color));
 }
 
-static hb_bool_t
-paint_image (hb_paint_funcs_t *funcs,
+static bool_t
+paint_image (paint_funcs_t *funcs,
              void *paint_data,
-             hb_blob_t *blob,
+             blob_t *blob,
              unsigned int width,
              unsigned int height,
-             hb_tag_t format,
+             tag_t format,
              float slant,
-             hb_glyph_extents_t *extents,
+             glyph_extents_t *extents,
              void *user_data)
 {
   paint_data_t *data = paint_data;
   char buf[5] = { 0, };
 
-  hb_tag_to_string (format, buf);
+  tag_to_string (format, buf);
   print (data, "image type %s size %u %u slant %.3g extents %d %d %d %d\n",
          buf, width, height, slant,
          extents->x_bearing, extents->y_bearing, extents->width, extents->height);
@@ -187,31 +187,31 @@ paint_image (hb_paint_funcs_t *funcs,
 
 static void
 print_color_line (paint_data_t *data,
-                  hb_color_line_t *color_line)
+                  color_line_t *color_line)
 {
-  hb_color_stop_t *stops;
+  color_stop_t *stops;
   unsigned int len;
 
-  len = hb_color_line_get_color_stops (color_line, 0, NULL, NULL);
-  stops = alloca (len * sizeof (hb_color_stop_t));
-  hb_color_line_get_color_stops (color_line, 0, &len, stops);
+  len = color_line_get_color_stops (color_line, 0, NULL, NULL);
+  stops = alloca (len * sizeof (color_stop_t));
+  color_line_get_color_stops (color_line, 0, &len, stops);
 
-  print (data, "colors %d", hb_color_line_get_extend (color_line));
+  print (data, "colors %d", color_line_get_extend (color_line));
   data->level += 1;
   for (unsigned int i = 0; i < len; i++)
     print (data, "%.3g %d %d %d %d",
            stops[i].offset,
-           hb_color_get_red (stops[i].color),
-           hb_color_get_green (stops[i].color),
-           hb_color_get_blue (stops[i].color),
-           hb_color_get_alpha (stops[i].color));
+           color_get_red (stops[i].color),
+           color_get_green (stops[i].color),
+           color_get_blue (stops[i].color),
+           color_get_alpha (stops[i].color));
   data->level -= 1;
 }
 
 static void
-paint_linear_gradient (hb_paint_funcs_t *funcs,
+paint_linear_gradient (paint_funcs_t *funcs,
                        void *paint_data,
-                       hb_color_line_t *color_line,
+                       color_line_t *color_line,
                        float x0, float y0,
                        float x1, float y1,
                        float x2, float y2,
@@ -230,9 +230,9 @@ paint_linear_gradient (hb_paint_funcs_t *funcs,
 }
 
 static void
-paint_radial_gradient (hb_paint_funcs_t *funcs,
+paint_radial_gradient (paint_funcs_t *funcs,
                        void *paint_data,
-                       hb_color_line_t *color_line,
+                       color_line_t *color_line,
                        float x0, float y0, float r0,
                        float x1, float y1, float r1,
                        void *user_data)
@@ -249,9 +249,9 @@ paint_radial_gradient (hb_paint_funcs_t *funcs,
 }
 
 static void
-paint_sweep_gradient (hb_paint_funcs_t *funcs,
+paint_sweep_gradient (paint_funcs_t *funcs,
                       void *paint_data,
-                      hb_color_line_t *color_line,
+                      color_line_t *color_line,
                       float cx, float cy,
                       float start_angle,
                       float end_angle,
@@ -269,7 +269,7 @@ paint_sweep_gradient (hb_paint_funcs_t *funcs,
 }
 
 static void
-push_group (hb_paint_funcs_t *funcs,
+push_group (paint_funcs_t *funcs,
             void *paint_data,
             void *user_data)
 {
@@ -279,9 +279,9 @@ push_group (hb_paint_funcs_t *funcs,
 }
 
 static void
-pop_group (hb_paint_funcs_t *funcs,
+pop_group (paint_funcs_t *funcs,
            void *paint_data,
-           hb_paint_composite_mode_t mode,
+           paint_composite_mode_t mode,
            void *user_data)
 {
   paint_data_t *data = paint_data;
@@ -289,30 +289,30 @@ pop_group (hb_paint_funcs_t *funcs,
   print (data, "pop group mode %d", mode);
 }
 
-static hb_paint_funcs_t *
+static paint_funcs_t *
 get_test_paint_funcs (void)
 {
-  static hb_paint_funcs_t *funcs = NULL;
+  static paint_funcs_t *funcs = NULL;
 
   if (!funcs)
   {
-    funcs = hb_paint_funcs_create ();
+    funcs = paint_funcs_create ();
 
-    hb_paint_funcs_set_push_transform_func (funcs, push_transform, NULL, NULL);
-    hb_paint_funcs_set_pop_transform_func (funcs, pop_transform, NULL, NULL);
-    hb_paint_funcs_set_color_glyph_func (funcs, paint_color_glyph, NULL, NULL);
-    hb_paint_funcs_set_push_clip_glyph_func (funcs, push_clip_glyph, NULL, NULL);
-    hb_paint_funcs_set_push_clip_rectangle_func (funcs, push_clip_rectangle, NULL, NULL);
-    hb_paint_funcs_set_pop_clip_func (funcs, pop_clip, NULL, NULL);
-    hb_paint_funcs_set_push_group_func (funcs, push_group, NULL, NULL);
-    hb_paint_funcs_set_pop_group_func (funcs, pop_group, NULL, NULL);
-    hb_paint_funcs_set_color_func (funcs, paint_color, NULL, NULL);
-    hb_paint_funcs_set_image_func (funcs, paint_image, NULL, NULL);
-    hb_paint_funcs_set_linear_gradient_func (funcs, paint_linear_gradient, NULL, NULL);
-    hb_paint_funcs_set_radial_gradient_func (funcs, paint_radial_gradient, NULL, NULL);
-    hb_paint_funcs_set_sweep_gradient_func (funcs, paint_sweep_gradient, NULL, NULL);
+    paint_funcs_set_push_transform_func (funcs, push_transform, NULL, NULL);
+    paint_funcs_set_pop_transform_func (funcs, pop_transform, NULL, NULL);
+    paint_funcs_set_color_glyph_func (funcs, paint_color_glyph, NULL, NULL);
+    paint_funcs_set_push_clip_glyph_func (funcs, push_clip_glyph, NULL, NULL);
+    paint_funcs_set_push_clip_rectangle_func (funcs, push_clip_rectangle, NULL, NULL);
+    paint_funcs_set_pop_clip_func (funcs, pop_clip, NULL, NULL);
+    paint_funcs_set_push_group_func (funcs, push_group, NULL, NULL);
+    paint_funcs_set_pop_group_func (funcs, pop_group, NULL, NULL);
+    paint_funcs_set_color_func (funcs, paint_color, NULL, NULL);
+    paint_funcs_set_image_func (funcs, paint_image, NULL, NULL);
+    paint_funcs_set_linear_gradient_func (funcs, paint_linear_gradient, NULL, NULL);
+    paint_funcs_set_radial_gradient_func (funcs, paint_radial_gradient, NULL, NULL);
+    paint_funcs_set_sweep_gradient_func (funcs, paint_sweep_gradient, NULL, NULL);
 
-    hb_paint_funcs_make_immutable (funcs);
+    paint_funcs_make_immutable (funcs);
   }
 
   return funcs;
@@ -321,7 +321,7 @@ get_test_paint_funcs (void)
 typedef struct {
   const char *font_file;
   float slant;
-  hb_codepoint_t glyph;
+  codepoint_t glyph;
   unsigned int palette;
   const char *output;
 } paint_test_t;
@@ -372,27 +372,27 @@ static paint_test_t paint_tests[] = {
 };
 
 static void
-test_hb_paint (gconstpointer d,
-               hb_bool_t     use_ft)
+test_paint (gconstpointer d,
+               bool_t     use_ft)
 {
   const paint_test_t *test = d;
-  hb_face_t *face;
-  hb_font_t *font;
-  hb_paint_funcs_t *funcs;
+  face_t *face;
+  font_t *font;
+  paint_funcs_t *funcs;
   paint_data_t data;
   char *file;
   char *buffer;
   gsize len;
   GError *error = NULL;
 
-  face = hb_test_open_font_file (test->font_file);
-  font = hb_font_create (face);
+  face = test_open_font_file (test->font_file);
+  font = font_create (face);
 
-  hb_font_set_synthetic_slant (font, test->slant);
+  font_set_synthetic_slant (font, test->slant);
 
 #ifdef HB_HAS_FREETYPE
   if (use_ft)
-    hb_ft_font_set_funcs (font);
+    ft_font_set_funcs (font);
 #endif
 
   funcs = get_test_paint_funcs ();
@@ -400,7 +400,7 @@ test_hb_paint (gconstpointer d,
   data.string = g_string_new ("");
   data.level = 0;
 
-  hb_font_paint_glyph (font, test->glyph, funcs, &data, 0, HB_COLOR (0, 0, 0, 255));
+  font_paint_glyph (font, test->glyph, funcs, &data, 0, HB_COLOR (0, 0, 0, 255));
 
   /* Run
    *
@@ -476,64 +476,64 @@ test_hb_paint (gconstpointer d,
 
   g_string_free (data.string, TRUE);
 
-  hb_font_destroy (font);
-  hb_face_destroy (face);
+  font_destroy (font);
+  face_destroy (face);
 }
 
 static void
-test_compare_ot_ft (const char *file, hb_codepoint_t glyph)
+test_compare_ot_ft (const char *file, codepoint_t glyph)
 {
-  hb_face_t *face;
-  hb_font_t *font;
-  hb_paint_funcs_t *funcs;
+  face_t *face;
+  font_t *font;
+  paint_funcs_t *funcs;
   GString *ot_str;
   paint_data_t data;
 
-  face = hb_test_open_font_file (file);
-  font = hb_font_create (face);
+  face = test_open_font_file (file);
+  font = font_create (face);
 
   funcs = get_test_paint_funcs ();
 
   data.string = g_string_new ("");
   data.level = 0;
 
-  hb_font_paint_glyph (font, glyph, funcs, &data, 0, HB_COLOR (0, 0, 0, 255));
+  font_paint_glyph (font, glyph, funcs, &data, 0, HB_COLOR (0, 0, 0, 255));
 
   g_assert_true (data.level == 0);
 
   ot_str = data.string;
 
 #ifdef HB_HAS_FREETYPE
-  hb_ft_font_set_funcs (font);
+  ft_font_set_funcs (font);
 #endif
 
   data.string = g_string_new ("");
   data.level = 0;
 
-  hb_font_paint_glyph (font, glyph, funcs, &data, 0, HB_COLOR (0, 0, 0, 255));
+  font_paint_glyph (font, glyph, funcs, &data, 0, HB_COLOR (0, 0, 0, 255));
 
   g_assert_true (data.level == 0);
 
   g_assert_cmpstr (ot_str->str, ==, data.string->str);
 
   g_string_free (data.string, TRUE);
-  hb_font_destroy (font);
-  hb_face_destroy (face);
+  font_destroy (font);
+  face_destroy (face);
 
   g_string_free (ot_str, TRUE);
 }
 
 static void
-test_hb_paint_ot (gconstpointer data)
+test_paint_ot (gconstpointer data)
 {
-  test_hb_paint (data, 0);
+  test_paint (data, 0);
 }
 
 static void
-test_hb_paint_ft (gconstpointer data)
+test_paint_ft (gconstpointer data)
 {
   if (have_ft_colrv1 ())
-    test_hb_paint (data, 1);
+    test_paint (data, 1);
   else
     g_test_skip ("FreeType COLRv1 support not present");
 }
@@ -557,34 +557,34 @@ test_compare_ot_ft_vf (gconstpointer d)
 }
 
 static void
-scrutinize_linear_gradient (hb_paint_funcs_t *funcs,
+scrutinize_linear_gradient (paint_funcs_t *funcs,
                             void *paint_data,
-                            hb_color_line_t *color_line,
+                            color_line_t *color_line,
                             float x0, float y0,
                             float x1, float y1,
                             float x2, float y2,
                             void *user_data)
 {
-  hb_bool_t *result = paint_data;
-  hb_color_stop_t *stops;
+  bool_t *result = paint_data;
+  color_stop_t *stops;
   unsigned int len;
-  hb_color_stop_t *stops2;
+  color_stop_t *stops2;
   unsigned int len2;
 
   *result = FALSE;
 
-  len = hb_color_line_get_color_stops (color_line, 0, NULL, NULL);
+  len = color_line_get_color_stops (color_line, 0, NULL, NULL);
   if (len == 0)
     return;
 
-  stops = malloc (len * sizeof (hb_color_stop_t));
-  stops2 = malloc (len * sizeof (hb_color_stop_t));
+  stops = malloc (len * sizeof (color_stop_t));
+  stops2 = malloc (len * sizeof (color_stop_t));
 
-  hb_color_line_get_color_stops (color_line, 0, &len, stops);
-  hb_color_line_get_color_stops (color_line, 0, &len, stops2);
+  color_line_get_color_stops (color_line, 0, &len, stops);
+  color_line_get_color_stops (color_line, 0, &len, stops2);
 
   // check that we can get stops twice
-  if (memcmp (stops, stops2, len * sizeof (hb_color_stop_t)) != 0)
+  if (memcmp (stops, stops2, len * sizeof (color_stop_t)) != 0)
   {
     free (stops);
     free (stops2);
@@ -593,8 +593,8 @@ scrutinize_linear_gradient (hb_paint_funcs_t *funcs,
 
   // check that we can get a single stop in the middle
   len2 = 1;
-  hb_color_line_get_color_stops (color_line, len - 1, &len2, stops2);
-  if (memcmp (&stops[len - 1], stops2, sizeof (hb_color_stop_t)) != 0)
+  color_line_get_color_stops (color_line, len - 1, &len2, stops2);
+  if (memcmp (&stops[len - 1], stops2, sizeof (color_stop_t)) != 0)
   {
     free (stops);
     free (stops2);
@@ -608,31 +608,31 @@ scrutinize_linear_gradient (hb_paint_funcs_t *funcs,
 }
 
 static void
-test_color_stops (hb_bool_t use_ft)
+test_color_stops (bool_t use_ft)
 {
-  hb_face_t *face;
-  hb_font_t *font;
-  hb_paint_funcs_t *funcs;
-  hb_bool_t result = FALSE;
+  face_t *face;
+  font_t *font;
+  paint_funcs_t *funcs;
+  bool_t result = FALSE;
 
-  face = hb_test_open_font_file (NOTO_HAND);
-  font = hb_font_create (face);
+  face = test_open_font_file (NOTO_HAND);
+  font = font_create (face);
 
 #ifdef HB_HAS_FREETYPE
   if (use_ft)
-    hb_ft_font_set_funcs (font);
+    ft_font_set_funcs (font);
 #endif
 
-  funcs = hb_paint_funcs_create ();
-  hb_paint_funcs_set_linear_gradient_func (funcs, scrutinize_linear_gradient, NULL, NULL);
+  funcs = paint_funcs_create ();
+  paint_funcs_set_linear_gradient_func (funcs, scrutinize_linear_gradient, NULL, NULL);
 
-  hb_font_paint_glyph (font, 10, funcs, &result, 0, HB_COLOR (0, 0, 0, 255));
+  font_paint_glyph (font, 10, funcs, &result, 0, HB_COLOR (0, 0, 0, 255));
 
   g_assert_true (result);
 
-  hb_paint_funcs_destroy (funcs);
-  hb_font_destroy (font);
-  hb_face_destroy (face);
+  paint_funcs_destroy (funcs);
+  font_destroy (font);
+  face_destroy (face);
 }
 
 static void
@@ -655,28 +655,28 @@ main (int argc, char **argv)
 {
   int status = 0;
 
-  hb_test_init (&argc, &argv);
+  test_init (&argc, &argv);
   for (unsigned int i = 0; i < G_N_ELEMENTS (paint_tests); i++)
   {
-    hb_test_add_data_flavor (&paint_tests[i], paint_tests[i].output, test_hb_paint_ot);
-    hb_test_add_data_flavor (&paint_tests[i], paint_tests[i].output, test_hb_paint_ft);
+    test_add_data_flavor (&paint_tests[i], paint_tests[i].output, test_paint_ot);
+    test_add_data_flavor (&paint_tests[i], paint_tests[i].output, test_paint_ft);
   }
 
-  hb_face_t *face = hb_test_open_font_file (TEST_GLYPHS);
-  unsigned glyph_count = hb_face_get_glyph_count (face);
+  face_t *face = test_open_font_file (TEST_GLYPHS);
+  unsigned glyph_count = face_get_glyph_count (face);
   for (unsigned int i = 1; i < glyph_count; i++)
   {
     char buf[20];
     snprintf (buf, 20, "test-%u", i);
-    hb_test_add_data_flavor (GUINT_TO_POINTER (i), buf, test_compare_ot_ft_novf);
-    hb_test_add_data_flavor (GUINT_TO_POINTER (i), buf, test_compare_ot_ft_vf);
+    test_add_data_flavor (GUINT_TO_POINTER (i), buf, test_compare_ot_ft_novf);
+    test_add_data_flavor (GUINT_TO_POINTER (i), buf, test_compare_ot_ft_vf);
   }
-  hb_face_destroy (face);
+  face_destroy (face);
 
-  hb_test_add (test_color_stops_ot);
-  hb_test_add (test_color_stops_ft);
+  test_add (test_color_stops_ot);
+  test_add (test_color_stops_ft);
 
-  status = hb_test_run();
+  status = test_run();
 
   return status;
 }
